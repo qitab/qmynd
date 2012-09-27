@@ -10,24 +10,24 @@
 
 (in-package :mysqlnd)
 
-;;; 15.1.1.2. String
+;;; 15.1.1.2. String - A sequence of bytes (aka octets).
+
+;;; NB: No character encoding/decoding is performed at this stage.
 
 ;;; Protocol::FixedLengthString
 ;;; A string with a known length
 
-(defun parse-fixed-length-string (stream length &key (encoding :utf-8))
-  (let ((octets (make-sequence '(vector (unsigned-byte 8))length)))
-    (read-sequence octets stream)
-    #+nil
-    (dotimes (i length)
-      (setf (aref octets i)
-            (read-byte stream)))
-    (babel:octets-to-string octets :encoding encoding)))
+(defun parse-fixed-length-string (stream length)
+  (let ((octets (make-sequence '(vector (unsigned-byte 8)) length)))
+    (read-sequence octets stream)))
+
+(defun encode-string (stream octets)
+  (write-sequence octets stream))
 
 ;;; Protocol::NulTerminatedString
 ;;; A string terminated by a NUL byte.
 
-(defun parse-null-terminated-string (stream &key (encoding :utf-8))
+(defun parse-null-terminated-string (stream)
   (let* ((length 16)
          (octets (make-array length
                              :element-type '(unsigned-byte 8)
@@ -39,8 +39,13 @@
        unless (< i length) do
          (incf length length) and do
          (adjust-array octets length)
-       do (setf (aref octets i) b)
-       when (= b 0) return (babel:octets-to-string octets :encoding encoding :start 0 :end i))))
+       when (= b 0) return octets
+       do (setf (aref octets i) b))))
+
+(defun encode-null-terminated-string (stream octets)
+  (assert (notany (lambda (ch) (char= ch #\NUL)) octets))
+  (encode-string stream octets)
+  (write-byte 0 stream))
 
 ;;; Protocol::VariableLengthString
 ;;; A string with a length determine by another field
@@ -49,10 +54,14 @@
 ;;; Protocol::LengthEncodedString
 ;;; A string prefixed by its length as a length-encoded integer
 
-(defun parse-length-encoded-string (stream &key (encoding :utf-8))
+(defun parse-length-encoded-string (stream)
   (parse-fixed-length-string stream
-                             (parse-length-encoded-integer stream)
-                             :encoding encoding))
+                             (parse-length-encoded-integer stream)))
+
+(defun encode-length-encoded-string (stream octets)
+  (let ((length (length octets)))
+    (encode-length-encoded-integer stream length)
+    (write-sequence octets stream)))
 
 ;;; Protocol::RestOfPacketString
 ;;; Just read the rest of the packet

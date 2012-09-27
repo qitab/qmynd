@@ -171,30 +171,30 @@
 
       ;; Pull strings out of the stream.
       (assert-equal
-       (parse-fixed-length-string s 7)
+       (babel:octets-to-string (parse-fixed-length-string s 7))
        "Testing"
        :test string=)
 
       (assert-equal
-      (parse-length-encoded-string s)
+       (babel:octets-to-string (parse-length-encoded-string s))
        "Hello, world!"
        :test string=)
 
       (assert-equal
-       (parse-null-terminated-string s)
+       (babel:octets-to-string (parse-null-terminated-string s))
        "Hello"
        :test string=)
 
-      (let ((str (parse-length-encoded-string s)))
+      (let ((str (babel:octets-to-string (parse-length-encoded-string s))))
         (assert-equal (length str) 251)
         (assert-true (every #'(lambda (x) (char= x #\A)) str)))
 
-      (let ((str (parse-null-terminated-string s)))
+      (let ((str (babel:octets-to-string (parse-null-terminated-string s))))
         (assert-equal (length str) 256)
         (assert-true (every #'(lambda (x) (char= x #\A)) str)))
 
       (assert-equal
-       (parse-null-terminated-string s)
+       (babel:octets-to-string (parse-null-terminated-string s))
        "Goodbye"
        :test string=))))
 
