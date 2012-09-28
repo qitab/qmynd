@@ -37,6 +37,7 @@
               :pathname #p""
               :depends-on ("common")
               :components ((:file "integers")
-                           (:file "strings")))))
+                           (:file "strings")
+                           (:file "base-packet")))))
 
 (pushnew :cl-mysqlnd *features*)
