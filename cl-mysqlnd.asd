@@ -38,6 +38,6 @@
               :depends-on ("common")
               :components ((:file "integers")
                            (:file "strings")
-                           (:file "base-packet")))))
+                           (:file "wire-packet")))))
 
 (pushnew :cl-mysqlnd *features*)
