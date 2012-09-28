@@ -10,4 +10,5 @@
 
 (in-package :cl-user)
 
-(defpackage mysqlnd)
+(defpackage mysqlnd
+  (:use :common-lisp))
