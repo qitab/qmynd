@@ -64,4 +64,33 @@
 (defconstant $mysql-shutdown-kill-connection #xff)
 
 
+;; Capability Flags (15.2.6)
+(defconstant $mysql-capability-client-long-password #x1)
+(defconstant $mysql-capability-client-found-rows #x2)
+(defconstant $mysql-capability-client-long-flag #x4)
+(defconstant $mysql-capability-client-connect-with-db #x8)
+
+(defconstant $mysql-capability-client-no-schema #x10)
+(defconstant $mysql-capability-client-compress #x20)
+(defconstant $mysql-capability-client-odbc #x40)
+(defconstant $mysql-capability-client-local-files #x80)
+
+(defconstant $mysql-capability-client-ignore-space #x100)
+(defconstant $mysql-capability-client-protocol-41 #x200)        ;; CLIENT_CHANGE_USER in v3.22; unused in v4.0
+(defconstant $mysql-capability-client-interactive #x400)
+(defconstant $mysql-capability-client-ssl #x800)
+
+(defconstant $mysql-capability-client-ignore-sigpipe #x1000)
+(defconstant $mysql-capability-client-transactions #x2000)
+(defconstant $mysql-capability-client-reserved #x4000)          ;; CLIENT_PROTOCOL_41 in v4.1.0; deprecated v4.1.1
+(defconstant $mysql-capability-client-secure-connection #x8000)
+
+(defconstant $mysql-capability-client-multi-statements #x10000) ;; Requires CLIENT_PROTOCOL_41
+(defconstant $mysql-capability-client-multi-results #x20000)    ;; Requires CLIENT_PROTOCOL_41
+(defconstant $mysql-capability-client-ps-multi-results #x40000) ;; Requires CLIENT_PROTOCOL_41
+(defconstant $mysql-capability-client-plugin-auth #x80000)      ;; New in v5.5.7; Requires CLIENT_PROTOCOL_41
+
+(defconstant $mysql-capability-client-connect-attrs #x100000)   ;; New in v5.6.6
+(defconstant $mysql-capability-client-plugin-auth-lenec-client-data #x200000) ;; New in v5.6.7
+
 ) ;eval-when
