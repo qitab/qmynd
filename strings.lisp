@@ -66,4 +66,20 @@
 
 ;;; Protocol::RestOfPacketString
 ;;; Just read the rest of the packet
-;;; This will be implemented at a higher level using fixed-length-strings and knowledge of packet length.
+
+(defgeneric parse-rest-of-packet-string (stream)
+  (:documentation
+   "Returns the rest of a stream as an array. Only implemented on
+   flexi-streams::vector-input-stream."))
+
+(defmethod parse-rest-of-packet-string ((stream flexi-streams::vector-input-stream))
+  ;; We're going to break the flexi-streams abstraction here to get an
+  ;; exact length.
+  (let* ((length (- (flexi-streams::vector-stream-end stream)
+                    (flexi-streams::vector-stream-index stream)))
+         (octets (make-array length
+                             :element-type '(unsigned-byte 8)
+                             :adjustable t
+                             :initial-element 0)))
+    (read-sequence octets stream)
+    octets))

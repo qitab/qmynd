@@ -19,7 +19,7 @@
   :maintainer '("Alejandro Sedeño")
   :description      "MySQL Native Driver for Common Lisp"
   :long-description "MySQL Native Driver for Common Lisp"
-  :depends-on (:babel)
+  :depends-on (:babel :flexi-streams)
   :serial nil
   :components
     ((:module "packages"
