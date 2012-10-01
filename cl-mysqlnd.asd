@@ -31,7 +31,8 @@
               :pathname #p""
               :depends-on ("packages")
               :components ((:file "constants")
-                           (:file "utilities")))
+                           (:file "utilities")
+                           (:file "misc")))
      (:module "wire-protocol"
               :serial nil
               :pathname #p""
