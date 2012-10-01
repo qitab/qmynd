@@ -93,4 +93,23 @@
 (defconstant $mysql-capability-client-connect-attrs #x100000)   ;; New in v5.6.6
 (defconstant $mysql-capability-client-plugin-auth-lenec-client-data #x200000) ;; New in v5.6.7
 
+
+;; Status flags (15.1.3.1)
+(defconstant $mysql-server-status-in-transaction #x1)
+(defconstant $mysql-server-status-autocommit #x2)
+;;; #x4 ?
+(defconstant $mysql-server-more-results-exist #x8)
+
+(defconstant $mysql-server-status-no-good-index-used #x10)
+(defconstant $mysql-server-status-no-index-used #x20)
+(defconstant $mysql-server-status-cursor-exists #x40)
+(defconstant $mysql-server-server-status-last-row-sent #x80)
+
+(defconstant $mysql-server-status-database-dropped #x100)
+(defconstant $mysql-server-status-no-backslash-escapes #x200)
+(defconstant $mysql-server-status-metadata-changed #x400)
+(defconstant $mysql-server-query-was-slow #x800)
+
+(defconstant $mysql-server-ps-out-params #x1000)
+
 ) ;eval-when
