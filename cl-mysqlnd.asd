@@ -37,8 +37,13 @@
               :serial nil
               :pathname #p""
               :depends-on ("common")
-              :components ((:file "integers")
-                           (:file "strings")
-                           (:file "wire-packet")))))
+              :components ((:file "wire-packet")))
+     (module "payload-decoding"
+             :serial nil
+             :pathname #p""
+             :depends-on ("common")
+             :components ((:file "integers")
+                          (:file "strings")
+                          (:file "response-packets")))))
 
 (pushnew :cl-mysqlnd *features*)
