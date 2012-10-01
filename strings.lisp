@@ -19,7 +19,8 @@
 
 (defun parse-fixed-length-string (stream length)
   (let ((octets (make-sequence '(vector (unsigned-byte 8)) length)))
-    (read-sequence octets stream)))
+    (read-sequence octets stream)
+    octets))
 
 (defun encode-string (stream octets)
   (write-sequence octets stream))
