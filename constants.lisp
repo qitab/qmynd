@@ -93,6 +93,28 @@
 (defconstant $mysql-capability-client-connect-attrs #x100000)   ;; New in v5.6.6
 (defconstant $mysql-capability-client-plugin-auth-lenec-client-data #x200000) ;; New in v5.6.7
 
+(defconstant $mysql-capabilities-required
+  (logior
+   $mysql-capability-client-long-password
+   $mysql-capability-client-found-rows
+   $mysql-capability-client-long-flag
+   $mysql-capability-client-protocol-41
+   $mysql-capability-client-secure-connection)
+  "The minimum required capabilities for this client to interop with a MySQL server.")
+
+(defconstant $mysql-capabilities-supported
+  (logior
+   $mysql-capabilities-required
+   ;$mysql-capability-client-connect-with-db
+   ;$mysql-capability-client-no-schema
+   ;$mysql-capability-client-ignore-space
+   ;$mysql-capability-client-transactions
+   ;$mysql-capability-client-multi-statements
+   ;$mysql-capability-client-multi-results
+   ;$mysql-capability-client-ps-multi-results
+   ;$mysql-capability-client-connect-attrs
+   )
+  "The full set of capabilities supported by this client library.")
 
 ;; Status flags (15.1.3.1)
 (defconstant $mysql-server-status-in-transaction #x1)
