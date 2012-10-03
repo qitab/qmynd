@@ -32,7 +32,8 @@
               :depends-on ("packages")
               :components ((:file "constants")
                            (:file "utilities")
-                           (:file "misc")))
+                           (:file "misc"
+                                  :depends-on ("constants"))))
      (:module "wire-protocol"
               :serial nil
               :pathname #p""

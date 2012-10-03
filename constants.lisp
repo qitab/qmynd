@@ -136,4 +136,11 @@
 
 (defconstant $mysql-server-ps-out-params #x1000)
 
+;; Character Sets (partially taken from $MYSQL/sql/share/charsets/Index.xml)
+(defconstant $mysql-cs-coll-latin1-swedish-ci 8)
+(defconstant $mysql-cs-coll-utf8-general-ci 33)
+(defconstant $mysql-cs-coll-utf8-binary 83)
+(defconstant $mysql-cs-coll-ascii-general-ci 11)
+(defconstant $mysql-cs-coll-ascii-binary 65)
+
 ) ;eval-when
