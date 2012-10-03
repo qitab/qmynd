@@ -1,0 +1,13 @@
+Features:
+• SSL
+• Pluggable Authentication
+
+Cleanup:
+• Add conditions.
+• Replace ASSERT with conditions.
+• babel default encoding should come from mysql connection
+  · Add our own encoding function that can look that up and call
+    babel?
+• Set client character-set on connect (default to :utf-8)
+• Drop “mysql-” prefix from everything: this is a MySQL driver, so
+   it's redundant.
