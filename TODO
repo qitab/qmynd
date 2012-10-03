@@ -11,3 +11,9 @@ Cleanup:
 • Set client character-set on connect (default to :utf-8)
 • Drop “mysql-” prefix from everything: this is a MySQL driver, so
    it's redundant.
+• parse-foo → read-foo; encode-foo → write-foo
+  · Make write-foo more like existing write-fns: (write thing stream)
+• combine integers, strings → basic-types
+
+Convenience
+• Convenience functions for toggling bits in status and capability.
