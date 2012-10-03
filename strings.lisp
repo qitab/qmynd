@@ -80,7 +80,6 @@
                     (flexi-streams::vector-stream-index stream)))
          (octets (make-array length
                              :element-type '(unsigned-byte 8)
-                             :adjustable t
                              :initial-element 0)))
     (read-sequence octets stream)
     octets))
