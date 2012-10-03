@@ -88,8 +88,9 @@
 (defconstant $mysql-capability-client-multi-statements #x10000) ;; Requires CLIENT_PROTOCOL_41
 (defconstant $mysql-capability-client-multi-results #x20000)    ;; Requires CLIENT_PROTOCOL_41
 (defconstant $mysql-capability-client-ps-multi-results #x40000) ;; Requires CLIENT_PROTOCOL_41
-(defconstant $mysql-capability-client-plugin-auth #x80000)      ;; New in v5.5.7; Requires CLIENT_PROTOCOL_41
 
+;;; NB: There are no immediate plans to support these capabilities.
+(defconstant $mysql-capability-client-plugin-auth #x80000)      ;; New in v5.5.7; Requires CLIENT_PROTOCOL_41
 (defconstant $mysql-capability-client-connect-attrs #x100000)   ;; New in v5.6.6
 (defconstant $mysql-capability-client-plugin-auth-lenec-client-data #x200000) ;; New in v5.6.7
 
