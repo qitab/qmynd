@@ -28,7 +28,7 @@
 ;;; Protocol::NulTerminatedString
 ;;; A string terminated by a NUL byte.
 
-(defun parse-null-terminated-string (stream)
+(defun parse-null-terminated-string (stream &optional (eof-error-p t))
   (let* ((length 16)
          (octets (make-array length
                              :element-type '(unsigned-byte 8)
@@ -36,11 +36,12 @@
                              :initial-element 0)))
     (loop
        for i fixnum from 0
-       as b fixnum = (read-byte stream)
+       as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
        unless (< i length) do
          (incf length length) and do
          (adjust-array octets length)
-       when (= b 0) return octets
+       when (= b 0) do
+         (adjust-array octets i) and return octets
        do (setf (aref octets i) b))))
 
 (defun encode-null-terminated-string (stream octets)
