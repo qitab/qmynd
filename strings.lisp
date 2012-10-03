@@ -45,7 +45,7 @@
        do (setf (aref octets i) b))))
 
 (defun encode-null-terminated-string (stream octets)
-  (assert (notany (lambda (ch) (char= ch #\NUL)) octets))
+  (assert (notany #'zerop octets))
   (encode-string stream octets)
   (write-byte 0 stream))
 
