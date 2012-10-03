@@ -19,7 +19,7 @@
   :maintainer '("Alejandro Sedeño")
   :description      "MySQL Native Driver for Common Lisp"
   :long-description "MySQL Native Driver for Common Lisp"
-  :depends-on (:babel :flexi-streams)
+  :depends-on (:babel :flexi-streams :ironclad)
   :serial nil
   :components
     ((:module "packages"
@@ -44,6 +44,7 @@
              :depends-on ("common")
              :components ((:file "integers")
                           (:file "strings")
-                          (:file "response-packets")))))
+                          (:file "response-packets")
+                          (:file "authentication")))))
 
 (pushnew :cl-mysqlnd *features*)
