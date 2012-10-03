@@ -63,7 +63,7 @@ each Command Phase.
       when (plusp length)
         do (adjust-array payload (+ pos length))
         and do (setf pos (read-sequence payload stream :start pos))
-      when (< length #xffffff) return payload)))
+      when (< length #xffffff) return (values payload expected-sequence-id))))
 
 (defun write-wire-packet (stream payload &key (sequence-id 0))
   (loop
@@ -74,5 +74,5 @@ each Command Phase.
     do (write-ub24/le (- end start) stream)
     do (write-byte sequence-id stream)
     do (setf sequence-id (mod (1+ sequence-id) 256))
-    do (write-sequence payload stream :start start :end end)
-    when (< length #xffffff) return (values)))
+    do (write-sequence payload stream :start start :end end))
+  sequence-id)
