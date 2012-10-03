@@ -19,7 +19,7 @@
   :maintainer '("Alejandro Sedeño")
   :description      "MySQL Native Driver for Common Lisp"
   :long-description "MySQL Native Driver for Common Lisp"
-  :depends-on (:babel :flexi-streams :ironclad)
+  :depends-on (:babel :flexi-streams :ironclad :usocket)
   :serial nil
   :components
     ((:module "packages"
@@ -39,13 +39,15 @@
               :pathname #p""
               :depends-on ("common")
               :components ((:file "wire-packet")))
-     (module "payload-decoding"
+     (module "mysql-protocol"
              :serial nil
              :pathname #p""
-             :depends-on ("common")
+             :depends-on ("common" "wire-protocol")
              :components ((:file "integers")
                           (:file "strings")
                           (:file "response-packets")
-                          (:file "authentication")))))
+                          (:file "connection")
+                          (:file "authentication")
+                          (:file "handshake")))))
 
 (pushnew :cl-mysqlnd *features*)

@@ -39,12 +39,11 @@ string[EOF]    info
     (make-mysql-response-ok-packet
      :affected-rows (parse-length-encoded-integer s)
      :last-insert-id (parse-length-encoded-integer s)
-     :status-flags (when (mysql-any-capabilities-available
+     :status-flags (when (mysql-has-some-capability
                           #.(logior $mysql-capability-client-protocol-41
                                     $mysql-capability-client-transactions))
                      (parse-fixed-length-integer s 2))
-     :warnings (when (mysql-all-capabilities-available
-                      $mysql-capability-client-protocol-41)
+     :warnings (when (mysql-has-capability $mysql-capability-client-protocol-41)
                  (parse-fixed-length-integer s 2))
      :info (babel:octets-to-string (parse-rest-of-packet-string s)))))
 
@@ -69,8 +68,7 @@ string[EOF]    error-message
   (let ((s (flexi-streams:make-in-memory-input-stream payload :start 1)))
     (make-mysql-response-error-packet
      :error-code (parse-fixed-length-integer s 2)
-     :sql-state (when (mysql-all-capabilities-available
-                       $mysql-capability-client-protocol-41)
+     :sql-state (when (mysql-has-capability $mysql-capability-client-protocol-41)
                   (assert (= (read-byte s) #.(char-code #\#)))
                   (babel:octets-to-string  (parse-fixed-length-string s 5)))
      :error-message (babel:octets-to-string (parse-rest-of-packet-string s)))))
@@ -90,11 +88,9 @@ endif
 (defun parse-end-of-file-payload (payload)
   (let ((s (flexi-streams:make-in-memory-input-stream payload :start 1)))
     (make-mysql-response-end-of-file-packet
-     :warning-count (when (mysql-all-capabilities-available
-                           $mysql-capability-client-protocol-41)
+     :warning-count (when (mysql-has-capability $mysql-capability-client-protocol-41)
                       (parse-fixed-length-integer s 2))
-     :status-flags (when (mysql-all-capabilities-available
-                          $mysql-capability-client-protocol-41)
+     :status-flags (when (mysql-has-capability  $mysql-capability-client-protocol-41)
                      (parse-fixed-length-integer s 2)))))
 
 (defun parse-response-payload (payload)

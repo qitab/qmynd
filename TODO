@@ -1,6 +1,7 @@
 Features:
 • SSL
 • Pluggable Authentication
+• Connect timeout
 
 Cleanup:
 • Add conditions.
