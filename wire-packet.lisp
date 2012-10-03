@@ -75,4 +75,5 @@ each Command Phase.
     do (write-byte sequence-id stream)
     do (setf sequence-id (mod (1+ sequence-id) 256))
     do (write-sequence payload stream :start start :end end))
+  (force-output stream)
   sequence-id)
