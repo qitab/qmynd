@@ -35,14 +35,14 @@
                              :adjustable t
                              :initial-element 0)))
     (loop
-       for i fixnum from 0
-       as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
-       unless (< i length) do
-         (incf length length) and do
-         (adjust-array octets length)
-       when (= b 0) do
-         (adjust-array octets i) and return octets
-       do (setf (aref octets i) b))))
+      for i fixnum from 0
+      as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
+      unless (< i length) do
+        (incf length length) and do
+          (adjust-array octets length)
+      when (= b 0) do
+        (adjust-array octets i) and return octets
+      do (setf (aref octets i) b))))
 
 (defun encode-null-terminated-string (stream octets)
   (assert (notany #'zerop octets))

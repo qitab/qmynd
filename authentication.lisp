@@ -79,5 +79,5 @@
      (error 'simple-error))
     ((string= plugin "mysql_clear_password")
      (mysql-clear-password-auth-response password))
-    ;;; asedeno-TODO: Replace with an appropriate condition
+    ;; asedeno-TODO: Replace with an appropriate condition
     (T (error 'simple-error))))

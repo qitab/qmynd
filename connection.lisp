@@ -34,7 +34,7 @@
                     :initform $mysql-capabilities-supported)
    (character-set   :type keyword
                     :accessor mysql-connection-character-set
-                    :initform :utf-8);:iso-8859-1)
+                    :initform :utf-8)   ;:iso-8859-1)
    (mysql-cs-coll   :type integer
                     :accessor mysql-connection-cs-coll
                     :initform $mysql-cs-coll-utf8-general-ci)
@@ -124,6 +124,6 @@
 
 (defmethod mysql-disconnect ((c mysql-connection))
   (when (mysql-connection-connected c)
-    ;;; asedeno-TODO: send a $mysql-command-quit here
+    ;; asedeno-TODO: send a $mysql-command-quit here
     (usocket:socket-close (mysql-connection-socket c))
     (setf (mysql-connection-connected c) nil)))

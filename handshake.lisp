@@ -104,9 +104,9 @@ endif
 
           (mysql-connection-status-flags *mysql-connection*)
           status-flags)
-    ;;; asedeno-TODO: Replace with an appropriate condition
+    ;; asedeno-TODO: Replace with an appropriate condition
     (assert (mysql-has-capability $mysql-capabilities-required))
-    ;;; asedeno-TODO: add optional logging/debugging functionality
+    ;; asedeno-TODO: add optional logging/debugging functionality
     #+nil
     (format t "Auth Data: ~A~%~
                Auth Plugin: ~A~%~
@@ -183,9 +183,9 @@ endif
       (encode-null-terminated-string s auth-plugin))
     #+mysql-client-connect-attributes
     (when (mysql-has-capability $mysql-capability-client-connect-attrs)
-      ;;; asedeno-TODO: When this is implemented, what sort of
-      ;;; attributes do we want to send? Are they hard-coded? Supplied
-      ;;; by the user? Both? Stored in the connection object?
+      ;; asedeno-TODO: When this is implemented, what sort of
+      ;; attributes do we want to send? Are they hard-coded? Supplied
+      ;; by the user? Both? Stored in the connection object?
       nil)
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s))))
 

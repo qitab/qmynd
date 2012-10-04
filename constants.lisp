@@ -107,14 +107,14 @@
 (defconstant $mysql-capabilities-supported
   (logior
    $mysql-capabilities-required
-   ;$mysql-capability-client-connect-with-db
-   ;$mysql-capability-client-no-schema
-   ;$mysql-capability-client-ignore-space
-   ;$mysql-capability-client-transactions
-   ;$mysql-capability-client-multi-statements
-   ;$mysql-capability-client-multi-results
-   ;$mysql-capability-client-ps-multi-results
-   ;$mysql-capability-client-connect-attrs
+   ;;$mysql-capability-client-connect-with-db
+   ;;$mysql-capability-client-no-schema
+   ;;$mysql-capability-client-ignore-space
+   ;;$mysql-capability-client-transactions
+   ;;$mysql-capability-client-multi-statements
+   ;;$mysql-capability-client-multi-results
+   ;;$mysql-capability-client-ps-multi-results
+   ;;$mysql-capability-client-connect-attrs
    )
   "The full set of capabilities supported by this client library.")
 

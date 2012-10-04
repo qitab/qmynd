@@ -19,16 +19,16 @@
 (defun parse-fixed-length-integer (stream length)
   (let ((result 0))
     (loop
-       repeat length
-       for i fixnum from 0 by 8
-       do (setf (ldb (byte 8 i) result) (read-byte stream)))
+      repeat length
+      for i fixnum from 0 by 8
+      do (setf (ldb (byte 8 i) result) (read-byte stream)))
     result))
 
 (defun encode-fixed-length-integer (stream int length)
   (loop
-     repeat length
-     for i fixnum from 0 by 8
-     do (write-byte (ldb (byte 8 i) int) stream)))
+    repeat length
+    for i fixnum from 0 by 8
+    do (write-byte (ldb (byte 8 i) int) stream)))
 
 ;;; 15.1.1.1.2. length encoded integer
 

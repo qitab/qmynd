@@ -37,9 +37,9 @@ each Command Phase.
 ;;; encoding packet length.
 (defun read-ub24/le (stream)
   (loop
-     for n fixnum from 0 by 8 below 24
-     as b fixnum = (read-byte stream)
-     sum (ash b n)))
+    for n fixnum from 0 by 8 below 24
+    as b fixnum = (read-byte stream)
+    sum (ash b n)))
 
 (defun write-ub24/le (i stream)
   (assert (<= 0 i #xffffff))
