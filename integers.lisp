@@ -17,17 +17,18 @@
 ;;; Little endian fixed-length integers with lengths (1 2 3 4 6 8)
 
 (defun parse-fixed-length-integer (stream length)
-  (loop
-     for i fixnum from 0 below length
-     for n fixnum from 0 by 8
-     as b fixnum = (read-byte stream)
-     sum (ash b n)))
+  (let ((result 0))
+    (loop
+       repeat length
+       for i fixnum from 0 by 8
+       do (setf (ldb (byte 8 i) result) (read-byte stream)))
+    result))
 
 (defun encode-fixed-length-integer (stream int length)
   (loop
-     for i fixnum from 0 below length
-     for n fixnum from 0 by -8
-     do (write-byte (logand (ash int n) #xff) stream)))
+     repeat length
+     for i fixnum from 0 by 8
+     do (write-byte (ldb (byte 8 i) int) stream)))
 
 ;;; 15.1.1.1.2. length encoded integer
 
