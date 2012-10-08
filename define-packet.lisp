@@ -119,13 +119,10 @@ Order of Operations:
 (defun emit-packet-slot-lisp-type (slotd)
   (destructuring-bind (mysql-type termination-spec)
       (packet-slot-mysql-type slotd)
+    (declare (ignore termination-spec))
     (let ((base-type
             (ecase mysql-type
-              (integer
-               (cond
-                 ((typep termination-spec 'integer)
-                  `(integer 0 ,(1- (ash 1 (* 8 termination-spec)))))
-                 (t 'integer)))
+              (integer 'integer)
               (octets '(vector (unsigned-byte 8)))
               (string 'string))))
       (if (packet-slot-predicate slotd)
@@ -134,12 +131,13 @@ Order of Operations:
 
 (defun emit-packet-struct (struct-name slotds)
   `(defstruct ,struct-name
-     ,@(remove-duplicates
-        (loop for slotd in slotds
-              unless (packet-slot-transient slotd)
-                collect `(,(packet-slot-name slotd)
-                          nil
-                          :type ,(emit-packet-slot-lisp-type slotd))))))
+     ,@(loop for slotd in slotds
+             unless (or (packet-slot-transient slotd)
+                        (member (packet-slot-name slotd) done))
+               collect `(,(packet-slot-name slotd)
+                         nil
+                         :type ,(emit-packet-slot-lisp-type slotd))
+             collect (packet-slot-name slotd) into done)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parser logic
