@@ -50,7 +50,8 @@
                           (:file "connection")
                           (:file "authentication")
                           (:file "handshake"
-                           :depends-on ("connection"
+                           :depends-on ("define-packet"
+                                        "connection"
                                         "authentication"))))))
 
 (pushnew :cl-mysqlnd *features*)

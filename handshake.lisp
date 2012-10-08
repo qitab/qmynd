@@ -12,98 +12,63 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Connection Phase Packets (15.2.5)
+(define-packet initial-handshake-v10
+  ((tag :mysql-type (integer 1) :value 10 :transient t)
+   (server-version :mysql-type (string :null))
+   (connection-id :mysql-type (integer 4))
+   (auth-data :mysql-type (octets 8))
+   (reserved :mysql-type (integer 1) :value 0 :transient t)
+   (capability-flags :mysql-type (integer 2))
 
-#|
-Protocol Handshake Packet (v10)
+   ;; This is interesting: the packet may end here, or continue as follows.
+   (character-set :mysql-type (integer 1) :eof :end)
+   (status-flags :mysql-type (integer 2))
+   (capability-flags :mysql-type (integer 2)
+                     :transform #'(lambda (x) (ash x 16))
+                     :reduce #'logior
+                     :bind t)
 
-1 byte         [0a] protocol version
-string[NUL]    server version
-4 bytes        connection id
-string[8]      auth-plugin-data-part-1
-1 byte         [00] filler
-2 bytes        capability flags
+   ;; Strictly speaking, this is 0 unless $mysql-capability-client-plugin-auth, but the field it is
+   ;; used for has a length of at least 13. We're being slightly looser than the spec here, but it
+   ;; should not be a problem.
+   (auth-data-length :mysql-type (integer 1)
+                     :transform #'(lambda (x) (max (- x 8) 13))
+                     :bind t
+                     :transient t)
 
-if the packet continues:
-  1 byte       character set
-  2 bytes      status flags
-  2 bytes      capability flags [upper bits]
+   (reserved :mysql-type (integer 10) :transient t) ; reserved for future use.
 
-  if $mysql-capability-client-plugin-auth
-    1 byte     length of auth-plugin-data
-  else
-    1 byte     [00]
-  endif
-  string[10]   reserved, all [00]
-  if $mysql-capability-client-secure-connection
-    string[len]  auth-plugin-data-part-2; len = max(13, (- length of auth-plugin-data 8))
-  endif
-  if $mysql-capability-client-plugin-auth
-    if (or (and (>= version 5.5.7) (< version 5.5.10))
-           (and (>= version 5.6.0) (< version 5.6.2)))
-      string[EOF] auth-plugin name
-    elif (or (>= version 5.5.10) (>= version 5.6.2))
-      string[NUL] auth-plugin name
-    endif
-  endif
-endif
-|#
+   (auth-data :mysql-type (octets auth-data-length)
+              :predicate (flagsp $mysql-capability-client-secure-connection capability-flags)
+              ;; can we simplify the transform?
+              :reduce #'(lambda (x y) (concatenate'(vector (unsigned-byte 8)) x y)))
+
+   (auth-plugin :mysql-type (string :null-eof)
+                :predicate (flagsp $mysql-capability-client-plugin-auth capability-flags))))
 
 (defun process-initial-handshake-v10-payload (payload)
   ;; 1) Parse the payload
-  (let* ((s (flexi-streams:make-flexi-stream
-             (flexi-streams:make-in-memory-input-stream payload :start 1)))
-         (server-version (parse-null-terminated-string s))
-         (connection-id (parse-fixed-length-integer s 4))
-         (auth-data (parse-fixed-length-string s 8))
-         (capability-flags (progn (assert (zerop (read-byte s)))
-                                  (parse-fixed-length-integer s 2)))
-         character-set
-         status-flags
-         auth-plugin-name)
-
-    ;; 1a) Keep parsing the packet if there's more
-    (when (flexi-streams:peek-byte s nil nil)
-      (setf character-set (read-byte s)
-            status-flags (parse-fixed-length-integer s 2)
-            capability-flags (logior capability-flags
-                                     (ash (parse-fixed-length-integer s 2) 16)))
-
-      (let ((auth-data-length (read-byte s)))
-        (unless (flagsp $mysql-capability-client-plugin-auth capability-flags)
-          (assert (zerop auth-data-length)))
-
-        ;; Reserved bytes
-        (assert (every #'zerop (parse-fixed-length-string s 10)))
-        ;; More auth data
-        (when (flagsp $mysql-capability-client-secure-connection capability-flags)
-          (setf auth-data
-                (concatenate '(vector (unsigned-byte 8))
-                             auth-data
-                             (parse-fixed-length-string s (max 13 (- auth-data-length 8))))))
-        ;; Auth plugin name
-        (when (flagsp $mysql-capability-client-plugin-auth capability-flags)
-          ;; eof-error-p is nil to account for http://bugs.mysql.com/bug.php?id=59453
-          (setf auth-plugin-name (parse-null-terminated-string s nil)))))
-
+  (let ((packet (parse-initial-handshake-v10 payload)))
     ;; 2) Populate *mysql-connection* slots with data from initial handshake
     (setf (mysql-connection-server-version *mysql-connection*)
-          (babel:octets-to-string server-version :encoding :utf-8)
+          (initial-handshake-v10-packet-server-version packet)
 
-          (mysql-connection-connection-id  *mysql-connection*)
-          connection-id
+          (mysql-connection-connection-id *mysql-connection*)
+          (initial-handshake-v10-packet-connection-id packet)
 
           (mysql-connection-capabilities *mysql-connection*)
           (logand (mysql-connection-capabilities *mysql-connection*)
-                  capability-flags)
+                  (initial-handshake-v10-packet-capability-flags packet))
 
           (mysql-connection-character-set *mysql-connection*)
-          (mysql-cs-coll-to-character-encoding character-set)
+          (mysql-cs-coll-to-character-encoding
+           (initial-handshake-v10-packet-character-set packet))
 
           (mysql-connection-cs-coll *mysql-connection*)
-          character-set
+          (initial-handshake-v10-packet-character-set packet)
 
           (mysql-connection-status-flags *mysql-connection*)
-          status-flags)
+          (initial-handshake-v10-packet-status-flags packet))
     ;; asedeno-TODO: Replace with an appropriate condition
     (assert (mysql-has-capability $mysql-capabilities-required))
     ;; asedeno-TODO: add optional logging/debugging functionality
@@ -118,11 +83,11 @@ endif
             capability-flags
             $mysql-capabilities-supported
             (mysql-connection-capabilities *mysql-connection*))
-    (values auth-data
+    (values (initial-handshake-v10-packet-auth-data packet)
             (when (mysql-has-capability $mysql-capability-client-plugin-auth)
               ;; If we don't support pluggable-auth (and we don't
               ;; yet), don't bother returnin the plugin name.
-              auth-plugin-name))))
+              (initial-handshake-v10-packet-auth-plugin packet)))))
 
 ;;; asedeno-TODO: Write SSL upgrade path
 
