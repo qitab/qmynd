@@ -48,6 +48,8 @@
                           (:file "response-packets")
                           (:file "connection")
                           (:file "authentication")
-                          (:file "handshake")))))
+                          (:file "handshake"
+                           :depends-on ("connection"
+                                        "authentication"))))))
 
 (pushnew :cl-mysqlnd *features*)
