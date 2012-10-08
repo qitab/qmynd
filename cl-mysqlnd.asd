@@ -45,6 +45,7 @@
              :depends-on ("common" "wire-protocol")
              :components ((:file "integers")
                           (:file "strings")
+                          (:file "define-packet")
                           (:file "response-packets")
                           (:file "connection")
                           (:file "authentication")
