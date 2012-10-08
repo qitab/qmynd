@@ -125,9 +125,7 @@ Order of Operations:
               (integer 'integer)
               (octets '(vector (unsigned-byte 8)))
               (string 'string))))
-      (if (packet-slot-predicate slotd)
-          `(or ,base-type null)
-          base-type))))
+      `(or ,base-type null))))
 
 (defun emit-packet-struct (struct-name slotds)
   `(defstruct ,struct-name
