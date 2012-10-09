@@ -73,14 +73,6 @@ Order of Operations:
 • Bind
 ||#
 
-#|
-TODO:
-1) bind by default (rename bind?)
-2) bind first, make struct later
-3) add lisp-type override to packet slots; require if transform or reduce is present
-4) make struct types stricter
-|#
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Slot meta-data
 (defclass packet-slot ()
@@ -95,16 +87,13 @@ TODO:
          :initarg :eof
          :initform :error
          :accessor packet-slot-eof)
-   (predicate :type (or function null)
-              :initform nil
+   (predicate :initform nil
               :initarg :predicate
               :accessor packet-slot-predicate)
-   (reduce :type (or function null)
-              :initform nil
+   (reduce :initform nil
            :initarg :reduce
            :accessor packet-slot-reduce)
-   (transform :type (or function null)
-              :initform nil
+   (transform :initform nil
               :initarg :transform
               :accessor packet-slot-transform)
    (transient :type boolean
