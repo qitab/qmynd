@@ -20,11 +20,12 @@ slot-specifier ::= (slot-name [[slot-options]])
 slot-name ::= symbol
 slot-options ::= {:bind boolean } |
                  {:eof eof-action} |
+                 {:mysql-type parser-type-spec} |
                  {:predicate form} |
                  {:reduce λ α′ α → β)
                  {:transform λ α → β} |
                  {:transient boolean} |
-                 {:mysql-type parser-type-spec} |
+                 {:type type-specifier} |
                  {:value form}
 
 parser-type-spec ::= (integer integer-size) |
@@ -59,6 +60,9 @@ Transform - The parsed value is transformed using the provided λ.
 Transient - The parsed value is not returned as a parsed value. It may be used internally if named.
 Value - If present, the value parsed for this slot is expected to be equal to the value of the form.
 
+The Lisp type specified by :TYPE may be omitted if it can be deduced from :MYSQL-TYPE. Generally, if
+:TRANSFORM or :REDUCE are specified, you should specify a :TYPE.
+
 Order of Operations:
 
 • Predicate
@@ -67,8 +71,15 @@ Order of Operations:
 • Value
 • Reduce
 • Bind
-• slot-bind (unless transient)
 ||#
+
+#|
+TODO:
+1) bind by default (rename bind?)
+2) bind first, make struct later
+3) add lisp-type override to packet slots; require if transform or reduce is present
+4) make struct types stricter
+|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Slot meta-data
@@ -78,7 +89,7 @@ Order of Operations:
          :reader packet-slot-name)
    (bind :type boolean
          :initarg :bind
-         :initform nil
+         :initform t
          :accessor packet-slot-bind)
    (eof  :type keyword
          :initarg :eof
@@ -102,6 +113,9 @@ Order of Operations:
               :accessor packet-slot-transient)
    (mysql-type :initarg :mysql-type
                :accessor packet-slot-mysql-type)
+   (type :initarg :type
+         :initform nil
+         :accessor packet-slot-type)
    (value :initarg :value
           :initform nil
           :accessor packet-slot-value)))
@@ -116,25 +130,35 @@ Order of Operations:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Packet struct
-(defun emit-packet-slot-lisp-type (slotd)
+(defun emit-packet-slot-lisp-type (slotd optional)
   (destructuring-bind (mysql-type termination-spec)
       (packet-slot-mysql-type slotd)
-    (declare (ignore termination-spec))
-    (let ((base-type
-            (ecase mysql-type
-              (integer 'integer)
-              (octets '(vector (unsigned-byte 8)))
-              (string 'string))))
-      `(or ,base-type null))))
+    (cond
+      ((packet-slot-type slotd))
+      (t
+       (let ((base-type
+               (ecase mysql-type
+                 (integer
+                  (cond
+                    ((typep termination-spec 'integer)
+                     `(integer 0 ,(1- (ash 1 (* 8 termination-spec)))))
+                    (t 'integer)))
+                 (octets '(vector (unsigned-byte 8)))
+                 (string 'string))))
+         (if (or optional (packet-slot-predicate slotd))
+             `(or ,base-type null)
+             base-type))))))
 
 (defun emit-packet-struct (struct-name slotds)
   `(defstruct ,struct-name
      ,@(loop for slotd in slotds
+             for optional = (eq (packet-slot-eof slotd) :end)
+               then (or optional (eq (packet-slot-eof slotd) :end))
              unless (or (packet-slot-transient slotd)
                         (member (packet-slot-name slotd) done))
                collect `(,(packet-slot-name slotd)
                          nil
-                         :type ,(emit-packet-slot-lisp-type slotd))
+                         :type ,(emit-packet-slot-lisp-type slotd optional))
              collect (packet-slot-name slotd) into done)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -172,48 +196,56 @@ Order of Operations:
              `(babel:octets-to-string ,parser)
              parser))))))
 
-(defun emit-packet-parser-slot (parser-name struct-name slotd stream packet locals)
+(defun emit-packet-parser-slot (parser-name slotd stream locals)
   (declare (ignorable parser-name))
-  (let ((struct-slot (fintern "~A-~A" struct-name (packet-slot-name slotd))))
-    (with-gensyms (value)
-      (let ((body `(let ((,value ,(emit-packet-parser-slot-reader slotd stream locals)))
-                     ,@(when (and (packet-slot-transient slotd) (not (packet-slot-bind slotd)))
-                         `((declare (ignorable ,value))))
-                     ,@(when (packet-slot-transform slotd)
-                         `((setf ,value (funcall ,(packet-slot-transform slotd) ,value))))
-                     ,@(when (packet-slot-value slotd)
-                         `((assert (equal ,(packet-slot-value slotd) ,value))))
-                     ,@(when (packet-slot-reduce slotd)
-                         `((setf ,value (funcall ,(packet-slot-reduce slotd) (,struct-slot ,packet) ,value))))
-                     ,@(unless (packet-slot-transient slotd)
-                         `((setf (,struct-slot ,packet) ,value)))
-                     ,@(when (packet-slot-bind slotd)
-                         `((setf ,(packet-slot-name slotd) ,value))))))
-        (when (packet-slot-predicate slotd)
-          (setf body
-                `(when ,(packet-slot-predicate slotd)
-                   ,body)))
-        (when (eq (packet-slot-eof slotd) :end)
-          (setf body
-                `(handler-case
-                     ,body
-                   (end-of-file () (return-from ,parser-name ,packet)))))
-        body))))
+  (with-gensyms (value)
+    (let ((body (emit-packet-parser-slot-reader slotd stream locals)))
+      (when (packet-slot-transform slotd)
+        (setf body `(funcall ,(packet-slot-transform slotd) ,body)))
+      (when (packet-slot-value slotd)
+        (setf body
+              `(let ((,value ,body))
+                 (assert (equal ,(packet-slot-value slotd) ,value))
+                 ,value)))
+      (when (packet-slot-reduce slotd)
+        (setf body `(funcall ,(packet-slot-reduce slotd)
+                             ,(packet-slot-name slotd)
+                             ,body)))
+      (when (packet-slot-bind slotd)
+        (setf body `(setf ,(packet-slot-name slotd) ,body)))
 
-(defun emit-packet-parser (parser-name struct-name constructor-name slot-descriptors)
-  (with-gensyms (stream packet #|local-bind-args|#)
+      (when (packet-slot-predicate slotd)
+        (setf body
+              `(when ,(packet-slot-predicate slotd)
+                 ,body)))
+      (when (eq (packet-slot-eof slotd) :end)
+        (setf body
+              `(handler-case
+                   ,body
+                 (end-of-file () (return-from ,parser-name (values))))))
+      body)))
+
+(defun emit-packet-parser (parser-name constructor-name slot-descriptors)
+  (with-gensyms (stream #|local-bind-args|#)
     `(defun ,parser-name (payload)
-       (block ,parser-name
-         (let ((,stream (flexi-streams:make-in-memory-input-stream payload))
-               (,packet (,constructor-name))
-               ,@(loop for slotd in slot-descriptors
+       (let ((,stream (flexi-streams:make-in-memory-input-stream payload))
+             ,@(loop for slotd in slot-descriptors
+                     unless (member (packet-slot-name slotd) done)
                        when (packet-slot-bind slotd)
-                         collect (packet-slot-name slotd)))
+                         collect (packet-slot-name slotd)
+                     collect (packet-slot-name slotd) into done))
+         (block ,parser-name
            ,@(loop for slotd in slot-descriptors
-                   collect (emit-packet-parser-slot parser-name struct-name slotd stream packet locals)
+                   collect (emit-packet-parser-slot parser-name slotd stream locals)
                    when (packet-slot-bind slotd)
-                     collect (packet-slot-name slotd) into locals)
-           ,packet)))))
+                     collect (packet-slot-name slotd) into locals))
+         (,constructor-name
+          ,@(loop for slotd in slot-descriptors
+                  unless (or (packet-slot-transient slotd)
+                             (member (packet-slot-name slotd) done))
+                    collect (kintern "~A" (packet-slot-name slotd))
+                    and collect (packet-slot-name slotd)
+                  collect (packet-slot-name slotd) into done))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point macro
@@ -227,7 +259,7 @@ Order of Operations:
          (eval-when (:compile-toplevel :load-toplevel :execute)
            ,(emit-packet-struct struct-name slot-descriptors))
          ;; Define a parser to parse a payload of this form and populate the struct
-         ,(emit-packet-parser parser-name struct-name struct-constructor slot-descriptors)
+         ,(emit-packet-parser parser-name struct-constructor slot-descriptors)
          ;; Define a writer to generate a packet payload of this type from the struct
          #| Implement writer here |#
          ;;

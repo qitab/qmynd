@@ -13,30 +13,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Connection Phase Packets (15.2.5)
 (define-packet initial-handshake-v10
-  ((tag :mysql-type (integer 1) :value 10 :transient t)
+  ((tag :mysql-type (integer 1) :value 10 :transient t :bind nil)
    (server-version :mysql-type (string :null))
    (connection-id :mysql-type (integer 4))
    (auth-data :mysql-type (octets 8))
-   (reserved :mysql-type (integer 1) :value 0 :transient t)
-   (capability-flags :mysql-type (integer 2))
+   (reserved :mysql-type (integer 1) :value 0 :transient t :bind nil)
+   (capability-flags :mysql-type (integer 2) :type integer)
 
    ;; This is interesting: the packet may end here, or continue as follows.
    (character-set :mysql-type (integer 1) :eof :end)
    (status-flags :mysql-type (integer 2))
    (capability-flags :mysql-type (integer 2)
                      :transform #'(lambda (x) (ash x 16))
-                     :reduce #'logior
-                     :bind t)
+                     :reduce #'logior)
 
    ;; Strictly speaking, this is 0 unless $mysql-capability-client-plugin-auth, but the field it is
    ;; used for has a length of at least 13. We're being slightly looser than the spec here, but it
    ;; should not be a problem.
    (auth-data-length :mysql-type (integer 1)
                      :transform #'(lambda (x) (max (- x 8) 13))
-                     :bind t
                      :transient t)
 
-   (reserved :mysql-type (integer 10) :transient t) ; reserved for future use.
+   (reserved :mysql-type (integer 10) :transient t :bind nil) ; reserved for future use.
 
    (auth-data :mysql-type (octets auth-data-length)
               :predicate (flagsp $mysql-capability-client-secure-connection capability-flags)
