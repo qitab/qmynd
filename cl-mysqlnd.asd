@@ -46,7 +46,8 @@
              :components ((:file "integers")
                           (:file "strings")
                           (:file "define-packet")
-                          (:file "response-packets")
+                          (:file "response-packets"
+                           :depends-on ("define-packet"))
                           (:file "connection")
                           (:file "authentication")
                           (:file "handshake"

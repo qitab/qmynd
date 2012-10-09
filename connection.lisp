@@ -115,10 +115,10 @@
         (let ((auth-response (generate-auth-response password auth-data auth-plugin)))
           ;; 5) Prepare Initial Response OR Close and Signal
           (send-handshake-response-41 :username username :auth-response auth-response :auth-plugin auth-plugin :database database)
-          (let ((response (parse-response-payload (mysql-read-packet))))
+          (let ((response (parse-response (mysql-read-packet))))
             (assert (typep
                      response
-                     'mysql-response-ok-packet))))))
+                     'response-ok-packet))))))
     (setf (mysql-connection-connected connection) t)
     connection))
 
