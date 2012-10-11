@@ -35,25 +35,13 @@ each Command Phase.
 
 ;;; Utilities for reading/writing 3-byte integers to/from a stream for
 ;;; encoding packet length.
-(defun read-ub24/le (stream)
-  (loop
-    for n fixnum from 0 by 8 below 24
-    as b fixnum = (read-byte stream)
-    sum (ash b n)))
-
-(defun write-ub24/le (i stream)
-  (assert (<= 0 i #xffffff))
-  (write-byte (logand i #xff) stream)
-  (write-byte (logand (ash i -8) #xff) stream)
-  (write-byte (logand (ash i -16) #xff) stream)
-  (values))
 
 ;;; Functions to read and write wire packets.
 (defun read-wire-packet (stream &key (expected-sequence-id 0))
   (let ((payload (make-array 0 :element-type '(unsigned-byte 8) :adjustable t))
         (pos 0))
     (loop
-      as length = (read-ub24/le stream)
+      as length = (read-fixed-length-integer 3 stream)
       as sequence-id = (read-byte stream)
       if (= sequence-id expected-sequence-id)
         do (setf expected-sequence-id (mod (1+ expected-sequence-id) 256))
@@ -71,7 +59,7 @@ each Command Phase.
     for start from 0 by #xffffff
     for max-end from #xffffff by #xffffff
     for end = (min (+ start length) max-end)
-    do (write-ub24/le (- end start) stream)
+    do (write-fixed-length-integer (- end start) 3 stream)
     do (write-byte sequence-id stream)
     do (setf sequence-id (mod (1+ sequence-id) 256))
     do (write-sequence payload stream :start start :end end))

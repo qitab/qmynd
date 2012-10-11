@@ -29,14 +29,12 @@
    :double-float-bits
    :make-single-float
    :make-double-float)
-  ;; mysql parsing
+  ;; MySQL Basic Type I/O
   (:import-from :mysqlnd
-   :parse-fixed-length-integer
-   :parse-length-encoded-integer
-   :parse-fixed-length-string
-   :parse-null-terminated-string
-   :parse-length-encoded-string)
-  ;; mysql encoding
-  (:import-from :mysqlnd
-   :encode-fixed-length-integer
-   :encode-length-encoded-integer))
+   :read-fixed-length-integer
+   :read-length-encoded-integer
+   :read-fixed-length-string
+   :read-null-terminated-string
+   :read-length-encoded-string
+   :write-fixed-length-integer
+   :write-length-encoded-integer))

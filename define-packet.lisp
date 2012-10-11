@@ -160,9 +160,9 @@ Order of Operations:
        (cond
          ((or (typep termination-spec 'integer)
               (member termination-spec locals))
-          `(parse-fixed-length-integer ,stream ,termination-spec))
+          `(read-fixed-length-integer ,termination-spec ,stream))
          ((eq termination-spec :lenenc)
-          `(parse-length-encoded-integer ,stream))
+          `(read-length-encoded-integer ,stream))
          ;; asedeno-TODO: real conditions
          (t (error "unexpected termination type for integer."))))
       ((octets string)
@@ -170,17 +170,17 @@ Order of Operations:
                (cond
                  ((or (typep termination-spec 'integer)
                       (member termination-spec locals))
-                  `(parse-fixed-length-string ,stream ,termination-spec))
+                  `(read-fixed-length-string ,termination-spec ,stream))
                  (t
                   (ecase termination-spec
                     (:eof
-                     `(parse-rest-of-packet-string ,stream))
+                     `(read-rest-of-packet-string ,stream))
                     (:lenenc
-                     `(parse-length-encoded-string ,stream))
+                     `(read-length-encoded-string ,stream))
                     (:null
-                     `(parse-null-terminated-string ,stream))
+                     `(read-null-terminated-string ,stream))
                     (:null-eof
-                     `(parse-null-terminated-string ,stream nil)))))))
+                     `(read-null-terminated-string ,stream nil)))))))
          (if (eq mysql-type 'string)
              `(babel:octets-to-string ,parser)
              parser))))))

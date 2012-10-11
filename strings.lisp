@@ -17,18 +17,19 @@
 ;;; Protocol::FixedLengthString
 ;;; A string with a known length
 
-(defun parse-fixed-length-string (stream length)
+(defun read-fixed-length-string (length stream)
   (let ((octets (make-sequence '(vector (unsigned-byte 8)) length)))
     (read-sequence octets stream)
     octets))
 
-(defun encode-string (stream octets)
-  (write-sequence octets stream))
+;; Just use write-sequence directly
+;; (defun write-string (octets stream)
+;;   (write-sequence octets stream))
 
 ;;; Protocol::NulTerminatedString
 ;;; A string terminated by a NUL byte.
 
-(defun parse-null-terminated-string (stream &optional (eof-error-p t))
+(defun read-null-terminated-string (stream &optional (eof-error-p t))
   (let* ((length 16)
          (octets (make-array length
                              :element-type '(unsigned-byte 8)
@@ -44,9 +45,9 @@
         (adjust-array octets i) and return octets
       do (setf (aref octets i) b))))
 
-(defun encode-null-terminated-string (stream octets)
+(defun write-null-terminated-string (octets stream)
   (assert (notany #'zerop octets))
-  (encode-string stream octets)
+  (write-sequence octets stream)
   (write-byte 0 stream))
 
 ;;; Protocol::VariableLengthString
@@ -56,24 +57,24 @@
 ;;; Protocol::LengthEncodedString
 ;;; A string prefixed by its length as a length-encoded integer
 
-(defun parse-length-encoded-string (stream)
-  (parse-fixed-length-string stream
-                             (parse-length-encoded-integer stream)))
+(defun read-length-encoded-string (stream)
+  (read-fixed-length-string (read-length-encoded-integer stream)
+                            stream))
 
-(defun encode-length-encoded-string (stream octets)
+(defun write-length-encoded-string (octets stream)
   (let ((length (length octets)))
-    (encode-length-encoded-integer stream length)
+    (write-length-encoded-integer length stream)
     (write-sequence octets stream)))
 
 ;;; Protocol::RestOfPacketString
 ;;; Just read the rest of the packet
 
-(defgeneric parse-rest-of-packet-string (stream)
+(defgeneric read-rest-of-packet-string (stream)
   (:documentation
    "Returns the rest of a stream as an array. Only implemented on
    flexi-streams::vector-input-stream."))
 
-(defmethod parse-rest-of-packet-string ((stream flexi-streams::vector-input-stream))
+(defmethod read-rest-of-packet-string ((stream flexi-streams::vector-input-stream))
   ;; We're going to break the flexi-streams abstraction here to get an
   ;; exact length.
   (let* ((length (- (flexi-streams::vector-stream-end stream)

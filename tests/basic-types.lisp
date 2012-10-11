@@ -25,57 +25,57 @@
 
     ;; 1 byte
     (assert-equal
-     (parse-fixed-length-integer s 1)
+     (read-fixed-length-integer 1 s)
      #x0)
     (assert-equal
-     (parse-fixed-length-integer s 1)
+     (read-fixed-length-integer 1 s)
      #x10)
     (assert-equal
-     (parse-fixed-length-integer s 1)
+     (read-fixed-length-integer 1 s)
      #x80)
     (assert-equal
-     (parse-fixed-length-integer s 1)
+     (read-fixed-length-integer 1 s)
      #xff)
     ;; 2 byte
     (assert-equal
-     (parse-fixed-length-integer s 2)
+     (read-fixed-length-integer 2 s)
      #x0)
     (assert-equal
-     (parse-fixed-length-integer s 2)
+     (read-fixed-length-integer 2 s)
      #xfffe)
     ;; 3 byte
     (assert-equal
-     (parse-fixed-length-integer s 3)
+     (read-fixed-length-integer 3 s)
      #x0)
     (assert-equal
-     (parse-fixed-length-integer s 3)
+     (read-fixed-length-integer 3 s)
      #xfffefd)
     ;; 4 byte
     (assert-equal
-     (parse-fixed-length-integer s 4)
+     (read-fixed-length-integer 4 s)
      #x0)
     (assert-equal
-     (parse-fixed-length-integer s 4)
+     (read-fixed-length-integer 4 s)
      #xfffefdfc)
     ;; 6 byte
     (assert-equal
-     (parse-fixed-length-integer s 6)
+     (read-fixed-length-integer 6 s)
      #x0)
     (assert-equal
-     (parse-fixed-length-integer s 6)
+     (read-fixed-length-integer 6 s)
      #xfffefdfcfbfa)
     ;; 8 byte
     (assert-equal
-     (parse-fixed-length-integer s 8)
+     (read-fixed-length-integer 8 s)
      #x0)
     (assert-equal
-     (parse-fixed-length-integer s 8)
+     (read-fixed-length-integer 8 s)
      #xfffefdfcfbfaf9f8)))
 
 (define-test encode-fixed-length-integers ()
   (flet ((encode-test (int len expected)
            (let ((stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-             (encode-fixed-length-integer stream int len)
+             (write-fixed-length-integer int len stream)
              (assert-equal (flexi-streams:get-output-stream-sequence stream)
                            expected :test equalp))))
     ;; 1 byte
@@ -110,34 +110,34 @@
                                                                     #xfe #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
                                                                     )))
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #x0)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #x80)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #xfa)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #xfb)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #xfc)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #xfffe)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #xfffefd)
     (assert-equal
-     (parse-length-encoded-integer s)
+     (read-length-encoded-integer s)
      #xfffefdfcfbfaf9f8)))
 
 (define-test encode-length-encoded-integers ()
   (flet ((encode-test (int expected)
            (let ((stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-             (encode-length-encoded-integer stream int)
+             (write-length-encoded-integer int stream)
              (assert-equal (flexi-streams:get-output-stream-sequence stream)
                            expected :test equalp))))
     (encode-test #x00 #(#x00))
@@ -171,30 +171,30 @@
 
       ;; Pull strings out of the stream.
       (assert-equal
-       (babel:octets-to-string (parse-fixed-length-string s 7))
+       (babel:octets-to-string (read-fixed-length-string 7 s))
        "Testing"
        :test string=)
 
       (assert-equal
-       (babel:octets-to-string (parse-length-encoded-string s))
+       (babel:octets-to-string (read-length-encoded-string s))
        "Hello, world!"
        :test string=)
 
       (assert-equal
-       (babel:octets-to-string (parse-null-terminated-string s))
+       (babel:octets-to-string (read-null-terminated-string s))
        "Hello"
        :test string=)
 
-      (let ((str (babel:octets-to-string (parse-length-encoded-string s))))
+      (let ((str (babel:octets-to-string (read-length-encoded-string s))))
         (assert-equal (length str) 251)
         (assert-true (every #'(lambda (x) (char= x #\A)) str)))
 
-      (let ((str (babel:octets-to-string (parse-null-terminated-string s))))
+      (let ((str (babel:octets-to-string (read-null-terminated-string s))))
         (assert-equal (length str) 256)
         (assert-true (every #'(lambda (x) (char= x #\A)) str)))
 
       (assert-equal
-       (babel:octets-to-string (parse-null-terminated-string s))
+       (babel:octets-to-string (read-null-terminated-string s))
        "Goodbye"
        :test string=))))
 

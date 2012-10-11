@@ -38,14 +38,15 @@
               :serial nil
               :pathname #p""
               :depends-on ("common")
-              :components ((:file "wire-packet")))
+              :components ((:file "integers")
+                           (:file "strings")
+                           (:file "wire-packet"
+                            :depends-on ("integers"))))
      (module "mysql-protocol"
              :serial nil
              :pathname #p""
              :depends-on ("common" "wire-protocol")
-             :components ((:file "integers")
-                          (:file "strings")
-                          (:file "define-packet")
+             :components ((:file "define-packet")
                           (:file "response-packets"
                            :depends-on ("define-packet"))
                           (:file "connection")

@@ -123,27 +123,27 @@ endif
 (defun send-handshake-response-41 (&key username auth-plugin auth-response database)
   (declare (ignorable username auth-response database))
   (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (encode-fixed-length-integer s (mysql-connection-capabilities *mysql-connection*) 4)
-    (encode-fixed-length-integer s #x1000000 4)
+    (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
+    (write-fixed-length-integer #x1000000 4 s)
     (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
-    (encode-fixed-length-integer s 0 23) ; 23 reserved bytes
-    (encode-null-terminated-string s (babel:string-to-octets
-                                      username
-                                      :encoding (mysql-connection-character-set *mysql-connection*)))
+    (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
+    (write-null-terminated-string (babel:string-to-octets
+                                   username
+                                   :encoding (mysql-connection-character-set *mysql-connection*)) s)
     (cond
       ((mysql-has-capability $mysql-capability-client-plugin-auth-lenec-client-data)
-       (encode-length-encoded-integer s (length auth-response))
+       (write-length-encoded-integer (length auth-response) s)
        (write-sequence auth-response s))
       ((mysql-has-capability $mysql-capability-client-secure-connection)
        (write-byte (length auth-response) s)
        (write-sequence auth-response s))
       (T
-       (encode-null-terminated-string s auth-response)))
+       (write-null-terminated-string auth-response s)))
     ;; If the bit is still set at this point, then we have a database schema to specify.
     (when (mysql-has-capability $mysql-capability-client-connect-with-db)
-      (encode-null-terminated-string s database))
+      (write-null-terminated-string database s))
     (when (mysql-has-capability $mysql-capability-client-plugin-auth)
-      (encode-null-terminated-string s auth-plugin))
+      (write-null-terminated-string auth-plugin s))
     #+mysql-client-connect-attributes
     (when (mysql-has-capability $mysql-capability-client-connect-attrs)
       ;; asedeno-TODO: When this is implemented, what sort of
