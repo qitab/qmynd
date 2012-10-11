@@ -22,38 +22,35 @@
   :depends-on (:babel :flexi-streams :ironclad :usocket)
   :serial nil
   :components
-    ((:module "packages"
-              :serial nil
-              :pathname #p""
-              :components ((:file "pkgdcl")))
-     (:module "common"
-              :serial nil
-              :pathname #p""
-              :depends-on ("packages")
-              :components ((:file "constants")
-                           (:file "utilities")
-                           (:file "misc"
-                                  :depends-on ("constants"))))
-     (:module "wire-protocol"
-              :serial nil
-              :pathname #p""
-              :depends-on ("common")
-              :components ((:file "integers")
-                           (:file "strings")
-                           (:file "wire-packet"
-                            :depends-on ("integers"))))
-     (module "mysql-protocol"
-             :serial nil
-             :pathname #p""
-             :depends-on ("common" "wire-protocol")
-             :components ((:file "define-packet")
-                          (:file "response-packets"
-                           :depends-on ("define-packet"))
-                          (:file "connection")
-                          (:file "authentication")
-                          (:file "handshake"
-                           :depends-on ("define-packet"
-                                        "connection"
-                                        "authentication"))))))
+    ((:module "src"
+      :serial nil
+      :components
+      ((:file "pkgdcl")
+       (:module "common"
+        :serial nil
+        :depends-on ("pkgdcl")
+        :components ((:file "constants")
+                     (:file "utilities")
+                     (:file "misc"
+                      :depends-on ("constants"))))
+       (:module "wire-protocol"
+        :serial nil
+        :depends-on ("common")
+        :components ((:file "integers")
+                     (:file "strings")
+                     (:file "wire-packet"
+                      :depends-on ("integers"))))
+       (module "mysql-protocol"
+        :serial nil
+        :depends-on ("common" "wire-protocol")
+        :components ((:file "define-packet")
+                     (:file "response-packets"
+                      :depends-on ("define-packet"))
+                     (:file "connection")
+                     (:file "authentication")
+                     (:file "handshake"
+                      :depends-on ("define-packet"
+                                   "connection"
+                                   "authentication"))))))))
 
 (pushnew :cl-mysqlnd *features*)
