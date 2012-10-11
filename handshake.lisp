@@ -44,7 +44,7 @@
    (auth-plugin :mysql-type (string :null-eof)
                 :predicate (flagsp $mysql-capability-client-plugin-auth capability-flags))))
 
-(defun process-initial-handshake-v10-payload (payload)
+(defun process-initial-handshake-v10 (payload)
   ;; 1) Parse the payload
   (let ((packet (parse-initial-handshake-v10 payload)))
     ;; 2) Populate *mysql-connection* slots with data from initial handshake
@@ -154,4 +154,4 @@ endif
 
 (defun process-initial-handshake-payload (payload)
   (ecase (aref payload 0)
-    (10 (process-initial-handshake-v10-payload payload))))
+    (10 (process-initial-handshake-v10 payload))))
