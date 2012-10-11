@@ -15,9 +15,9 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 
-(defparameter $optimize-default     '(optimize (speed 1) (safety 3) (debug 3))
+(defparameter +optimize-default+     '(optimize (speed 1) (safety 3) (debug 3))
   "Compiler optimization settings for safe, debuggable code.")
-(defparameter $optimize-fast-unsafe '(optimize (speed 3) (safety 0) (debug 0))
+(defparameter +optimize-fast-unsafe+ '(optimize (speed 3) (safety 0) (debug 0))
   "Compiler optimization settings for fast, unsafe, hard-to-debug code.")
 
 )       ;eval-when

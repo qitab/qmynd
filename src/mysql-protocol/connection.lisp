@@ -31,13 +31,13 @@
                     :accessor mysql-connection-connection-id)
    (capabilities    :type integer
                     :accessor mysql-connection-capabilities
-                    :initform $mysql-capabilities-supported)
+                    :initform +mysql-capabilities-supported+)
    (character-set   :type keyword
                     :accessor mysql-connection-character-set
                     :initform :utf-8)   ;:iso-8859-1)
    (mysql-cs-coll   :type integer
                     :accessor mysql-connection-cs-coll
-                    :initform $mysql-cs-coll-utf8-general-ci)
+                    :initform +mysql-cs-coll-utf8-general-ci+)
    (status-flags    :type (or integer null)
                     :accessor mysql-connection-status-flags)
    (sequence-id     :type integer
@@ -109,7 +109,7 @@
         (unless database
           (setf (mysql-connection-capabilities connection)
                 (logxor (mysql-connection-capabilities connection)
-                        $mysql-capability-client-connect-with-db)))
+                        +mysql-capability-client-connect-with-db+)))
 
         ;; 4) Prepare Auth Response
         (let ((auth-response (generate-auth-response password auth-data auth-plugin)))
@@ -124,6 +124,6 @@
 
 (defmethod mysql-disconnect ((c mysql-connection))
   (when (mysql-connection-connected c)
-    ;; asedeno-TODO: send a $mysql-command-quit here
+    ;; asedeno-TODO: send a +mysql-command-quit+ here
     (usocket:socket-close (mysql-connection-socket c))
     (setf (mysql-connection-connected c) nil)))

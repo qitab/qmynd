@@ -27,7 +27,7 @@
                      :transform #'(lambda (x) (ash x 16))
                      :reduce #'logior)
 
-   ;; Strictly speaking, this is 0 unless $mysql-capability-client-plugin-auth, but the field it is
+   ;; Strictly speaking, this is 0 unless +mysql-capability-client-plugin-auth+, but the field it is
    ;; used for has a length of at least 13. We're being slightly looser than the spec here, but it
    ;; should not be a problem.
    (auth-data-length :mysql-type (integer 1)
@@ -37,12 +37,12 @@
    (reserved :mysql-type (integer 10) :transient t :bind nil) ; reserved for future use.
 
    (auth-data :mysql-type (octets auth-data-length)
-              :predicate (flagsp $mysql-capability-client-secure-connection capability-flags)
+              :predicate (flagsp +mysql-capability-client-secure-connection+ capability-flags)
               ;; can we simplify the transform?
               :reduce #'(lambda (x y) (concatenate'(vector (unsigned-byte 8)) x y)))
 
    (auth-plugin :mysql-type (string :null-eof)
-                :predicate (flagsp $mysql-capability-client-plugin-auth capability-flags))))
+                :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))))
 
 (defun process-initial-handshake-v10 (payload)
   ;; 1) Parse the payload
@@ -68,7 +68,7 @@
           (mysql-connection-status-flags *mysql-connection*)
           (initial-handshake-v10-packet-status-flags packet))
     ;; asedeno-TODO: Replace with an appropriate condition
-    (assert (mysql-has-capability $mysql-capabilities-required))
+    (assert (mysql-has-capability +mysql-capabilities-required+))
     ;; asedeno-TODO: add optional logging/debugging functionality
     #+nil
     (format t "Auth Data: ~A~%~
@@ -79,10 +79,10 @@
             auth-data
             (babel:octets-to-string auth-plugin-name :encoding (mysql-connection-character-set *mysql-connection*))
             capability-flags
-            $mysql-capabilities-supported
+            +mysql-capabilities-supported+
             (mysql-connection-capabilities *mysql-connection*))
     (values (initial-handshake-v10-packet-auth-data packet)
-            (when (mysql-has-capability $mysql-capability-client-plugin-auth)
+            (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
               ;; If we don't support pluggable-auth (and we don't
               ;; yet), don't bother returnin the plugin name.
               (initial-handshake-v10-packet-auth-plugin packet)))))
@@ -97,22 +97,22 @@ Protocol Handshake Response Packet (v41)
 1 byte         character set
 string[23]     reserved (all [0])
 string[NUL]    username
-if $mysql-capability-client-plugin-auth-lenenc-client-data
+if +mysql-capability-client-plugin-auth-lenenc-client-data+
   lenenc-int   length of auth-response
   string[n]    auth-response
-elif $mysql-capability-client-secure-connection
+elif +mysql-capability-client-secure-connection+
   1 byte       length of auth-response
   string[n]    auth-response
 else
   string[NUL]  auth-response
 endif
-if $mysql-capability-client-connect-with-db
+if +mysql-capability-client-connect-with-db+
   string[NUL]  database
 endif
-if $mysql-capability-client-plugin-auth
+if +mysql-capability-client-plugin-auth+
   string[NUL]  auth plugin name
 endif
-if $mysql-capability-client-connect-attrs
+if +mysql-capability-client-connect-attrs+
   lenenc-int   length of all key-values
   ( lenenc-str   key
     lenenc-str   value
@@ -131,21 +131,21 @@ endif
                                    username
                                    :encoding (mysql-connection-character-set *mysql-connection*)) s)
     (cond
-      ((mysql-has-capability $mysql-capability-client-plugin-auth-lenec-client-data)
+      ((mysql-has-capability +mysql-capability-client-plugin-auth-lenec-client-data+)
        (write-length-encoded-integer (length auth-response) s)
        (write-sequence auth-response s))
-      ((mysql-has-capability $mysql-capability-client-secure-connection)
+      ((mysql-has-capability +mysql-capability-client-secure-connection+)
        (write-byte (length auth-response) s)
        (write-sequence auth-response s))
       (T
        (write-null-terminated-string auth-response s)))
     ;; If the bit is still set at this point, then we have a database schema to specify.
-    (when (mysql-has-capability $mysql-capability-client-connect-with-db)
+    (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
       (write-null-terminated-string database s))
-    (when (mysql-has-capability $mysql-capability-client-plugin-auth)
+    (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
       (write-null-terminated-string auth-plugin s))
     #+mysql-client-connect-attributes
-    (when (mysql-has-capability $mysql-capability-client-connect-attrs)
+    (when (mysql-has-capability +mysql-capability-client-connect-attrs+)
       ;; asedeno-TODO: When this is implemented, what sort of
       ;; attributes do we want to send? Are they hard-coded? Supplied
       ;; by the user? Both? Stored in the connection object?
