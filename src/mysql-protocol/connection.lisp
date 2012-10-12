@@ -15,8 +15,12 @@
   and must bind *mysql-connection* to that connection for internal
   function use.")
 
-(defmacro with-mysql-connection ((c) &body body)
+(defmacro bind-mysql-connection ((c) &body body)
   `(let ((*mysql-connection* ,c))
+     ,@body))
+
+(defmacro with-mysql-connection ((c) &body body)
+  `(let ((,c *mysql-connection*))
      ,@body))
 
 (defclass mysql-connection ()
@@ -99,7 +103,7 @@
                                     :socket socket))
          ;; 2) Read a wire packet
          (initial-handshake-payload (mysql-connection-read-packet connection)))
-    (with-mysql-connection (connection)
+    (bind-mysql-connection (connection)
       ;; 3) Process Initial Handshake
       (multiple-value-bind (auth-data auth-plugin)
           (process-initial-handshake-payload initial-handshake-payload)
