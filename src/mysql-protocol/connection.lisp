@@ -87,6 +87,9 @@
     (setf (mysql-connection-sequence-id c) seq-id)
     payload))
 
+(defmethod mysql-command-init ((c mysql-connection))
+  (setf (mysql-connection-sequence-id c) 0))
+
 (defun mysql-write-packet (payload)
   (mysql-connection-write-packet *mysql-connection* payload))
 
