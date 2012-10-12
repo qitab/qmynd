@@ -45,6 +45,5 @@
 
 (defmethod mysql-disconnect ((c mysql-connection))
   (when (mysql-connection-connected c)
-    ;; asedeno-TODO: send a +mysql-command-quit+ here
-    (usocket:socket-close (mysql-connection-socket c))
-    (setf (mysql-connection-connected c) nil)))
+    (bind-mysql-connection (c)
+      (send-command-quit))))

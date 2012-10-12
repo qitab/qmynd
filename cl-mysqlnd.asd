@@ -50,7 +50,11 @@
                      (:file "handshake"
                       :depends-on ("define-packet"
                                    "connection"
-                                   "authentication"))))
+                                   "authentication"))
+                     (:module "text-protocol"
+                      :serial nil
+                      :depends-on ("connection")
+                      :components ((:file "command-quit")))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
