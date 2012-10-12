@@ -50,6 +50,10 @@
                      (:file "handshake"
                       :depends-on ("define-packet"
                                    "connection"
-                                   "authentication"))))))))
+                                   "authentication"))))
+       (module "api"
+        :serial nil
+        :depends-on ("mysql-protocol")
+        :components ((:file "connection")))))))
 
 (pushnew :cl-mysqlnd *features*)
