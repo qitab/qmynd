@@ -139,7 +139,7 @@ endif
        (write-null-terminated-string auth-response s)))
     ;; If the bit is still set at this point, then we have a database schema to specify.
     (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
-      (write-null-terminated-string database s))
+      (write-null-terminated-string (babel:string-to-octets database) s))
     (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
       (write-null-terminated-string auth-plugin s))
     #+mysql-client-connect-attributes
