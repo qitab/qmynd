@@ -54,7 +54,8 @@
                      (:module "text-protocol"
                       :serial nil
                       :depends-on ("connection")
-                      :components ((:file "command-quit")))))
+                      :components ((:file "command-quit")
+                                   (:file "command-initialize-database")))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
