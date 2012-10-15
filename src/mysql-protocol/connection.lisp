@@ -46,7 +46,10 @@
                     :accessor mysql-connection-status-flags)
    (sequence-id     :type integer
                     :initform 0
-                    :accessor mysql-connection-sequence-id)))
+                    :accessor mysql-connection-sequence-id)
+   (default-schema  :type (or string null)
+                    :initarg :default-schema
+                    :accessor mysql-connection-default-schema)))
 
 (defmethod mysql-connection-stream ((c mysql-connection))
   (usocket:socket-stream (mysql-connection-socket c)))
