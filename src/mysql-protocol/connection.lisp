@@ -16,7 +16,8 @@
   function use.")
 
 (defmacro bind-mysql-connection ((c) &body body)
-  `(let ((*mysql-connection* ,c))
+  `(let ((*mysql-connection* ,c)
+         (babel::*default-character-encoding* (mysql-connection-character-set ,c)))
      ,@body))
 
 (defmacro with-mysql-connection ((c) &body body)

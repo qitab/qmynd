@@ -40,7 +40,7 @@
 (defun mysql-native-password-auth-response (password auth-data)
   ;; (xor (sha1 password)
   ;;      (sha1 (concatenate auth-data (sha1 (sha1 password)))))
-  (let* ((password-octets (babel:string-to-octets password :encoding (mysql-connection-character-set *mysql-connection*)))
+  (let* ((password-octets (babel:string-to-octets password))
          (hash-stage-1 (ironclad:digest-sequence :sha1 password-octets))
          (hash-stage-2 (ironclad:digest-sequence :sha1 hash-stage-1)))
     (map-into hash-stage-1 #'logxor
@@ -55,7 +55,7 @@
 
 (defun mysql-clear-password-auth-response (password)
   "This function implements the MySQL clear-text password authentication mechanism."
-  (babel:string-to-octets password :encoding (mysql-connection-character-set *mysql-connection*)))
+  (babel:string-to-octets password))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; authentication_windows_client (15.3.5)

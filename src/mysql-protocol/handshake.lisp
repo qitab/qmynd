@@ -77,7 +77,7 @@
                Client Capabilities: ~8,'0X~%~
                Combined Capabiltiies ~8,'0X~%~%"
             auth-data
-            (babel:octets-to-string auth-plugin-name :encoding (mysql-connection-character-set *mysql-connection*))
+            (babel:octets-to-string auth-plugin-name)
             capability-flags
             +mysql-capabilities-supported+
             (mysql-connection-capabilities *mysql-connection*))
@@ -127,9 +127,7 @@ endif
     (write-fixed-length-integer #x1000000 4 s)
     (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
     (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
-    (write-null-terminated-string (babel:string-to-octets
-                                   username
-                                   :encoding (mysql-connection-character-set *mysql-connection*)) s)
+    (write-null-terminated-string (babel:string-to-octets username) s)
     (cond
       ((mysql-has-capability +mysql-capability-client-plugin-auth-lenec-client-data+)
        (write-length-encoded-integer (length auth-response) s)
