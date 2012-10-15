@@ -9,3 +9,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package :qmynd-impl)
+
+(defun have-ssl ()
+  (find-package "CL+SSL"))

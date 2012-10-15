@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -88,11 +88,24 @@
             auth-data
             (babel:octets-to-string auth-plugin-name)
             capability-flags
-            +mysql-capabilities-supported+
+            (mysql-capabilities-supported)
             (mysql-connection-capabilities *mysql-connection*))
     (values)))
 
-;;; asedeno-TODO: Write SSL upgrade path
+(defun send-ssl-request-packet ()
+  "Sends a MySQL SSL Connection Request Packet and begins SSL Negotiation."
+  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
+    (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
+    (write-fixed-length-integer #x1000000 4 s)
+    (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
+    (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
+    (mysql-write-packet (flexi-streams:get-output-stream-sequence s))
+    (setf (mysql-connection-stream *mysql-connection*)
+          ;; We may not have CL+SSL, in which case we'll never get to this function,
+          ;; but we still want it to compile.
+          (uiop/package:symbol-call
+           :cl+ssl :make-ssl-client-stream
+           (mysql-connection-stream *mysql-connection*)))))
 
 ;; (define-packet handshake-response-v41
 ;;   ((capability-flags :mysql-type (integer 4))

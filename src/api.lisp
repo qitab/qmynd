@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -27,12 +27,13 @@
       ;; Process Initial Handshake
       (process-initial-handshake-payload initial-handshake-payload)
 
-      ;; asedeno-TODO: Negotiate SSL
-
       (unless database
         (setf (mysql-connection-capabilities connection)
               (logandc2 (mysql-connection-capabilities connection)
                         +mysql-capability-client-connect-with-db+)))
+
+      (when (mysql-has-capability +mysql-capability-client-ssl+)
+        (send-ssl-request-packet))
 
       ;; Prepare Auth Response
       (handler-case

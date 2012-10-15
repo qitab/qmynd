@@ -115,19 +115,6 @@
    +mysql-capability-client-secure-connection+)
   "The minimum required capabilities for this client to interop with a MySQL server.")
 
-(defconstant +mysql-capabilities-supported+
-  (logior
-   +mysql-capabilities-required+
-   +mysql-capability-client-connect-with-db+
-   ;;+mysql-capability-client-no-schema+
-   ;;+mysql-capability-client-ignore-space+
-   ;;+mysql-capability-client-multi-statements+
-   ;;+mysql-capability-client-multi-results+
-   ;;+mysql-capability-client-ps-multi-results+
-   ;;+mysql-capability-client-connect-attrs+
-   )
-  "The full set of capabilities supported by this client library.")
-
 ;; Status flags (15.1.3.1)
 (defconstant +mysql-server-status-in-transaction+ #x1)
 (defconstant +mysql-server-status-autocommit+ #x2)
@@ -210,3 +197,19 @@
 (defconstant +hours-per-day+ 24)
 
 ) ;eval-when
+
+(defun mysql-capabilities-supported ()
+  "Returns the full set of capabilities supported by this client library."
+  (logior
+   +mysql-capabilities-required+
+   +mysql-capability-client-connect-with-db+
+   (if (have-ssl)
+       +mysql-capability-client-ssl+
+       0)
+   ;;+mysql-capability-client-no-schema+
+   ;;+mysql-capability-client-ignore-space+
+   ;;+mysql-capability-client-multi-statements+
+   ;;+mysql-capability-client-multi-results+
+   ;;+mysql-capability-client-ps-multi-results+
+   ;;+mysql-capability-client-connect-attrs+
+   ))

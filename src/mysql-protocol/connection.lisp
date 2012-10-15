@@ -34,7 +34,7 @@
                     :accessor mysql-connection-connection-id)
    (capabilities    :type integer
                     :accessor mysql-connection-capabilities
-                    :initform +mysql-capabilities-supported+)
+                    :initform (mysql-capabilities-supported))
    (character-set   :type keyword
                     :accessor mysql-connection-character-set
                     :initform :utf-8)   ;:iso-8859-1)

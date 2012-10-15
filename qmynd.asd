@@ -10,7 +10,6 @@
 
 (in-package "CL-USER")
 
-
 (asdf:defsystem :qmynd
   :name "MySQL Native Driver"
   :author "Alejandro Sedeño"
@@ -20,6 +19,7 @@
   :description      "MySQL Native Driver"
   :long-description "MySQL Native Driver for Common Lisp"
   :depends-on (:babel :flexi-streams :ironclad :list-of :usocket)
+  :weakly-depends-on (:cl+ssl)
   :around-compile "asdf-finalizers:check-finalizers-around-compile"
   :serial nil
   :components
