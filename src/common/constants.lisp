@@ -52,6 +52,13 @@
 (defconstant +mysql-command-register-slave+ #x15)
 (defconstant +mysql-command-binary-log-dump-gtid+ #x1e)
 
+
+;; Response types
+(defconstant +mysql-response-ok+ #x00)
+(defconstant +mysql-response-end-of-file+ #xfe)
+(defconstant +mysql-response-error+ #xff)
+
+
 ;; Shutdown types (15.6.9)
 ;; NB: Only +mysql-shutdown-wait-all-buffers+ is used
 (defconstant +mysql-shutdown-default+ #x00)
