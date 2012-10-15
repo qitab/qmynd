@@ -2,6 +2,7 @@ Features:
 • SSL
 • Pluggable Authentication
 • Connect timeout
+• Deal with LOCAL_INFILE requests
 
 Cleanup:
 • Add conditions.
