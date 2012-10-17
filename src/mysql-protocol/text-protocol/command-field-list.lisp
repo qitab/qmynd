@@ -1,0 +1,50 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;                                                                  ;;;
+;;; Free Software published under an MIT-like license. See LICENSE   ;;;
+;;;                                                                  ;;;
+;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;;                                                                  ;;;
+;;; Original author: Alejandro Sedeño                                ;;;
+;;;                                                                  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(in-package :mysqlnd)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 15.6.5 command-field-list
+
+;; We don't actually receive this packet as a client, but it looks like this.
+
+;; (define-packet command-field-list
+;;   ((tag :mysql-type (integer 1)
+;;         :value +mysql-command-field-list+
+;;         :transient t :bind nil)
+;;    (table :mysql-type (string :null))
+;;    (field-wildcard :mysql-type (string :eof))))
+
+(defun send-command-field-list (table &optional field-wildcard)
+  (with-mysql-connection (c)
+    (mysql-command-init c +mysql-command-field-list+)
+    (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
+      (write-byte +mysql-command-field-list+ s)
+      (write-null-terminated-string (babel:string-to-octets table) s)
+      (when field-wildcard
+        (write-sequence (babel:string-to-octets field-wildcard) s))
+      (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+    (let* ((initial-payload (mysql-read-packet))
+           (tag (aref initial-payload 0)))
+      (case tag
+        (#.+mysql-response-error+
+         (parse-response initial-payload))
+        (otherwise
+         (coerce
+          (loop
+            for payload = initial-payload then (mysql-read-packet)
+            until (and (= (aref payload 0) +mysql-response-end-of-file+)
+                       (< (length payload) 9))
+            collect (parse-column-definition-v41 payload)
+            ;; asedeno-TODO: do something better here; probably signal for
+            ;; ERR in parse-response.
+            finally (assert (typep (parse-response payload)
+                                   'response-end-of-file-packet)))
+          'vector))))))

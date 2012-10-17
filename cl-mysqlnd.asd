@@ -58,6 +58,8 @@
                                    (:file "command-initialize-database")
                                    (:file "response-result-set")
                                    (:file "command-query"
+                                    :depends-on ("response-result-set"))
+                                   (:file "command-field-list"
                                     :depends-on ("response-result-set"))))))
        (module "api"
         :serial nil
