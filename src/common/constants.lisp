@@ -114,7 +114,7 @@
 (defconstant +mysql-capabilities-supported+
   (logior
    +mysql-capabilities-required+
-   ;;+mysql-capability-client-connect-with-db+
+   +mysql-capability-client-connect-with-db+
    ;;+mysql-capability-client-no-schema+
    ;;+mysql-capability-client-ignore-space+
    ;;+mysql-capability-client-transactions+
