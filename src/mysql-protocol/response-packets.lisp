@@ -45,10 +45,12 @@
                    :predicate (mysql-has-capability +mysql-capability-client-protocol-41+))))
 
 (defun parse-response (payload)
-  (ecase (aref payload 0)
-    (+mysql-response-ok+
-     (parse-response-ok payload))
-    (+mysql-response-error+
-     (parse-response-error payload))
-    (+mysql-response-end-of-file+
-     (parse-response-end-of-file payload))))
+  (let ((tag (aref payload 0)))
+    (cond
+      ((= tag +mysql-response-ok+)
+       (parse-response-ok payload))
+      ((= tag +mysql-response-error+)
+       ;; asedeno-TODO: signal a condition with information from the error.
+       (parse-response-error payload))
+      ((= tag +mysql-response-end-of-file+)
+       (parse-response-end-of-file payload)))))
