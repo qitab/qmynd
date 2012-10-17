@@ -21,9 +21,9 @@
 
 ;; Returns OK or ERR packet
 
-(defun send-command-initialize-databse (schema-name)
+(defun send-command-initialize-database (schema-name)
   (with-mysql-connection (c)
-    (mysql-command-init c)
+    (mysql-command-init c +mysql-command-initialize-database+)
     (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
       (write-byte +mysql-command-initialize-database+ s)
       (write-sequence (babel:string-to-octets schema-name) s)

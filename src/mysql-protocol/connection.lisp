@@ -50,7 +50,10 @@
                     :accessor mysql-connection-sequence-id)
    (default-schema  :type (or string null)
                     :initarg :default-schema
-                    :accessor mysql-connection-default-schema)))
+                    :accessor mysql-connection-default-schema)
+   (current-command :type (or integer null)
+                    :initform nil
+                    :accessor mysql-connection-current-command)))
 
 (defmethod mysql-connection-stream ((c mysql-connection))
   (usocket:socket-stream (mysql-connection-socket c)))
@@ -91,8 +94,12 @@
     (setf (mysql-connection-sequence-id c) seq-id)
     payload))
 
-(defmethod mysql-command-init ((c mysql-connection))
-  (setf (mysql-connection-sequence-id c) 0))
+(defmethod mysql-command-init ((c mysql-connection) command)
+  (setf (mysql-connection-sequence-id c) 0
+        (mysql-connection-current-command c) command))
+
+(defun mysql-current-command-p (command)
+  (eq (mysql-connection-current-command *mysql-connection*) command))
 
 (defun mysql-write-packet (payload)
   (mysql-connection-write-packet *mysql-connection* payload))

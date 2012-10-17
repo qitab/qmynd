@@ -24,7 +24,7 @@
 
 (defun send-command-quit ()
   (with-mysql-connection (c)
-    (mysql-command-init c)
+    (mysql-command-init c +mysql-command-quit+)
     (mysql-write-packet (vector +mysql-command-quit+))
     ;; Don't bother listening for the OK packet, just close the connection.
     (usocket:socket-close (mysql-connection-socket c))
