@@ -33,11 +33,13 @@
 
 ;;; 15.1.1.1.2. length encoded integer
 
-(defun read-length-encoded-integer (stream)
+(defun read-length-encoded-integer (stream &key null-ok)
   (let ((n (read-byte stream)))
     (cond
       ((< n #xfb) n)
       ;; #xfb here is undefined, though it may mean NULL in certain contexts.
+      ((and null-ok (= n #xfb))
+       nil)
       ((= n #xfc)
        (read-fixed-length-integer 2 stream))
       ((= n #xfd)
@@ -110,9 +112,10 @@
 ;;; Protocol::LengthEncodedString
 ;;; A string prefixed by its length as a length-encoded integer
 
-(defun read-length-encoded-string (stream)
-  (read-fixed-length-string (read-length-encoded-integer stream)
-                            stream))
+(defun read-length-encoded-string (stream &key null-ok)
+  (let ((length (read-length-encoded-integer stream :null-ok null-ok)))
+    (when length
+      (read-fixed-length-string length stream))))
 
 (defun write-length-encoded-string (octets stream)
   (let ((length (length octets)))
