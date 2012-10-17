@@ -53,9 +53,12 @@
                                    "authentication"))
                      (:module "text-protocol"
                       :serial nil
-                      :depends-on ("connection")
+                      :depends-on ("connection" "define-packet")
                       :components ((:file "command-quit")
-                                   (:file "command-initialize-database")))))
+                                   (:file "command-initialize-database")
+                                   (:file "response-result-set")
+                                   (:file "command-query"
+                                    :depends-on ("response-result-set"))))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
