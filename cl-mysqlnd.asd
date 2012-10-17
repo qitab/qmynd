@@ -61,6 +61,7 @@
                                     :depends-on ("response-result-set"))
                                    (:file "command-field-list"
                                     :depends-on ("response-result-set"))
+                                   (:file "command-statistics")
                                    (:file "command-ping")))))
        (module "api"
         :serial nil
