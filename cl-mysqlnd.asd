@@ -60,7 +60,8 @@
                                    (:file "command-query"
                                     :depends-on ("response-result-set"))
                                    (:file "command-field-list"
-                                    :depends-on ("response-result-set"))))))
+                                    :depends-on ("response-result-set"))
+                                   (:file "command-ping")))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
