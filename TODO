@@ -3,6 +3,7 @@ Features:
 • Pluggable Authentication
 • Connect timeout
 • Deal with LOCAL_INFILE requests
+• Multi-ResultSets
 
 Cleanup:
 • Add conditions.
