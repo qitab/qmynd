@@ -34,6 +34,7 @@ parser-type-spec ::= (integer integer-size) |
 integer-size ::= byte-count | :lenenc
  byte-count - read this many bytes
  :lenenc - read a length-encoded integer
+ :lenenc-null-ok - read a length-encoded integer, allowing integer to be NULL.
 
 string-type ::= octets | string
  octets - '(vector (unsigned-byte 8))
@@ -44,6 +45,7 @@ string-termination-spec ::= integer | :eof | :lenenc | :null | :null-eof
  integer - a specific length.
  :eof - read until the end of the packet.
  :lenenc - read a length-encoded integer first, then use that as the length.
+ :lenenc-null-ok - read a length-encoded integer first; if not null then use that as the length.
  :null - read until a null byte is encountered.
  :null-eof - read until a null byte is encountered or we hit the end of the packet.
              Used to deal with a bug in some forms of the initial handshake packet.
@@ -134,7 +136,9 @@ Order of Operations:
                     (t 'integer)))
                  (octets '(vector (unsigned-byte 8)))
                  (string 'string))))
-         (if (or optional (packet-slot-predicate slotd))
+         (if (or optional
+                 (packet-slot-predicate slotd)
+                 (eq termination-spec :lenenc-or-null))
              `(or ,base-type null)
              base-type))))))
 
@@ -163,6 +167,8 @@ Order of Operations:
           `(read-fixed-length-integer ,termination-spec ,stream))
          ((eq termination-spec :lenenc)
           `(read-length-encoded-integer ,stream))
+         ((eq termination-spec :lenenc-null-ok)
+          `(read-length-encoded-integer ,stream :null-ok t))
          ;; asedeno-TODO: real conditions
          (t (error "unexpected termination type for integer."))))
       ((octets string)
@@ -177,12 +183,17 @@ Order of Operations:
                      `(read-rest-of-packet-string ,stream))
                     (:lenenc
                      `(read-length-encoded-string ,stream))
+                    (:lenenc-null-ok
+                     `(read-length-encoded-string ,stream :null-ok t))
                     (:null
                      `(read-null-terminated-string ,stream))
                     (:null-eof
                      `(read-null-terminated-string ,stream nil)))))))
          (if (eq mysql-type 'string)
-             `(babel:octets-to-string ,parser)
+             (with-gensyms (octets)
+               `(let ((,octets ,parser))
+                  (when ,octets
+                    (babel:octets-to-string ,octets))))
              parser))))))
 
 (defun emit-packet-parser-slot (parser-name slotd stream locals)

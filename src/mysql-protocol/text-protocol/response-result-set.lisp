@@ -59,7 +59,7 @@ If EOF packet status has +mysql-server-more-results-exist+ set, another ResultSe
            :value 0
            :transient t
            :bind nil)
-   (default-value :mysql-type (string :lenenc)
+   (default-value :mysql-type (string :lenenc-null-ok)
                   :predicate (mysql-current-command-p +mysql-command-field-list+))))
 
 (defmethod column-definition-type ((column-definition column-definition-v41-packet))
