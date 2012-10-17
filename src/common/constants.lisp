@@ -19,8 +19,8 @@
 (defconstant +mysql-command-initialize-database+ #x02)
 (defconstant +mysql-command-query+ #x03)
 (defconstant +mysql-command-field-list+ #x04)
-(defconstant +mysql-command-create-database+ #x05)
-(defconstant +mysql-command-drop-database+ #x06)
+(defconstant +mysql-command-create-database+ #x05) ; deprecated
+(defconstant +mysql-command-drop-database+ #x06) ; deprecated
 (defconstant +mysql-command-refresh+ #x07)
 (defconstant +mysql-command-shutdown+ #x08)
 (defconstant +mysql-command-statistics+ #x09)
@@ -88,7 +88,7 @@
 (defconstant +mysql-capability-client-ssl+ #x800)
 
 (defconstant +mysql-capability-client-ignore-sigpipe+ #x1000)
-(defconstant +mysql-capability-client-transactions+ #x2000)
+(defconstant +mysql-capability-client-transactions+ #x2000)      ;; Always set by server since v4.0
 (defconstant +mysql-capability-client-reserved+ #x4000)          ;; CLIENT_PROTOCOL_41 in v4.1.0; deprecated v4.1.1
 (defconstant +mysql-capability-client-secure-connection+ #x8000)
 
@@ -108,6 +108,7 @@
    +mysql-capability-client-long-flag+
    +mysql-capability-client-connect-with-db+ ; required of server; client use not required.
    +mysql-capability-client-protocol-41+
+   +mysql-capability-client-transactions+
    +mysql-capability-client-secure-connection+)
   "The minimum required capabilities for this client to interop with a MySQL server.")
 
@@ -117,7 +118,6 @@
    +mysql-capability-client-connect-with-db+
    ;;+mysql-capability-client-no-schema+
    ;;+mysql-capability-client-ignore-space+
-   ;;+mysql-capability-client-transactions+
    ;;+mysql-capability-client-multi-statements+
    ;;+mysql-capability-client-multi-results+
    ;;+mysql-capability-client-ps-multi-results+
