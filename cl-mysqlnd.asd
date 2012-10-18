@@ -65,6 +65,7 @@
                                    (:file "command-statistics")
                                    (:file "command-process-information")
                                    (:file "command-process-kill")
+                                   (:file "command-debug")
                                    (:file "command-ping")))))
        (module "api"
         :serial nil
