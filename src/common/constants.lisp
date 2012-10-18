@@ -26,7 +26,7 @@
 (defconstant +mysql-command-statistics+ #x09)
 (defconstant +mysql-command-process-information+ #x0a) ; deprecated (5.16.11)
 (defconstant +mysql-command-connect+ #x0b) ;MySQL Internal
-(defconstant +mysql-command-kill+ #x0c)
+(defconstant +mysql-command-process-kill+ #x0c)
 (defconstant +mysql-command-debug+ #x0d) ;Requires SUPER priviledge
 (defconstant +mysql-command-ping+ #x0e)
 (defconstant +mysql-command-time+ #x0f) ;MySQL Internal
