@@ -62,6 +62,7 @@
                                    (:file "command-field-list"
                                     :depends-on ("response-result-set"))
                                    (:file "command-refresh")
+                                   (:file "command-shutdown")
                                    (:file "command-statistics")
                                    (:file "command-process-information")
                                    (:file "command-process-kill")
