@@ -63,6 +63,7 @@
                                     :depends-on ("response-result-set"))
                                    (:file "command-refresh")
                                    (:file "command-statistics")
+                                   (:file "command-process-kill")
                                    (:file "command-ping")))))
        (module "api"
         :serial nil
