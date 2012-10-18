@@ -179,4 +179,14 @@
 (defconstant +mysql-type-string+ #xfe)
 (defconstant +mysql-type-geometry+ #xff)
 
+;; Command Refresh flags (15.6.8)
+(defconstant +mysql-refresh-grant+ #x01)
+(defconstant +mysql-refresh-log+ #x02)
+(defconstant +mysql-refresh-tables+ #x04)
+(defconstant +mysql-refresh-hosts+ #x08)
+(defconstant +mysql-refresh-status+ #x10)
+(defconstant +mysql-refresh-threads+ #x20)
+(defconstant +mysql-refresh-slave+ #x40)
+(defconstant +mysql-refresh-master+ #x80)
+
 ) ;eval-when
