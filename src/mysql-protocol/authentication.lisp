@@ -73,11 +73,8 @@
     ((or (not plugin)
          (string= plugin "mysql_native_password"))
      (mysql-native-password-auth-response password auth-data))
-    #+mysql-insecure-password-hash
-    ((string= plugin "mysql_old_password")
-     ;; asedeno-TODO: Replace with an appropriate condition
-     (error 'simple-error))
     ((string= plugin "mysql_clear_password")
      (mysql-clear-password-auth-response password))
-    ;; asedeno-TODO: Replace with an appropriate condition
-    (T (error 'simple-error))))
+    (T
+     (error (make-condition 'mysql-unsupported-authentication
+                            :plugin plugin)))))

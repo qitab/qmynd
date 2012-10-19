@@ -43,8 +43,6 @@
             until (and (= (aref payload 0) +mysql-response-end-of-file+)
                        (< (length payload) 9))
             collect (parse-column-definition-v41 payload)
-            ;; asedeno-TODO: do something better here; probably signal for
-            ;; ERR in parse-response.
-            finally (assert (typep (parse-response payload)
-                                   'response-end-of-file-packet)))
+            ;; Consume the EOF packet or signal an error for an ERR packet.
+            finally (parse-response payload))
           'vector))))))

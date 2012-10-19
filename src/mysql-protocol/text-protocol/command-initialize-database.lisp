@@ -28,9 +28,6 @@
       (write-byte +mysql-command-initialize-database+ s)
       (write-sequence (babel:string-to-octets schema-name) s)
       (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
-    (let ((response (parse-response (mysql-read-packet))))
-      (assert (typep
-               response
-               'response-ok-packet))
-      (setf (mysql-connection-default-schema c) schema-name)
-      (values))))
+    (prog1
+        (parse-response (mysql-read-packet))
+      (setf (mysql-connection-default-schema c) schema-name))))

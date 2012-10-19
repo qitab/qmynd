@@ -34,13 +34,15 @@
                         +mysql-capability-client-connect-with-db+)))
 
         ;; 4) Prepare Auth Response
-        (let ((auth-response (generate-auth-response password auth-data auth-plugin)))
-          ;; 5) Prepare Initial Response OR Close and Signal
-          (send-handshake-response-41 :username username :auth-response auth-response :auth-plugin auth-plugin :database database)
-          (let ((response (parse-response (mysql-read-packet))))
-            (assert (typep
-                     response
-                     'response-ok-packet))))))
+        (handler-case
+            (let ((auth-response (generate-auth-response password auth-data auth-plugin)))
+              ;; 5) Prepare Initial Response OR Close and Signal
+              (send-handshake-response-41 :username username :auth-response auth-response :auth-plugin auth-plugin :database database)
+              (parse-response (mysql-read-packet)))
+          (mysql-base-error (e)
+            (usocket:socket-close socket)
+            (error e)))))
+
     (setf (mysql-connection-connected connection) t)
     connection))
 

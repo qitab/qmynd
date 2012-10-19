@@ -30,6 +30,7 @@
         :serial nil
         :depends-on ("pkgdcl")
         :components ((:file "constants")
+                     (:file "conditions")
                      (:file "utilities")
                      (:file "misc"
                       :depends-on ("constants"))))
@@ -43,9 +44,9 @@
         :serial nil
         :depends-on ("common" "wire-protocol")
         :components ((:file "define-packet")
-                     (:file "response-packets"
-                      :depends-on ("define-packet"))
                      (:file "connection")
+                     (:file "response-packets"
+                      :depends-on ("define-packet" "connection"))
                      (:file "authentication")
                      (:file "handshake"
                       :depends-on ("define-packet"

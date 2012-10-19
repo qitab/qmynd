@@ -67,8 +67,11 @@
 
           (mysql-connection-status-flags *mysql-connection*)
           (initial-handshake-v10-packet-status-flags packet))
-    ;; asedeno-TODO: Replace with an appropriate condition
-    (assert (mysql-has-capability +mysql-capabilities-required+))
+
+    (unless (mysql-has-capability +mysql-capabilities-required+)
+      (error 'mysql-insufficient-capabilities
+             :server-flags (initial-handshake-v10-packet-capability-flags packet)))
+
     ;; asedeno-TODO: add optional logging/debugging functionality
     #+nil
     (format t "Auth Data: ~A~%~

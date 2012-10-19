@@ -69,24 +69,22 @@ If EOF packet status has +mysql-server-more-results-exist+ set, another ResultSe
   (declare (ignorable column-definitions))
   (flet ((parse-resultset-row ()
            (let ((payload (mysql-read-packet)))
-             (if (and (= (aref payload 0) +mysql-response-end-of-file+)
-                      (< (length payload) 9))
-                 (parse-response payload)
-                 (let ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload)))
-                       (row (make-array column-count :initial-element nil)))
-                   (loop for i from 0 below column-count
-                         if (eq (flexi-streams:peek-byte s) #xfb)
-                           do (read-byte s) ; throw this byte away -- it represents a NULL column.
-                         else
-                           ;; asedeno-TODO interpret results as more than octets
-                           do (setf (aref row i)
-                                    #+nil
+             (cond
+               ((and (= (aref payload 0) +mysql-response-end-of-file+)
+                     (< (length payload) 9))
+                (parse-response payload))
+               (t
+                (let ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload)))
+                      (row (make-array column-count :initial-element nil)))
+                  (loop for i from 0 below column-count
+                        if (eq (flexi-streams:peek-byte s) #xfb)
+                          do (read-byte s) ; throw this byte away -- it represents a NULL column.
+                        else
+                          do (setf (aref row i)
+                                   (parse-text-protocol-result-column
                                     (read-length-encoded-string s)
-                                    #-nil
-                                    (parse-text-protocol-result-column
-                                     (read-length-encoded-string s)
-                                     (aref column-definitions i))))
-                   row)))))
+                                    (aref column-definitions i))))
+                  row))))))
     (coerce (loop for row = (parse-resultset-row) then (parse-resultset-row)
                   until (typep row 'response-end-of-file-packet)
                   collect row)

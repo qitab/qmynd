@@ -37,10 +37,8 @@
                                      (loop
                                        repeat column-count
                                        collect (parse-column-definition-v41 (mysql-read-packet))
-                                       ;; asedeno-TODO: do something better here; probably signal for
-                                       ;; ERR in parse-response.
-                                       finally (assert (typep (parse-response (mysql-read-packet))
-                                                              'response-end-of-file-packet)))
+                                       ;; Consume the EOF packet, or signal an error for an ERR packet.
+                                       finally (parse-response (mysql-read-packet)))
                                      'vector))
                 (rows (parse-resultset-rows column-count column-definitions)))
            (values rows column-definitions)))))))

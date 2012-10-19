@@ -169,8 +169,8 @@ Order of Operations:
           `(read-length-encoded-integer ,stream))
          ((eq termination-spec :lenenc-null-ok)
           `(read-length-encoded-integer ,stream :null-ok t))
-         ;; asedeno-TODO: real conditions
-         (t (error "unexpected termination type for integer."))))
+         (t (error (make-condition 'bad-mysql-type-spec
+                                   :text (format nil "Unexpected termination type for integer: ~A." termination-spec))))))
       ((octets string)
        (let ((parser
                (cond
