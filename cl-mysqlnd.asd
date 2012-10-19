@@ -52,23 +52,28 @@
                       :depends-on ("define-packet"
                                    "connection"
                                    "authentication"))
+                     (:file "response-result-set"
+                      :depends-on ("define-packet"))
                      (:module "text-protocol"
                       :serial nil
-                      :depends-on ("connection" "define-packet")
+                      :depends-on ("connection" "define-packet" "response-result-set")
                       :components ((:file "command-quit")
                                    (:file "command-initialize-database")
-                                   (:file "response-result-set")
-                                   (:file "command-query"
-                                    :depends-on ("response-result-set"))
-                                   (:file "command-field-list"
-                                    :depends-on ("response-result-set"))
+                                   (:file "command-query")
+                                   (:file "command-field-list")
                                    (:file "command-refresh")
                                    (:file "command-shutdown")
                                    (:file "command-statistics")
                                    (:file "command-process-information")
                                    (:file "command-process-kill")
                                    (:file "command-debug")
-                                   (:file "command-ping")))))
+                                   (:file "command-ping")))
+                     (:module "prepared-statements"
+                      :serial nil
+                      :depends-on ("response-result-set")
+                      :components ((:file "command-statement-prepare")
+                                   (:file "command-statement-close")
+                                   (:file "command-statement-reset")))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
