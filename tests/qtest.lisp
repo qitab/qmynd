@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package "MYSQLND-TEST")
+(in-package "QMYND-TEST")
 
 
 ;;; Ultra light-weight test framework

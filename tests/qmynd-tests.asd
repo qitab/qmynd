@@ -11,16 +11,16 @@
 (in-package "CL-USER")
 
 
-(asdf:defsystem :cl-mysqlnd-tests
-  :name "CL MySQL Native Driver"
+(asdf:defsystem :qmynd-tests
+  :name "MySQL Native Driver - Test Suite"
   :author "Alejandro Sedeño"
   :version "1.0"
   :licence "MIT-style"
   :maintainer '("Alejandro Sedeño")
-  :description      "Test code for MySQL Native Driver for Common Lisp"
+  :description      "Test code for MySQL Native Driver"
   :long-description "Test code for MySQL Native Driver for Common Lisp"
-  :defsystem-depends-on (:cl-mysqlnd)
-  :depends-on (:babel :flexi-streams :cl-mysqlnd)
+  :defsystem-depends-on (:qmynd)
+  :depends-on (:babel :flexi-streams :qmynd)
   :serial nil
   :components
     ((:module "packages"
@@ -39,4 +39,4 @@
               :components ((:file "parsing")
                            (:file "basic-types")))))
 
-(pushnew :cl-mysqlnd *features*)
+(pushnew :cl-qmynd *features*)

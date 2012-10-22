@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :mysqlnd)
+(in-package :qmynd)
 
 ;;; MYSQL Authentication Mechanisms
 

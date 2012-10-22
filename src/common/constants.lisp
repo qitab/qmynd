@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :mysqlnd)
+(in-package :qmynd)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 

@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :mysqlnd)
+(in-package :qmynd)
 
 (define-condition mysql-base-error (error)
   ())

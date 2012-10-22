@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :mysqlnd)
+(in-package :qmynd)
 
 ;;; Conncetion entry-point
 (defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database)

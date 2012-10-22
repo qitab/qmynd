@@ -12,8 +12,8 @@
 
 ;;; Package declaration for MySQL Native Driver tests
 
-(defpackage :mysqlnd-test
-  (:use :common-lisp :mysqlnd)
+(defpackage :qmynd-test
+  (:use :common-lisp :qmynd)
   #+test-tools
   (:import-from :qtest
    :define-test
@@ -24,13 +24,13 @@
    :assert-true
    :assert-false)
   ;; utilities
-  (:import-from :mysqlnd
+  (:import-from :qmynd
    :single-float-bits
    :double-float-bits
    :make-single-float
    :make-double-float)
   ;; MySQL Basic Type I/O
-  (:import-from :mysqlnd
+  (:import-from :qmynd
    :read-fixed-length-integer
    :read-length-encoded-integer
    :read-fixed-length-string

@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :mysqlnd)
+(in-package :qmynd)
 
 (defvar *mysql-connection* nil
   "All API entry-points after connect take a mysql-connection argument

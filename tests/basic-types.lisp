@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :mysqlnd-test)
+(in-package :qmynd-test)
 
 (define-test decode-fixed-length-integers ()
   ;;prepare a stream with a bunch of integers for decoding

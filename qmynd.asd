@@ -11,13 +11,13 @@
 (in-package "CL-USER")
 
 
-(asdf:defsystem :cl-mysqlnd
-  :name "CL MySQL Native Driver"
+(asdf:defsystem :qmynd
+  :name "MySQL Native Driver"
   :author "Alejandro Sedeño"
   :version "1.0"
   :licence "MIT-style"
   :maintainer '("Alejandro Sedeño")
-  :description      "MySQL Native Driver for Common Lisp"
+  :description      "MySQL Native Driver"
   :long-description "MySQL Native Driver for Common Lisp"
   :depends-on (:babel :flexi-streams :ironclad :usocket)
   :serial nil
@@ -79,4 +79,4 @@
         :depends-on ("mysql-protocol")
         :components ((:file "connection")))))))
 
-(pushnew :cl-mysqlnd *features*)
+(pushnew :cl-qmynd *features*)

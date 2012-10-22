@@ -10,5 +10,5 @@
 
 (in-package :cl-user)
 
-(defpackage mysqlnd
+(defpackage qmynd
   (:use :common-lisp))
