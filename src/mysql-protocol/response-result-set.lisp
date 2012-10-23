@@ -12,26 +12,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 15.6.4.1 Text Resultset
+;;; Two parts:
+;;; • Column Definitions
+;;;   · Column Count (n)
+;;;   · Column Definition Packets (n total)
+;;;   · EOF Packet
+;;; • Rows
+;;;   · One or more ResutltsetRow packets
+;;;   · EOF or ERR Packet
 
-#|
+;;; If EOF packet status has +mysql-server-more-results-exist+ set, another ResultSet packet follows.
+;;; (See +mysql-capability-client-multi-results+, +mysql-capability-client-ps-multi-results+.)
 
-Two parts:
-• Column Definiitions
-  · Column Count (n)
-  · Column Definition Packets (n total)
-  · EOF Packet
-• Rows
-  · One or more ResutltsetRow packets
-  · EOF or ERR Packet
-
-If EOF packet status has +mysql-server-more-results-exist+ set, another ResultSet packet follows.
-(See +mysql-capability-client-multi-results+, +mysql-capability-client-ps-multi-results+.)
-
-|#
-
-
-
-;; This packet is not worth parsing making a struct.
+;; This packet is trivial and does not require a struct.
 ;; (define-packet column-count
 ;;  ((count :mysql-type (integer :lenenc))))
 
