@@ -66,7 +66,6 @@ If EOF packet status has +mysql-server-more-results-exist+ set, another ResultSe
   (column-definition-v41-packet-type column-definition))
 
 (defun parse-resultset-rows (column-count column-definitions)
-  (declare (ignorable column-definitions))
   (flet ((parse-resultset-row ()
            (let ((payload (mysql-read-packet)))
              (cond
