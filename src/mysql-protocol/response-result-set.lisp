@@ -99,27 +99,27 @@
                  (let ((*read-default-float-format* float-format))
                    (with-input-from-string (s (str))
                      (read s)))))
-             (parse-datetime (&optional (tz 0))
+             (parse-datetime ()
                ;; Look into replacing this with a library, or moving it to utilities.lisp.
                (case (length octets)
                  (4 ; YYYY
                   (encode-universal-time
                    0 0 0 1 1
                    (parse-integer (str))
-                   tz))
+                   0))
                  (8 ; hh:mm:ss
                   (encode-universal-time
                    (parse-integer (subseq (str) 6 8))
                    (parse-integer (subseq (str) 3 5))
                    (parse-integer (subseq (str) 0 2))
-                   1 1 1900 tz))
+                   1 1 1900 0))
                  (10 ; YYYY-MM-DD
                   (encode-universal-time
                    0 0 0
                    (parse-integer (subseq (str) 8 10))
                    (parse-integer (subseq (str) 5 7))
                    (parse-integer (subseq (str) 0 4))
-                   tz))
+                   0))
                  (19 ; YYYY-MM-DD hh:mm:ss
                   (encode-universal-time
                    (parse-integer (subseq (str) 17 19))
@@ -128,7 +128,7 @@
                    (parse-integer (subseq (str) 8 10))
                    (parse-integer (subseq (str) 5 7))
                    (parse-integer (subseq (str) 0 4))
-                   tz))))
+                   0))))
              (parse-decimal ()
                ;; Look into replacing this with a library, or moving it to utilities.lisp.
                (assert (and
