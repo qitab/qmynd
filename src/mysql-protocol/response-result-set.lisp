@@ -112,7 +112,7 @@
                    (parse-integer (subseq (str) 6 8))
                    (parse-integer (subseq (str) 3 5))
                    (parse-integer (subseq (str) 0 2))
-                   1 1 0 tz))
+                   1 1 1900 tz))
                  (10 ; YYYY-MM-DD
                   (encode-universal-time
                    0 0 0
