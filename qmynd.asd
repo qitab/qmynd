@@ -70,13 +70,15 @@
                                    (:file "command-ping")))
                      (:module "prepared-statements"
                       :serial nil
-                      :depends-on ("response-result-set")
-                      :components ((:file "command-statement-prepare")
+                      :depends-on ("connection" "response-result-set")
+                      :components ((:file "prepared-statement")
+                                   (:file "command-statement-prepare")
                                    (:file "command-statement-close")
                                    (:file "command-statement-reset")))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
-        :components ((:file "connection")))))))
+        :components ((:file "connection")
+                     (:file "prepared-statements")))))))
 
 (pushnew :cl-qmynd *features*)

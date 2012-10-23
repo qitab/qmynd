@@ -20,8 +20,8 @@
          (babel::*default-character-encoding* (mysql-connection-character-set ,c)))
      ,@body))
 
-(defmacro with-mysql-connection ((c) &body body)
-  `(let ((,c *mysql-connection*))
+(defmacro with-mysql-connection ((c &optional cxn) &body body)
+  `(let ((,c (or ,cxn *mysql-connection*)))
      ,@body))
 
 (defclass mysql-connection ()

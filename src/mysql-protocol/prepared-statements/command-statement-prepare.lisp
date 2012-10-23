@@ -54,4 +54,8 @@
                             ;; Consume the EOF packet or signal an error for an ERR packet.
                             finally (parse-response (mysql-read-packet)))
                           'vector)))
-           (values sp-ok parameters columns)))))))
+           (make-instance 'mysql-prepared-statement
+                          :connection c
+                          :statement-id (command-statement-prepare-ok-packet-statement-id sp-ok)
+                          :columns columns
+                          :parameters parameters)))))))
