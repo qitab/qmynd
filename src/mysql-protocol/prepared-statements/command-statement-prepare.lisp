@@ -40,19 +40,23 @@
         ((#.+mysql-response-error+) (parse-response payload))
         (otherwise
          (let* ((sp-ok (parse-command-statement-prepare-ok payload))
+                (parameter-count (command-statement-prepare-ok-packet-num-params sp-ok))
+                (column-count (command-statement-prepare-ok-packet-num-columns sp-ok))
                 (parameters (coerce
-                             (loop
-                               repeat (command-statement-prepare-ok-packet-num-params sp-ok)
-                               collect (parse-column-definition-v41 (mysql-read-packet))
-                               ;; Consume the EOF packet or signal an error for an ERR packet.
-                               finally (parse-response (mysql-read-packet)))
-                          'vector))
+                             (unless (zerop parameter-count)
+                               (loop
+                                 repeat parameter-count
+                                 collect (parse-column-definition-v41 (mysql-read-packet))
+                                 ;; Consume the EOF packet or signal an error for an ERR packet.
+                                 finally (parse-response (mysql-read-packet))))
+                             'vector))
                 (columns (coerce
-                          (loop
-                            repeat (command-statement-prepare-ok-packet-num-columns sp-ok)
-                            collect (parse-column-definition-v41 (mysql-read-packet))
-                            ;; Consume the EOF packet or signal an error for an ERR packet.
-                            finally (parse-response (mysql-read-packet)))
+                          (unless (zerop column-count)
+                            (loop
+                              repeat column-count
+                              collect (parse-column-definition-v41 (mysql-read-packet))
+                              ;; Consume the EOF packet or signal an error for an ERR packet.
+                              finally (parse-response (mysql-read-packet))))
                           'vector)))
            (make-instance 'mysql-prepared-statement
                           :connection c
