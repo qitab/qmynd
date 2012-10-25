@@ -11,7 +11,7 @@
 (in-package "CL-USER")
 
 
-(asdf:defsystem :qmynd-tests
+(asdf:defsystem :qmynd-test
   :name "MySQL Native Driver - Test Suite"
   :author "Alejandro Sedeño"
   :version "1.0"
