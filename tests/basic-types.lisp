@@ -21,7 +21,9 @@
                                                                     #x00 #x00 #x00 #x00 #x00 #x0
                                                                     #xfa #xfb #xfc #xfd #xfe #xff
                                                                     #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x0
-                                                                    #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff)))
+                                                                    #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
+                                                                    #xff #x7f #x80 #x00
+                                                                    #xff #xff #xff #x7f #x00 #x80 #x00 #x00)))
 
     ;; 1 byte
     (assert-equal
@@ -70,7 +72,32 @@
      #x0)
     (assert-equal
      (read-fixed-length-integer 8 s)
-     #xfffefdfcfbfaf9f8)))
+     #xfffefdfcfbfaf9f8)
+    ;; Signed integers
+    (assert-equal
+     (read-fixed-length-integer 1 s :signed t)
+     -1)
+    (assert-equal
+     (read-fixed-length-integer 1 s :signed t)
+     127)
+    (assert-equal
+     (read-fixed-length-integer 1 s :signed t)
+     -128)
+    (assert-equal
+     (read-fixed-length-integer 1 s :signed t)
+     0)
+    (assert-equal
+     (read-fixed-length-integer 2 s :signed t)
+     -1)
+    (assert-equal
+     (read-fixed-length-integer 2 s :signed t)
+     32767)
+    (assert-equal
+     (read-fixed-length-integer 2 s :signed t)
+     -32768)
+    (assert-equal
+     (read-fixed-length-integer 2 s :signed t)
+     0)))
 
 (define-test encode-fixed-length-integers ()
   (flet ((encode-test (int len expected)
@@ -83,9 +110,15 @@
     (encode-test #x10 1 #(#x10))
     (encode-test #x80 1 #(#x80))
     (encode-test #xff 1 #(#xff))
+    (encode-test -1 1 #(#xff))
+    (encode-test 127 1 #(#x7f))
+    ;; 1 byte fun with aliasing
+    (encode-test 128 1 #(#x80))
+    (encode-test -128 1 #(#x80))
     ;; 2 byte
     (encode-test 0 2 #(0 0))
     (encode-test #xfffe 2 #(#xfe #xff))
+    (encode-test -1 2 #(#xff #xff))
     ;; 3 byte
     (encode-test 0 3 #(0 0 0))
     (encode-test #xfffefd 3 #(#xfd #xfe #xff))
