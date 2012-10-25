@@ -19,4 +19,5 @@
     (#.+mysql-cs-coll-utf8-general-ci+ :utf-8)
     (#.+mysql-cs-coll-utf8-binary+ :utf-8)
     (#.+mysql-cs-coll-ascii-general-ci+ :us-ascii)
-    (#.+mysql-cs-coll-ascii-binary+ :us-ascii)))
+    (#.+mysql-cs-coll-ascii-binary+ :us-ascii)
+    (#.+mysql-cs-coll-binary+ nil)))

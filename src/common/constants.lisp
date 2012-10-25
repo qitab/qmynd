@@ -149,6 +149,7 @@
 (defconstant +mysql-cs-coll-utf8-binary+ 83)
 (defconstant +mysql-cs-coll-ascii-general-ci+ 11)
 (defconstant +mysql-cs-coll-ascii-binary+ 65)
+(defconstant +mysql-cs-coll-binary+ 63)
 
 ;; Column Types (15.6.4.1.1.1)
 (defconstant +mysql-type-decimal+ #x00)
