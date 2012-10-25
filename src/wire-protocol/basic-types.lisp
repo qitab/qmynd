@@ -17,13 +17,18 @@
 ;;; 15.1.1.1.1. fixed length integer
 ;;; Little endian fixed-length integers with lengths (1 2 3 4 6 8)
 
-(defun read-fixed-length-integer (length stream)
-  (let ((result 0))
+(defun read-fixed-length-integer (length stream &key signed)
+  (let ((result 0)
+        negative)
     (loop
       repeat length
       for i fixnum from 0 by 8
-      do (setf (ldb (byte 8 i) result) (read-byte stream)))
-    result))
+      for byte = (read-byte stream) then (read-byte stream)
+      do (setf (ldb (byte 8 i) result) byte)
+      finally (setf negative (plusp (ash byte -7))))
+    (if (and signed negative)
+        (logxor (lognot result) (1- (ash 1 (* 8 length))))
+        result)))
 
 (defun write-fixed-length-integer (int length stream)
   (loop
