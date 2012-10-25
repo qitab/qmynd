@@ -330,10 +330,10 @@
         ;; Floating Point
         ((= column-type +mysql-type-double+)
          (make-double-float (read-fixed-length-integer 4 stream)
-                            (read-fixed-length-integer 4 stream)))
+                            (read-fixed-length-integer 4 stream :signed t)))
 
         ((= column-type +mysql-type-float+)
-         (make-single-float (read-fixed-length-integer 4 stream)))
+         (make-single-float (read-fixed-length-integer 4 stream :signed t)))
 
         ;; Date/Time
         ((= column-type +mysql-type-year+)
