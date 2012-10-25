@@ -60,10 +60,12 @@
 
 (defun parse-resultset-rows (column-count column-definitions)
   (flet ((parse-resultset-row ()
-           (let ((payload (mysql-read-packet)))
+           (let* ((payload (mysql-read-packet))
+                  (tag (aref payload 0)))
              (cond
-               ((and (= (aref payload 0) +mysql-response-end-of-file+)
-                     (< (length payload) 9))
+               ((or (and (= tag +mysql-response-end-of-file+)
+                         (< (length payload) 9))
+                    (= tag +mysql-response-error+))
                 (parse-response payload))
                (t
                 (let ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload)))
@@ -234,12 +236,14 @@
 
 (defun parse-binary-resultset-rows (column-count column-definitions)
   (flet ((parse-binary-resultset-row ()
-           (let ((payload (mysql-read-packet)))
+           (let* ((payload (mysql-read-packet))
+                  (tag (aref payload 0)))
              (cond
-               ((and (= (aref payload 0) +mysql-response-end-of-file+)
-                     (< (length payload) 9))
+               ((or (and (= tag +mysql-response-end-of-file+)
+                         (< (length payload) 9))
+                    (= tag +mysql-response-error+))
                 (parse-response payload))
-               ((= (aref payload 0) 0)
+               ((= tag 0)
                 (let* ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload :start 1)))
                        (row (make-array column-count :initial-element nil))
                        (null-bitmap (read-fixed-length-integer (ceiling (+ column-count 2) 8) s)))
