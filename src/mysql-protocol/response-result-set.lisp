@@ -55,8 +55,14 @@
    (default-value :mysql-type (string :lenenc-null-ok)
                   :predicate (mysql-current-command-p +mysql-command-field-list+))))
 
-(defmethod column-definition-type ((column-definition column-definition-v41-packet))
-  (column-definition-v41-packet-type column-definition))
+(defgeneric column-definition-type (column-definition)
+  (:method ((column-definition column-definition-v41-packet))
+    (column-definition-v41-packet-type column-definition)))
+
+(defgeneric column-definition-encoding (column-definition)
+  (:method ((column-definition column-definition-v41-packet))
+    (mysql-cs-coll-to-character-encoding
+     (column-definition-v41-packet-cs-coll column-definition))))
 
 (defun parse-resultset-rows (column-count column-definitions)
   (flet ((parse-resultset-row ()
@@ -88,7 +94,9 @@
   (let ((column-type (column-definition-type column-definition))
         str)
     (labels ((str ()
-               (unless str (setf str (babel:octets-to-string octets)))
+               (unless str (setf str
+                                 (babel:octets-to-string
+                                  octets)))
                str)
              (parse-float (&optional (float-format 'single-float))
                ;; Look into replacing this with a library, or moving it to utilities.lisp.
@@ -130,35 +138,7 @@
                    (parse-integer (subseq (str) 8 10))
                    (parse-integer (subseq (str) 5 7))
                    (parse-integer (subseq (str) 0 4))
-                   0))))
-             (parse-decimal ()
-               ;; Look into replacing this with a library, or moving it to utilities.lisp.
-               (assert (and
-                        (let ((x (aref octets 0)))
-                          (or (<= #.(char-code #\0) x #.(char-code #\9))
-                              (=  x #.(char-code #\-))))
-                        (every #'(lambda (x) (or (<= #.(char-code #\0) x #.(char-code #\9))
-                                                 (=  x #.(char-code #\.))))
-                               (subseq octets 1))
-                        (< (count #.(char-code #\.) octets) 2)))
-               (let ((start 0)
-                     (sign 1)
-                     found-decimal)
-                 (when (= (aref octets 0) #.(char-code #\-))
-                   (setq start 1
-                         sign -1))
-                 (loop
-                   for i from start below (length (str))
-                   for c = (aref (str) i) then (aref (str) i)
-                   for denominator = 0 then (if found-decimal (1+ denominator) denominator)
-                   if (char= c #\.)
-                     do (setq found-decimal t)
-                   else
-                     collect c into numerator
-                   finally
-                      (return (* sign
-                                 (/ (parse-integer (coerce numerator 'string))
-                                    (expt 10 denominator))))))))
+                   0)))))
       (cond
         ;; Integers
         ((member column-type (list +mysql-type-tiny+
@@ -173,7 +153,7 @@
         ((member column-type (list +mysql-type-decimal+
                                    +mysql-type-newdecimal+)
                  :test #'=)
-         (parse-decimal))
+         (parse-decimal (str)))
 
         ;; Floating Point
         ((= column-type +mysql-type-float+)
@@ -261,42 +241,21 @@
                   'vector)))
 
 (defun parse-binary-protocol-result-column (stream column-definition)
-  (let ((column-type (column-definition-type column-definition)))
+  (let ((column-type (column-definition-type column-definition))
+        (encoding (or (column-definition-encoding column-definition)
+                      babel::*default-character-encoding*)))
     (labels ((parse-year (&optional (tz 0))
                (encode-universal-time
                 0 0 0 1 1
                 (read-fixed-length-integer 2 stream)
                 tz))
-             (parse-decimal (octets)
-               ;; Look into replacing this with a library, or moving it to utilities.lisp.
-               (assert (and
-                        (let ((x (aref octets 0)))
-                          (or (<= #.(char-code #\0) x #.(char-code #\9))
-                              (=  x #.(char-code #\-))))
-                        (every #'(lambda (x) (or (<= #.(char-code #\0) x #.(char-code #\9))
-                                                 (=  x #.(char-code #\.))))
-                               (subseq octets 1))
-                        (< (count #.(char-code #\.) octets) 2)))
-               (let ((start 0)
-                     (sign 1)
-                     (str (babel:octets-to-string octets))
-                     found-decimal)
-                 (when (= (aref octets 0) #.(char-code #\-))
-                   (setq start 1
-                         sign -1))
-                 (loop
-                   for i from start below (length str)
-                   for c = (aref str i) then (aref str i)
-                   for denominator = 0 then (if found-decimal (1+ denominator) denominator)
-                   if (char= c #\.)
-                     do (setq found-decimal t)
-                   else
-                     collect c into numerator
-                   finally
-                      (return (* sign
-                                 (/ (parse-integer (coerce numerator 'string))
-                                    (expt 10 denominator))))))))
-
+             (to-string (octets)
+               (babel:octets-to-string octets :encoding encoding))
+             (parse-binary-integer (length)
+               (read-fixed-length-integer
+                length stream
+                :signed (not (flagsp +mysql-flag-column-unsigned+
+                                     (column-definition-v41-packet-flags column-definition))))))
       (cond
         ;; Stuff encoded as strings
         ((member column-type (list +mysql-type-varchar+
@@ -308,28 +267,32 @@
                                    +mysql-type-var-string+
                                    +mysql-type-string+)
                  :test #'=)
-         (read-length-encoded-string stream))
+         (let ((octets (read-length-encoded-string stream)))
+           (if (flagsp +mysql-flag-column-binary+
+                       (column-definition-v41-packet-flags column-definition))
+               octets
+               (to-string octets))))
 
         ((member column-type (list +mysql-type-decimal+
                                    +mysql-type-newdecimal+)
                  :test #'=)
          ;;asedeno-TODO: verify this
-         (parse-decimal (read-length-encoded-string stream)))
+         (parse-decimal (to-string (read-length-encoded-string stream))))
 
         ;; Integers
         ((= column-type +mysql-type-longlong+)
-         (read-fixed-length-integer 8 stream))
+         (parse-binary-integer 8))
 
         ((member column-type (list +mysql-type-long+
                                    +mysql-type-int24+) ;; Yes, 24-bit integers are transmitted as 32-bit integers.
                  :test #'=)
-         (read-fixed-length-integer 4 stream))
+         (parse-binary-integer 4))
 
         ((= column-type +mysql-type-short+)
-         (read-fixed-length-integer 2 stream))
+         (parse-binary-integer 2))
 
         ((= column-type +mysql-type-tiny+)
-         (read-fixed-length-integer 1 stream))
+         (parse-binary-integer 1))
 
         ;; Floating Point
         ((= column-type +mysql-type-double+)

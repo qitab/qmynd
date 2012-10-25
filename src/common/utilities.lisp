@@ -189,6 +189,37 @@
          (apply ,function ,(car args) more-args))
     form))
 
+;;; Decimal Parsing
+
+(defun parse-decimal (str)
+  ;; Look into replacing this with a library.
+  (assert (and
+           (let ((x (aref str 0)))
+             (or (char<= #\0 x #\9)
+                 (char=  x #\-)))
+           (every #'(lambda (x) (or (char<= #\0 x #\9)
+                                    (char= x #\.)))
+                  (subseq str 1))
+           (< (count #\. str) 2)))
+  (let ((start 0)
+        (sign 1)
+        found-decimal)
+    (when (starts-with str "-")
+      (setq start 1
+            sign -1))
+    (loop
+      for i from start below (length str)
+      for c = (aref str i) then (aref str i)
+      for denominator = 0 then (if found-decimal (1+ denominator) denominator)
+      if (char= c #\.)
+        do (setq found-decimal t)
+      else
+        collect c into numerator
+      finally
+         (return (* sign
+                    (/ (parse-integer (coerce numerator 'string))
+                       (expt 10 denominator)))))))
+
 
 ;;; Portable floating point utilities
 
