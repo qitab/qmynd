@@ -180,6 +180,16 @@
 (defconstant +mysql-type-string+ #xfe)
 (defconstant +mysql-type-geometry+ #xff)
 
+;; Column Description Flags
+(defconstant +mysql-flag-column-non-nullable+ #x01)
+(defconstant +mysql-flag-column-primary-key+ #x02)
+(defconstant +mysql-flag-column-unique-key+ #x04)
+(defconstant +mysql-flag-column-multiple-key+ #x08)
+(defconstant +mysql-flag-column-blob+ #x10)
+(defconstant +mysql-flag-column-unsigned+ #x20)
+(defconstant +mysql-flag-column-zero-fill+ #x40)
+(defconstant +mysql-flag-column-binary+ #x80)
+
 ;; Command Refresh flags (15.6.8)
 (defconstant +mysql-refresh-grant+ #x01)
 (defconstant +mysql-refresh-log+ #x02)
