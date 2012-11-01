@@ -111,34 +111,51 @@
                      (read s)))))
              (parse-datetime ()
                ;; Look into replacing this with a library, or moving it to utilities.lisp.
-               (case (length octets)
-                 (4 ; YYYY
-                  (encode-universal-time
-                   0 0 0 1 1
-                   (parse-integer (str))
-                   0))
-                 (8 ; hh:mm:ss
-                  (encode-universal-time
-                   (parse-integer (subseq (str) 6 8))
-                   (parse-integer (subseq (str) 3 5))
-                   (parse-integer (subseq (str) 0 2))
-                   1 1 1900 0))
-                 (10 ; YYYY-MM-DD
-                  (encode-universal-time
-                   0 0 0
-                   (parse-integer (subseq (str) 8 10))
-                   (parse-integer (subseq (str) 5 7))
-                   (parse-integer (subseq (str) 0 4))
-                   0))
-                 (19 ; YYYY-MM-DD hh:mm:ss
-                  (encode-universal-time
-                   (parse-integer (subseq (str) 17 19))
-                   (parse-integer (subseq (str) 14 16))
-                   (parse-integer (subseq (str) 11 13))
-                   (parse-integer (subseq (str) 8 10))
-                   (parse-integer (subseq (str) 5 7))
-                   (parse-integer (subseq (str) 0 4))
-                   0)))))
+               (let ((year 0) (month 0) (day 0)
+                     (hour 0) (minute 0) (second 0)
+                     (microsecond 0)
+                     (length (length octets)))
+                 (when (> length 0)
+                   ;; YYYY-MM-DD
+                   (setf year (parse-integer (str) :start 0 :junk-allowed t)
+                         month (parse-integer (str) :start 5 :junk-allowed t)
+                         day (parse-integer (str) :start 10 :junk-allowed t)))
+                 (when (> length 10)
+                   ;; YYYY-MM-DD hh:mm:ss
+                   (setf hour (parse-integer (str) :start 11 :junk-allowed t)
+                         minute (parse-integer (str) :start 14 :junk-allowed t)
+                         second (parse-integer (str) :start 17 :junk-allowed t)))
+                 (when (> length 19)
+                   ;; YYYY-MM-DD hh:mm:ss.µµµµµµ
+                   (setf microsecond (parse-integer (str) :start 19)))
+                 (make-instance 'mysql-date-time
+                                :year year
+                                :month month
+                                :day day
+                                :hour hour
+                                :minute minute
+                                :second second
+                                :microsecond microsecond)))
+             (parse-time ()
+               (let ((negativep (starts-with (str) "-")))
+                 (multiple-value-bind (hours end)
+                     (parse-integer (str) :start (if negativep 1 0) :junk-allowed t)
+                   (multiple-value-bind (days hours)
+                       (truncate hours 24)
+                     (multiple-value-bind (minutes end)
+                         (parse-integer (str) :start (1+ end) :junk-allowed t)
+                       (multiple-value-bind (seconds end)
+                           (parse-integer (str) :start (1+ end) :junk-allowed t)
+                         (let ((microseconds
+                                 (if (> (length (str)) end)
+                                     (parse-integer (str) :start (1+ end))
+                                     0)))
+                           (make-instance 'mysql-time-interval
+                                          :days days
+                                          :hours hours
+                                          :minutes minutes
+                                          :seconds seconds
+                                          :microseconds microseconds)))))))))
       (cond
         ;; Integers
         ((member column-type (list +mysql-type-tiny+
@@ -168,12 +185,17 @@
         ;; Date/Time
         ((member column-type (list +mysql-type-timestamp+
                                    +mysql-type-date+
-                                   +mysql-type-time+
                                    +mysql-type-datetime+
-                                   +mysql-type-year+
                                    +mysql-type-newdate+)
                  :test #'=)
          (parse-datetime))
+
+        ((= column-type +mysql-type-year+)
+         (make-instance 'mysql-year
+                        :year (parse-integer (str))))
+
+        ((= column-type +mysql-type-time+)
+         (parse-time))
 
         ;; Strings
         ((member column-type (list +mysql-type-varchar+
@@ -244,12 +266,7 @@
   (let ((column-type (column-definition-type column-definition))
         (encoding (or (column-definition-encoding column-definition)
                       babel::*default-character-encoding*)))
-    (labels ((parse-year (&optional (tz 0))
-               (encode-universal-time
-                0 0 0 1 1
-                (read-fixed-length-integer 2 stream)
-                tz))
-             (to-string (octets)
+    (labels ((to-string (octets)
                (babel:octets-to-string octets :encoding encoding))
              (parse-binary-integer (length)
                (read-fixed-length-integer
@@ -304,7 +321,8 @@
 
         ;; Date/Time
         ((= column-type +mysql-type-year+)
-         (parse-year))
+         (let ((year (read-fixed-length-integer 2 stream)))
+           (make-instance 'mysql-year :year year)))
 
         ((= column-type +mysql-type-time+)
          (let ((length (read-byte stream))
@@ -321,8 +339,11 @@
            (when (>= length 12)
              ;; asedeno-TODO: warn about dropped precision
              (setf µs (read-fixed-length-integer 4 stream)))
-           (* sign (+ (* days 86400 #|seconds/day|#)
-                      (encode-universal-time s m h 1 1 1900 0)))))
+           (make-instance 'mysql-time-interval
+                          :days days
+                          :hours h
+                          :minutes m
+                          :seconds s)))
 
         ((member column-type (list +mysql-type-timestamp+
                                    +mysql-type-date+
@@ -330,9 +351,8 @@
                                    +mysql-type-newdate+)
                  :test #'=)
          (let ((length (read-byte stream))
-               (y 0) (m 1) (d 1)
+               (y 0) (m 0) (d 0)
                (hr 0) (mn 0) (s 0) (µs 0))
-           ;; NB: We don't support microseconds (µs)
            (assert (member length (list 0 4 7 11) :test #'=))
            (when (>= length 4)
              (setf y (read-fixed-length-integer 2 stream)
@@ -343,9 +363,15 @@
                    mn (read-byte stream)
                    s (read-byte stream)))
            (when (>= length 11)
-             ;; asedeno-TODO: warn about dropped precision
              (setf µs (read-fixed-length-integer 4 stream)))
-           (encode-universal-time s mn hr d m y 0)))
+           (make-instance 'mysql-date-time
+                          :year y
+                          :month m
+                          :day d
+                          :hour hr
+                          :minute mn
+                          :second s
+                          :microsecond µs)))
 
         ;; These types are not encoded in the binary format:
         ;; +mysql-type-null+ (encoded in null bitmap)

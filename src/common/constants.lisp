@@ -200,4 +200,10 @@
 (defconstant +mysql-refresh-slave+ #x40)
 (defconstant +mysql-refresh-master+ #x80)
 
+;; Date-Time
+
+(defconstant +seconds-per-minute+ 60)
+(defconstant +minutes-per-hour+ 60)
+(defconstant +hours-per-day+ 24)
+
 ) ;eval-when

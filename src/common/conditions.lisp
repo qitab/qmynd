@@ -40,3 +40,7 @@
 (define-condition bad-mysql-type-spec (mysql-error)
   ((text :initarg :text
          :reader bad-mysql-type-spec-text)))
+
+(define-condition invalid-date-time (mysql-error)
+  ((value :initarg :value
+          :reader invalid-date-time-parameter-value)))

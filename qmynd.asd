@@ -32,6 +32,8 @@
         :components ((:file "constants")
                      (:file "conditions")
                      (:file "utilities")
+                     (:file "date-time"
+                      :depends-on ("constants" "utilities"))
                      (:file "misc"
                       :depends-on ("constants"))))
        (:module "wire-protocol"
