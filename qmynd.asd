@@ -74,7 +74,10 @@
                       :serial nil
                       :depends-on ("connection" "response-result-set")
                       :components ((:file "prepared-statement")
+                                   (:file "binary-protocol-encoding")
                                    (:file "command-statement-prepare")
+                                   (:file "command-statement-execute"
+                                    :depends-on ("binary-protocol-encoding"))
                                    (:file "command-statement-close")
                                    (:file "command-statement-reset")))))
        (module "api"
