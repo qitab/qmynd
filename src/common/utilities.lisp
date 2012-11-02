@@ -220,6 +220,55 @@
                     (/ (parse-integer (coerce numerator 'string))
                        (expt 10 denominator)))))))
 
+(defun %denominator-divisible-by-2-or-5-only (x)
+  "Helper function used in the definition of type DECIMAL-NUMBER.
+
+  Return T if the denominator of x has only 2 and/or 5 as factors,
+  otherwise return NIL."
+  (let ((twos 0)
+        (fives 0))
+    (values (or (zerop x)
+                (let ((x (denominator x)))
+                  (loop while (evenp x)
+                        do (setq x (ash x -1))
+                           (incf twos))
+                  (loop with r = 0
+                        while (and (> x 1) (zerop r))
+                        do (multiple-value-setq (x r) (truncate x 5))
+                        when (zerop r)
+                          do (incf fives)
+                        finally (return (zerop r)))))
+            twos fives)))
+
+(defun write-decimal-to-string (value)
+  ;; Collect factors
+  (multiple-value-bind (decimalp twos fives)
+      (%denominator-divisible-by-2-or-5-only value)
+    ;; asedeno-TODO: signal somthing here
+    (unless decimalp
+      (error 'value-is-not-decimal :value value))
+    (let ((n (numerator value))
+          (d (denominator value)))
+      ;; Adjust denominator
+      (unless (= twos fives)
+        (let ((multiple (expt (if (< twos fives) 2 5)
+                              (abs (- twos fives)))))
+          (setf n (* n multiple)
+                d (* d multiple))))
+      ;; Split into parts
+      (multiple-value-bind
+            (whole frac)
+          (truncate (abs n) d)
+
+        ;; Combine into string
+        (apply #'concatenate
+               'string
+               (when (minusp value) "-")
+               (princ-to-string whole)
+               (unless (zerop frac)
+                 `("."
+                   ,(princ-to-string frac))))))))
+
 
 ;;; Portable floating point utilities
 
