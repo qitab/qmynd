@@ -73,13 +73,9 @@
                      (:module "prepared-statements"
                       :serial nil
                       :depends-on ("connection" "response-result-set")
-                      :components ((:file "prepared-statement")
-                                   (:file "binary-protocol-encoding")
-                                   (:file "command-statement-prepare")
-                                   (:file "command-statement-execute"
-                                    :depends-on ("binary-protocol-encoding"))
-                                   (:file "command-statement-close")
-                                   (:file "command-statement-reset")))))
+                      :components ((:file "binary-protocol-encoding")
+                                   (:file "prepared-statement"
+                                    :depends-on ("binary-protocol-encoding"))))))
        (module "api"
         :serial nil
         :depends-on ("mysql-protocol")
