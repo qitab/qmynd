@@ -14,6 +14,9 @@
   ((connection :type (or mysql-connection null)
                :initarg :connection
                :accessor mysql-prepared-statement-connection)
+   (query-string :type string
+                 :initarg :query-string
+                 :accessor mysql-prepared-statement-query-string)
    (statement-id :type (unsigned-byte 32)
                  :initarg :statement-id
                  :accessor mysql-prepared-statement-statement-id)
@@ -78,6 +81,7 @@
                           'vector)))
            (make-instance 'mysql-prepared-statement
                           :connection c
+                          :query-string query-string
                           :statement-id (command-statement-prepare-ok-packet-statement-id sp-ok)
                           :columns columns
                           :parameters parameters)))))))
