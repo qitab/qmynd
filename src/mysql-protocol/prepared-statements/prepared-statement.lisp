@@ -104,6 +104,7 @@
                   ((vector (unsigned-byte 8)) data)
                   (string (babel:string-to-octets data)))))
     (with-mysql-connection (c)
+      (assert (eq c (mysql-prepared-statement-connection statement)))
       (mysql-command-init c +mysql-command-statement-send-long-data+)
       (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
         (write-byte +mysql-command-statement-send-long-data+ s)
@@ -138,6 +139,7 @@
                   (list 0 (length (mysql-prepared-statement-parameters statement)))
                   :test #'=))
   (with-mysql-connection (c)
+    (assert (eq c (mysql-prepared-statement-connection statement)))
     (mysql-command-init c +mysql-command-statement-execute+)
     (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
       (write-byte +mysql-command-statement-execute+ s)
@@ -197,6 +199,7 @@
 
 (defmethod send-command-statement-close ((statement mysql-prepared-statement))
   (with-mysql-connection (c)
+    (assert (eq c (mysql-prepared-statement-connection statement)))
     (mysql-command-init c +mysql-command-statement-close+)
     (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
       (write-byte +mysql-command-statement-close+ s)
