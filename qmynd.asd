@@ -80,6 +80,7 @@
         :serial nil
         :depends-on ("mysql-protocol")
         :components ((:file "connection")
+                     (:file "commands")
                      (:file "prepared-statements")))))))
 
 (pushnew :qmynd *features*)
