@@ -11,4 +11,7 @@
 (in-package :cl-user)
 
 (defpackage qmynd
+  (:use))
+
+(defpackage qmynd-impl
   (:use :common-lisp))

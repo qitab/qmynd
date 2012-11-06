@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :qmynd)
+(in-package :qmynd-impl)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 

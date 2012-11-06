@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :qmynd)
+(in-package :qmynd-impl)
 
 (defclass mysql-prepared-statement ()
   ((connection :type (or mysql-connection null)

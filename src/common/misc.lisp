@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :qmynd)
+(in-package :qmynd-impl)
 
 ;;; Stuff in here should find a more permanent home as the library
 ;;; evolves.

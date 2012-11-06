@@ -8,7 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :qmynd)
+(in-package :qmynd-impl)
 
 ;;; The parameter "column definition" does not specify types well enough to be used for encoding
 ;;; here. Instead, we'll pick an encoding based on the type of the parameter. Later we may allow the
