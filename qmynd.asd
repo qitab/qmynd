@@ -82,4 +82,4 @@
         :components ((:file "connection")
                      (:file "prepared-statements")))))))
 
-(pushnew :cl-qmynd *features*)
+(pushnew :qmynd *features*)
