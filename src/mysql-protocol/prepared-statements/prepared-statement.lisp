@@ -25,10 +25,7 @@
             :accessor mysql-prepared-statement-columns)
    (parameters :type (list-of column-definition-v41)
                :initarg :parameters
-               :accessor mysql-prepared-statement-parameters)
-   (parameters-with-long-data :type list
-                              :initform nil
-                              :accessor mysql-prepared-statement-parameters-with-long-data)))
+               :accessor mysql-prepared-statement-parameters)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,7 +111,6 @@
         (write-fixed-length-integer parameter-id 2 s)
         (write-sequence octets s)
         (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))))
-  (pushnew parameter-id (mysql-prepared-statement-parameters-with-long-data statement))
   (values))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -222,11 +218,11 @@
 
 (defmethod send-command-statement-reset ((statement mysql-prepared-statement))
   (with-mysql-connection (c)
+    (assert (eq c (mysql-prepared-statement-connection statement)))
     (mysql-command-init c +mysql-command-statement-reset+)
     (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
       (write-byte +mysql-command-statement-reset+ s)
       (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
       (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
     (prog1
-        (parse-response (mysql-read-packet))
-      (setf (mysql-prepared-statement-parameters-with-long-data statement) nil))))
+        (parse-response (mysql-read-packet)))))
