@@ -20,9 +20,6 @@
          (babel::*default-character-encoding* (mysql-connection-character-set ,c)))
      ,@body))
 
-(defmacro with-mysql-connection ((c &optional cxn) &body body)
-  `(let ((,c (or ,cxn *mysql-connection*)))
-     ,@body))
 
 (defclass mysql-connection ()
   ((connected       :type boolean
@@ -94,9 +91,12 @@
     (setf (mysql-connection-sequence-id c) seq-id)
     payload))
 
-(defmethod mysql-command-init ((c mysql-connection) command)
+(defmethod mysql-connection-command-init ((c mysql-connection) command)
   (setf (mysql-connection-sequence-id c) 0
         (mysql-connection-current-command c) command))
+
+(defun mysql-command-init (command)
+  (mysql-connection-command-init *mysql-connection* command))
 
 (defun mysql-current-command-p (command)
   (eq (mysql-connection-current-command *mysql-connection*) command))

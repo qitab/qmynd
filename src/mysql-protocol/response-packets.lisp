@@ -46,24 +46,23 @@
 
 (defun parse-response (payload)
   "Parse a generic (OK, ERR, EOF) payload. Update MySQL connection status flags as necessary."
-  (with-mysql-connection (c)
-    (let ((tag (aref payload 0)))
-      (cond
-        ((= tag +mysql-response-ok+)
-         (let ((packet (parse-response-ok payload)))
-           (setf (mysql-connection-status-flags c)
-                 (response-ok-packet-status-flags packet))
-           packet))
-        ((= tag +mysql-response-error+)
-         (let ((packet (parse-response-error payload)))
-           (error (make-condition 'mysql-error
-                                   :code    (response-error-packet-error-code packet)
-                                   :message (response-error-packet-error-message packet)
-                                   :state   (response-error-packet-sql-state packet)))))
-        ((= tag +mysql-response-end-of-file+)
-         (let ((packet (parse-response-end-of-file payload)))
-           (setf (mysql-connection-status-flags c)
-                 (response-end-of-file-packet-status-flags packet))
-           packet))
-        (t
-         (error (make-condition 'unexpected-packet :payload payload)))))))
+  (let ((tag (aref payload 0)))
+    (cond
+      ((= tag +mysql-response-ok+)
+       (let ((packet (parse-response-ok payload)))
+         (setf (mysql-connection-status-flags *mysql-connection*)
+               (response-ok-packet-status-flags packet))
+         packet))
+      ((= tag +mysql-response-error+)
+       (let ((packet (parse-response-error payload)))
+         (error (make-condition 'mysql-error
+                                :code    (response-error-packet-error-code packet)
+                                :message (response-error-packet-error-message packet)
+                                :state   (response-error-packet-sql-state packet)))))
+      ((= tag +mysql-response-end-of-file+)
+       (let ((packet (parse-response-end-of-file payload)))
+         (setf (mysql-connection-status-flags *mysql-connection*)
+               (response-end-of-file-packet-status-flags packet))
+         packet))
+      (t
+       (error (make-condition 'unexpected-packet :payload payload))))))

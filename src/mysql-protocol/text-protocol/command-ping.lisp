@@ -23,7 +23,6 @@
 ;; Returns OK packet
 
 (defun send-command-ping ()
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-ping+)
-    (mysql-write-packet (vector +mysql-command-ping+))
-    (parse-response (mysql-read-packet))))
+  (mysql-command-init +mysql-command-ping+)
+  (mysql-write-packet (vector +mysql-command-ping+))
+  (parse-response (mysql-read-packet)))

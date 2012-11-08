@@ -23,9 +23,8 @@
 ;; Closes connection or returns OK packet.
 
 (defun send-command-quit ()
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-quit+)
-    (mysql-write-packet (vector +mysql-command-quit+))
-    ;; Don't bother listening for the OK packet, just close the connection.
-    (usocket:socket-close (mysql-connection-socket c))
-    (setf (mysql-connection-connected c) nil)))
+  (mysql-command-init +mysql-command-quit+)
+  (mysql-write-packet (vector +mysql-command-quit+))
+  ;; Don't bother listening for the OK packet, just close the connection.
+  (usocket:socket-close (mysql-connection-socket *mysql-connection*))
+  (setf (mysql-connection-connected *mysql-connection*) nil))

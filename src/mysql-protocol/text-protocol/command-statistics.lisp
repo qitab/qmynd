@@ -23,7 +23,6 @@
 ;; Returns (string :eof)
 
 (defun send-command-statistics ()
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-statistics+)
-    (mysql-write-packet (vector +mysql-command-statistics+))
-    (babel:octets-to-string (mysql-read-packet))))
+  (mysql-command-init +mysql-command-statistics+)
+  (mysql-write-packet (vector +mysql-command-statistics+))
+  (babel:octets-to-string (mysql-read-packet)))

@@ -25,7 +25,6 @@
 
 (defun send-command-refresh (flags)
   (assert (typep flags '(unsigned-byte 8)))
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-refresh+)
-    (mysql-write-packet (vector +mysql-command-refresh+ flags))
-    (parse-response (mysql-read-packet))))
+  (mysql-command-init +mysql-command-refresh+)
+  (mysql-write-packet (vector +mysql-command-refresh+ flags))
+  (parse-response (mysql-read-packet)))

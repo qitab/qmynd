@@ -23,7 +23,6 @@
 ;; Returns EOF or ERR packet
 
 (defun send-command-debug ()
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-debug+)
-    (mysql-write-packet (vector +mysql-command-debug+))
-    (parse-response (mysql-read-packet))))
+  (mysql-command-init +mysql-command-debug+)
+  (mysql-write-packet (vector +mysql-command-debug+))
+  (parse-response (mysql-read-packet)))

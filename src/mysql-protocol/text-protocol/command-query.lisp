@@ -20,24 +20,23 @@
 ;;    (query-string :mysql-type (string :eof))))
 
 (defun send-command-query (query-string)
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-query+)
-    (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-      (write-byte +mysql-command-query+ s)
-      (write-sequence (babel:string-to-octets query-string) s)
-      (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
-    (let* ((payload (mysql-read-packet))
-           (tag (aref payload 0)))
-      (case tag
-        ((#.+mysql-response-ok+ #.+mysql-response-error+) (parse-response payload))
-        (otherwise
-         (let* ((column-count (parse-column-count payload))
-                (column-definitions (coerce
-                                     (loop
-                                       repeat column-count
-                                       collect (parse-column-definition-v41 (mysql-read-packet))
-                                       ;; Consume the EOF packet or signal an error for an ERR packet.
-                                       finally (parse-response (mysql-read-packet)))
-                                     'vector))
-                (rows (parse-resultset-rows column-count column-definitions)))
-           (values rows column-definitions)))))))
+  (mysql-command-init +mysql-command-query+)
+  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
+    (write-byte +mysql-command-query+ s)
+    (write-sequence (babel:string-to-octets query-string) s)
+    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (let* ((payload (mysql-read-packet))
+         (tag (aref payload 0)))
+    (case tag
+      ((#.+mysql-response-ok+ #.+mysql-response-error+) (parse-response payload))
+      (otherwise
+       (let* ((column-count (parse-column-count payload))
+              (column-definitions (coerce
+                                   (loop
+                                     repeat column-count
+                                     collect (parse-column-definition-v41 (mysql-read-packet))
+                                     ;; Consume the EOF packet or signal an error for an ERR packet.
+                                     finally (parse-response (mysql-read-packet)))
+                                   'vector))
+              (rows (parse-resultset-rows column-count column-definitions)))
+         (values rows column-definitions))))))

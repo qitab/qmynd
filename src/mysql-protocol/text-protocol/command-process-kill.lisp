@@ -25,7 +25,6 @@
 
 (defun send-command-process-kill (connection-id)
   (assert (typep connection-id '(unsigned-byte 32)))
-  (with-mysql-connection (c)
-    (mysql-command-init c +mysql-command-process-kill+)
-    (mysql-write-packet (vector +mysql-command-process-kill+ connection-id))
-    (parse-response (mysql-read-packet))))
+  (mysql-command-init +mysql-command-process-kill+)
+  (mysql-write-packet (vector +mysql-command-process-kill+ connection-id))
+  (parse-response (mysql-read-packet)))
