@@ -92,36 +92,37 @@
 
 ;;; asedeno-TODO: Write SSL upgrade path
 
-#|
-Protocol Handshake Response Packet (v41)
-
-4 bytes        capability flags, CLIENT_PROTOCOL_41 always set
-4 bytes        max-packet size
-1 byte         character set
-string[23]     reserved (all [0])
-string[NUL]    username
-if +mysql-capability-client-plugin-auth-lenenc-client-data+
-  lenenc-int   length of auth-response
-  string[n]    auth-response
-elif +mysql-capability-client-secure-connection+
-  1 byte       length of auth-response
-  string[n]    auth-response
-else
-  string[NUL]  auth-response
-endif
-if +mysql-capability-client-connect-with-db+
-  string[NUL]  database
-endif
-if +mysql-capability-client-plugin-auth+
-  string[NUL]  auth plugin name
-endif
-if +mysql-capability-client-connect-attrs+
-  lenenc-int   length of all key-values
-  ( lenenc-str   key
-    lenenc-str   value
-  ) [repeated]
-endif
-|#
+;; (define-packet handshake-response-v41
+;;   ((capability-flags :mysql-type (integer 4))
+;;    (max-packet-size :mysql-type (integer 4))
+;;    (character-set :mysql-type (integer 1))
+;;    (reserved :mysql-type (string 23) :transient t :bind nil)
+;;    (username :mysql-type (string :null))
+;;    (auth-response-length
+;;     :mysql-type (integer :lenenc)
+;;     :predicate (flagsp +mysql-capability-client-plugin-auth-lenenc-client-data+ capability-flags)
+;;     :transient t)
+;;    (auth-response-length
+;;     :mysql-type (integer 1)
+;;     :predicate (and (flagsp +mysql-capability-client-secure-connection+ capability-flags)
+;;                     (not (flagsp +mysql-capability-client-plugin-auth-lenenc-client-data+ capability-flags)))
+;;     :transient t)
+;;    (auth-response
+;;     :mysql-type (octets auth-response-length)
+;;     :predicate (flagsp +mysql-capability-client-secure-connection+ capability-flags))
+;;    (auth-response
+;;     :mysql-type (octets :null)
+;;     :predicate (not (flagsp +mysql-capability-client-secure-connection+ capability-flags)))
+;;    (schema
+;;     :mysql-type (string :null)
+;;     :predicate (flagsp +mysql-capability-client-connect-with-db+ capability-flags))
+;;    (auth-plugin
+;;     :mysql-type (string :null)
+;;     :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))
+;;    ;; requires additional parsing
+;;    (client-capability-string
+;;     :mysql-type (octets :lenenc)
+;;     :predicate (flagsp +mysql-capability-client-connect-attrs+ capability-flags))))
 
 (defun send-handshake-response-41 (&key username auth-plugin auth-response database)
   (declare (ignorable username auth-response database))
