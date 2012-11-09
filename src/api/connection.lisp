@@ -23,25 +23,28 @@
          (initial-handshake-payload (mysql-connection-read-packet connection)))
     (bind-mysql-connection (connection)
       ;; 3) Process Initial Handshake
-      (multiple-value-bind (auth-data auth-plugin)
-          (process-initial-handshake-payload initial-handshake-payload)
+      (process-initial-handshake-payload initial-handshake-payload)
 
-        ;; asedeno-TODO: Negotiate SSL
+      ;; asedeno-TODO: Negotiate SSL
 
-        (unless database
-          (setf (mysql-connection-capabilities connection)
-                (logxor (mysql-connection-capabilities connection)
-                        +mysql-capability-client-connect-with-db+)))
+      (unless database
+        (setf (mysql-connection-capabilities connection)
+              (logxor (mysql-connection-capabilities connection)
+                      +mysql-capability-client-connect-with-db+)))
 
-        ;; 4) Prepare Auth Response
-        (handler-case
-            (let ((auth-response (generate-auth-response password auth-data auth-plugin)))
-              ;; 5) Prepare Initial Response OR Close and Signal
-              (send-handshake-response-41 :username username :auth-response auth-response :auth-plugin auth-plugin :database database)
-              (parse-response (mysql-read-packet)))
-          (mysql-base-error (e)
-            (usocket:socket-close socket)
-            (error e)))))
+      ;; 4) Prepare Auth Response
+      (handler-case
+          (with-prefixed-accessors (auth-data auth-plugin)
+              (mysql-connection- connection)
+            ;; 5) Prepare Initial Response OR Close and Signal
+            (send-handshake-response-41 :username username
+                                        :auth-response (generate-auth-response password auth-data auth-plugin)
+                                        :auth-plugin auth-plugin
+                                        :database database)
+            (parse-response (mysql-read-packet)))
+        (mysql-base-error (e)
+          (usocket:socket-close socket)
+          (error e))))
 
     (setf (mysql-connection-connected connection) t)
     connection))

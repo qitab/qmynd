@@ -45,6 +45,10 @@
    (sequence-id     :type integer
                     :initform 0
                     :accessor mysql-connection-sequence-id)
+   (auth-data       :type (vector (unsigned-byte 8))
+                    :accessor mysql-connection-auth-data)
+   (auth-plugin     :type (or string null)
+                    :accessor mysql-connection-auth-plugin)
    (default-schema  :type (or string null)
                     :initarg :default-schema
                     :accessor mysql-connection-default-schema)

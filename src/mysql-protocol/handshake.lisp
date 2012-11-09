@@ -66,7 +66,13 @@
           (initial-handshake-v10-packet-character-set packet)
 
           (mysql-connection-status-flags *mysql-connection*)
-          (initial-handshake-v10-packet-status-flags packet))
+          (initial-handshake-v10-packet-status-flags packet)
+
+          (mysql-connection-auth-data *mysql-connection*)
+          (initial-handshake-v10-packet-auth-data packet)
+
+          (mysql-connection-auth-plugin *mysql-connection*)
+          (initial-handshake-v10-packet-auth-plugin packet))
 
     (unless (mysql-has-capability +mysql-capabilities-required+)
       (error 'mysql-insufficient-capabilities
@@ -84,11 +90,7 @@
             capability-flags
             +mysql-capabilities-supported+
             (mysql-connection-capabilities *mysql-connection*))
-    (values (initial-handshake-v10-packet-auth-data packet)
-            (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
-              ;; If we don't support pluggable-auth (and we don't
-              ;; yet), don't bother returnin the plugin name.
-              (initial-handshake-v10-packet-auth-plugin packet)))))
+    (values)))
 
 ;;; asedeno-TODO: Write SSL upgrade path
 
