@@ -125,7 +125,6 @@
 ;;     :predicate (flagsp +mysql-capability-client-connect-attrs+ capability-flags))))
 
 (defun send-handshake-response-41 (&key username auth-plugin auth-response database)
-  (declare (ignorable username auth-response database))
   (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
     (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
     (write-fixed-length-integer #x1000000 4 s)
