@@ -75,12 +75,15 @@
                             ;; Consume the EOF packet or signal an error for an ERR packet.
                             finally (parse-response (mysql-read-packet))))
                         'vector)))
-         (make-instance 'mysql-prepared-statement
-                        :connection *mysql-connection*
-                        :query-string query-string
-                        :statement-id (command-statement-prepare-ok-packet-statement-id sp-ok)
-                        :columns columns
-                        :parameters parameters))))))
+         (let ((statement
+                 (make-instance 'mysql-prepared-statement
+                                :connection *mysql-connection*
+                                :query-string query-string
+                                :statement-id (command-statement-prepare-ok-packet-statement-id sp-ok)
+                                :columns columns
+                                :parameters parameters)))
+           (push statement (mysql-connection-prepared-statements *mysql-connection*))
+           statement))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 15.7.5 command-statement-send-long-data
@@ -202,6 +205,7 @@
     (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
   ;; No response from server
+  (setf (mysql-prepared-statement-connection statement) nil)
   (values))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

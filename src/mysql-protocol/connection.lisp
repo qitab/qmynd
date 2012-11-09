@@ -50,11 +50,21 @@
                     :accessor mysql-connection-default-schema)
    (current-command :type (or integer null)
                     :initform nil
-                    :accessor mysql-connection-current-command)))
+                    :accessor mysql-connection-current-command)
+   ;; This is internal library state. It may be destructively by the library.
+   (prepared-statements :type list
+                        :initform nil
+                        :accessor mysql-connection-prepared-statements)))
 
 (defmethod mysql-connection-stream ((c mysql-connection))
   (usocket:socket-stream (mysql-connection-socket c)))
 
+(defmethod mysql-connection-remove-stale-prepared-statements ((c mysql-connection))
+  (setf (mysql-connection-prepared-statements *mysql-connection*)
+        (delete-if-not
+         #'(lambda (ps)
+             (eq (mysql-prepared-statement-connection ps) *mysql-connection*))
+         (mysql-connection-prepared-statements *mysql-connection*))))
 
 ;;; Flag utilities
 (defun flagsp (bits-to-test bits-available &optional (mode :every))

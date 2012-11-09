@@ -38,5 +38,5 @@
     (assert connection)
     (bind-mysql-connection (connection)
       (send-command-statement-close statement)
-      (setf (mysql-prepared-statement-connection statement) nil)
+      (mysql-connection-remove-stale-prepared-statements *mysql-connection*)
       (values))))
