@@ -13,7 +13,7 @@
 ;;; Package declaration for MySQL Native Driver tests
 
 (defpackage :qmynd-test
-  (:use :common-lisp :qmynd)
+  (:use :common-lisp :qmynd-impl)
   #+test-tools
   (:import-from :qtest
    :define-test
@@ -23,18 +23,53 @@
    :assert-equal
    :assert-true
    :assert-false)
+
+  (:import-from :qmynd-impl
   ;; utilities
-  (:import-from :qmynd
    :single-float-bits
    :double-float-bits
    :make-single-float
-   :make-double-float)
+   :make-double-float
+
   ;; MySQL Basic Type I/O
-  (:import-from :qmynd
    :read-fixed-length-integer
    :read-length-encoded-integer
    :read-fixed-length-string
    :read-null-terminated-string
    :read-length-encoded-string
    :write-fixed-length-integer
-   :write-length-encoded-integer))
+   :write-length-encoded-integer
+
+  ;; MySQL Date/Time classes
+   :mysql-date-time
+   :mysql-time-interval
+   :mysql-year
+
+  ;; MySQL Constants
+   :+mysql-type-decimal+
+   :+mysql-type-tiny+
+   :+mysql-type-short+
+   :+mysql-type-long+
+   :+mysql-type-float+
+   :+mysql-type-double+
+   :+mysql-type-null+
+   :+mysql-type-timestamp+
+   :+mysql-type-longlong+
+   :+mysql-type-int24+
+   :+mysql-type-date+
+   :+mysql-type-time+
+   :+mysql-type-datetime+
+   :+mysql-type-year+
+   :+mysql-type-newdate+
+   :+mysql-type-varchar+
+   :+mysql-type-bit+
+   :+mysql-type-newdecimal+
+   :+mysql-type-enum+
+   :+mysql-type-set+
+   :+mysql-type-tiny-blob+
+   :+mysql-type-medium-blob+
+   :+mysql-type-long-blob+
+   :+mysql-type-blob+
+   :+mysql-type-var-string+
+   :+mysql-type-string+
+   :+mysql-type-geometry+))
