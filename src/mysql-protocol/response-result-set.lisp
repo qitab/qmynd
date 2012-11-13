@@ -77,12 +77,11 @@
                 (let ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload)))
                       (row (make-array column-count :initial-element nil)))
                   (loop for i from 0 below column-count
-                        if (eq (flexi-streams:peek-byte s) #xfb)
-                          do (read-byte s) ; throw this byte away -- it represents a NULL column.
-                        else
+                        for str = (read-length-encoded-string s :null-ok t)
+                        when str
                           do (setf (aref row i)
                                    (parse-text-protocol-result-column
-                                    (read-length-encoded-string s)
+                                    str
                                     (aref column-definitions i))))
                   row))))))
     (coerce (loop for row = (parse-resultset-row) then (parse-resultset-row)
