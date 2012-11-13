@@ -64,13 +64,13 @@
       (single-float
        (write-fixed-length-integer (single-float-bits value)
                                    4 value-stream)
-       (write-byte +mysql-type-double+ type-stream)
+       (write-byte +mysql-type-float+ type-stream)
        (write-byte #x80 type-stream))
       (double-float
        (multiple-value-bind (l h) (double-float-bits value)
          (write-fixed-length-integer l 4 value-stream)
          (write-fixed-length-integer h 4 value-stream))
-
+       (write-byte +mysql-type-double+ type-stream)
        (write-byte #x80 type-stream))
 
       ;; MySQL Date/Time structs
