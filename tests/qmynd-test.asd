@@ -37,6 +37,11 @@
               :pathname #p""
               :depends-on ("common")
               :components ((:file "parsing")
-                           (:file "basic-types")))))
+                           (:file "basic-types")))
+     (:module "encoding"
+              :serial nil
+              :pathname #p""
+              :depends-on ("common")
+              :components ((:file "binary-encoding")))))
 
 (pushnew :cl-qmynd *features*)
