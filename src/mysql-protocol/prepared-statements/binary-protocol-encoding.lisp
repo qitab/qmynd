@@ -38,15 +38,15 @@
        (write-byte +mysql-type-tiny+ type-stream)
        (encode-binary-integer 1))
       ;; short, signed or unsigned
-      ((or (integer #x-8000 #xffff))
+      ((integer #x-8000 #xffff)
        (write-byte +mysql-type-short+ type-stream)
        (encode-binary-integer 2))
       ;; long, signed or unsigned
-      ((or (integer #x-80000000 #xffffffff))
+      ((integer #x-80000000 #xffffffff)
        (write-byte +mysql-type-long+ type-stream)
        (encode-binary-integer 4))
       ;; long-long, signed or unsigned
-      ((or (integer #x-8000000000000000 #xffffffffffffffff))
+      ((integer #x-8000000000000000 #xffffffffffffffff)
        (write-byte +mysql-type-longlong+ type-stream)
        (encode-binary-integer 8))
       ;; too big, encode as string and let MySQL deal with it.
