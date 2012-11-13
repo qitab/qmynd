@@ -111,7 +111,7 @@
              (write-byte minutes value-stream)
              (write-byte seconds value-stream))
            (when (> length 8)
-             (write-byte microseconds value-stream))))
+             (write-fixed-length-integer microseconds 4 value-stream))))
        (write-byte +mysql-type-time+ type-stream)
        (write-byte 0 type-stream))
 
