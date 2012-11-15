@@ -116,17 +116,17 @@
                      (length (length octets)))
                  (when (> length 0)
                    ;; YYYY-MM-DD
-                   (setf year (parse-integer (str) :start 0 :junk-allowed t)
-                         month (parse-integer (str) :start 5 :junk-allowed t)
-                         day (parse-integer (str) :start 10 :junk-allowed t)))
+                   (setf year  (parse-integer (str) :start 0 :end  4)
+                         month (parse-integer (str) :start 5 :end  7)
+                         day   (parse-integer (str) :start 8 :end 10)))
                  (when (> length 10)
                    ;; YYYY-MM-DD hh:mm:ss
-                   (setf hour (parse-integer (str) :start 11 :junk-allowed t)
-                         minute (parse-integer (str) :start 14 :junk-allowed t)
-                         second (parse-integer (str) :start 17 :junk-allowed t)))
+                   (setf hour   (parse-integer (str) :start 11 :end 13)
+                         minute (parse-integer (str) :start 14 :end 16)
+                         second (parse-integer (str) :start 17 :end 19)))
                  (when (> length 19)
                    ;; YYYY-MM-DD hh:mm:ss.µµµµµµ
-                   (setf microsecond (parse-integer (str) :start 19)))
+                   (setf microsecond (parse-integer (str) :start 20 :end 26)))
                  (make-instance 'mysql-date-time
                                 :year year
                                 :month month
