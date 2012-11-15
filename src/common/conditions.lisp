@@ -10,10 +10,27 @@
 
 (in-package :qmynd-impl)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Library Base Conditions
 (define-condition mysql-base-error (error)
   ())
 
-(define-condition mysql-error (mysql-base-error)
+(define-condition mysql-internal-error (mysql-base-error)
+  ())
+
+(define-condition mysql-external-error (mysql-base-error)
+  ())
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Library Internal Errors
+(define-condition bad-mysql-type-spec (mysql-internal-error)
+  ((text :initarg :text
+         :reader bad-mysql-type-spec-text)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Exported Errors
+
+(define-condition mysql-error (mysql-external-error)
   ((code :initarg :code
          :reader mysql-error-code)
    (message :initarg :message
@@ -25,25 +42,30 @@
                      (mysql-error-code e)
                      (mysql-error-message e)))))
 
-(define-condition mysql-insufficient-capabilities (mysql-base-error)
+(define-condition invalid-prepared-statement (mysql-external-error)
+  ())
+
+(define-condition unexpected-parameter-count (mysql-external-error)
+  ())
+
+(define-condition unexpected-column-type (mysql-external-error)
+  ())
+
+(define-condition mysql-insufficient-capabilities (mysql-external-error)
   ((server-flags :initarg server-flags
                  :reader mysql-insufficient-capabilities-server-flags)))
 
-(define-condition mysql-unsupported-authentication (mysql-base-error)
+(define-condition mysql-unsupported-authentication (mysql-external-error)
   ((plugin :initarg :plugin
            :reader mysql-unsupported-authentication-plugin)))
 
-(define-condition unexpected-packet (mysql-base-error)
+(define-condition unexpected-packet (mysql-external-error)
   ((payload :initarg :payload
             :reader unexpected-packet-payload)))
 
-(define-condition bad-mysql-type-spec (mysql-error)
-  ((text :initarg :text
-         :reader bad-mysql-type-spec-text)))
-
-(define-condition value-is-not-decimal (mysql-error)
+(define-condition value-is-not-decimal (mysql-external-error)
   ((value :initarg :value)))
 
-(define-condition invalid-date-time (mysql-error)
+(define-condition invalid-date-time (mysql-external-error)
   ((value :initarg :value
           :reader invalid-date-time-parameter-value)))
