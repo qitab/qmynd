@@ -173,8 +173,7 @@
         ;; ((= column-type +mysql-type-geometry+)
         ;;  octets)
         (t
-         ;; asedeno-TODO: log unknown type rather than asserting.
-         (assert "Unknown type")
+         ;; asedeno-TODO: log unknown type
          octets)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -330,5 +329,5 @@
          (read-rest-of-packet-string stream))
         ;; +mysql-type-null+ (encoded in null bitmap)
         (t
-         ;; asedeno-TODO: signal parsing error
-         (assert "Unknown type"))))))
+         ;; asedeno-TODO: log unknown type
+         (read-rest-of-packet-string stream))))))
