@@ -77,10 +77,11 @@
   (with-prefixed-accessors (year month day hour minute second microsecond)
       (mysql-date-time- date-time)
     (assert (>= year 1900))
-    ;; asedeno-TODO: warn on loss of microseconds
-    (encode-universal-time second minute hour day month year 0)))
+    ;; asedeno-TODO: log loss of microseconds if non-zero
+    (values (encode-universal-time second minute hour day month year 0)
+            microsecond)))
 
-(defun universal-time-to-mysql-date-time (integer-time)
+(defun universal-time-to-mysql-date-time (integer-time &optional (microseconds 0))
   (assert (typep integer-time 'integer))
   (multiple-value-bind (second minute hour day month year tz)
       (decode-universal-time integer-time 0)
@@ -91,7 +92,8 @@
                    :day day
                    :hour hour
                    :minute minute
-                   :second second)))
+                   :second second
+                   :microsecond microseconds)))
 
 (defun parse-date-time-string (str)
   (let ((year 0) (month 0) (day 0)
@@ -160,16 +162,17 @@
 (defun mysql-time-interval-to-seconds (interval)
   (assert (typep interval 'mysql-time-interval))
   (with-prefixed-accessors (negativep days hours minutes seconds microseconds)
-      (mysql-time-interval- interval)
-    (* (if negativep -1 1)
-       (+ seconds
-          (* +seconds-per-minute+
-             (+ minutes
-                (* +minutes-per-hour+
-                   (+ hours
-                      (* +hours-per-day+ days)))))))))
+    (mysql-time-interval- interval)
+    (values (* (if negativep -1 1)
+               (+ seconds
+                  (* +seconds-per-minute+
+                     (+ minutes
+                        (* +minutes-per-hour+
+                           (+ hours
+                              (* +hours-per-day+ days)))))))
+            microseconds)))
 
-(defun seconds-to-mysql-time-interval (value)
+(defun seconds-to-mysql-time-interval (value &optional (microseconds 0))
   (assert (typep value 'integer))
   (let ((negativep (minusp value))
         (value (abs value)))
@@ -181,7 +184,8 @@
                          :days days
                          :hours hours
                          :minutes minutes
-                         :seconds seconds))))))
+                         :seconds seconds
+                         :microseconds microseconds))))))
 
 (defun parse-time-interval-string (str)
   (let ((negativep (starts-with str "-")))
