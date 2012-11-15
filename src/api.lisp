@@ -10,6 +10,7 @@
 
 (in-package :qmynd-impl)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Conncetion entry-point
 (defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database)
   ;; 1) Open Socket
@@ -53,3 +54,42 @@
   (when (mysql-connection-connected c)
     (bind-mysql-connection (c)
       (send-command-quit))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Simple SQL Queries
+(defun mysql-query (connection query-string)
+  (bind-mysql-connection (connection)
+    (send-command-query query-string)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Prepared Statements
+(defun mysql-statement-prepare (connection query-string)
+  (bind-mysql-connection (connection)
+    (send-command-statement-prepare query-string)))
+
+(defmethod mysql-statement-execute ((statement mysql-prepared-statement) &key parameters)
+  (with-prefixed-accessors (connection statement-id)
+      (mysql-prepared-statement- statement)
+    ;;; asedeno-TODO: signal something real here
+    (assert connection)
+    (bind-mysql-connection (connection)
+      (send-command-statement-execute statement :parameters parameters))))
+
+(defmethod mysql-statement-reset ((statement mysql-prepared-statement))
+  (with-prefixed-accessors (connection statement-id)
+      (mysql-prepared-statement- statement)
+    ;;; asedeno-TODO: signal something real here
+    (assert connection)
+    (bind-mysql-connection (connection)
+      (send-command-statement-reset statement)
+      (values))))
+
+(defmethod mysql-statement-close ((statement mysql-prepared-statement))
+  (with-prefixed-accessors (connection statement-id)
+      (mysql-prepared-statement- statement)
+    ;;; asedeno-TODO: signal something real here
+    (assert connection)
+    (bind-mysql-connection (connection)
+      (send-command-statement-close statement)
+      (mysql-connection-remove-stale-prepared-statements *mysql-connection*)
+      (values))))

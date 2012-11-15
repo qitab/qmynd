@@ -76,11 +76,7 @@
                       :components ((:file "binary-protocol-encoding")
                                    (:file "prepared-statement"
                                     :depends-on ("binary-protocol-encoding"))))))
-       (module "api"
-        :serial nil
-        :depends-on ("mysql-protocol")
-        :components ((:file "connection")
-                     (:file "commands")
-                     (:file "prepared-statements")))))))
+       (:file "api"
+        :depends-on ("mysql-protocol"))))))
 
 (pushnew :qmynd *features*)
