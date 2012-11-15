@@ -244,7 +244,6 @@
         ((member column-type (list +mysql-type-decimal+
                                    +mysql-type-newdecimal+)
                  :test #'=)
-         ;;asedeno-TODO: verify this
          (parse-decimal (to-string (read-length-encoded-string stream))))
 
         ;; Integers
