@@ -244,7 +244,6 @@
   ;; Collect factors
   (multiple-value-bind (decimalp twos fives)
       (%denominator-divisible-by-2-or-5-only value)
-    ;; asedeno-TODO: signal somthing here
     (unless decimalp
       (error 'value-is-not-decimal :value value))
     (let ((n (numerator value))
