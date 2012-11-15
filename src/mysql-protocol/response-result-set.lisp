@@ -280,7 +280,6 @@
          (let ((length (read-byte stream))
                (sign 0) (days 0)
                (h 0) (m 0) (s 0) (µs 0))
-           ;; NB: We don't support microseconds (µs)
            (assert (member length (list 0 8 12) :test #'=))
            (when (>= length 8)
              (setf sign (if (zerop (read-byte stream)) 1 -1)
@@ -289,13 +288,13 @@
                    m (read-byte stream)
                    s (read-byte stream)))
            (when (>= length 12)
-             ;; asedeno-TODO: warn about dropped precision
              (setf µs (read-fixed-length-integer 4 stream)))
            (make-instance 'mysql-time-interval
                           :days days
                           :hours h
                           :minutes m
-                          :seconds s)))
+                          :seconds s
+                          :microseconds µs)))
 
         ((member column-type (list +mysql-type-timestamp+
                                    +mysql-type-date+
