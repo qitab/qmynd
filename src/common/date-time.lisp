@@ -93,6 +93,33 @@
                    :minute minute
                    :second second)))
 
+(defun parse-date-time-string (str)
+  (let ((year 0) (month 0) (day 0)
+        (hour 0) (minute 0) (second 0)
+        (microsecond 0)
+        (length (length str)))
+    (when (> length 0)
+      ;; YYYY-MM-DD
+      (setf year  (parse-integer str :start 0 :end  4)
+            month (parse-integer str :start 5 :end  7)
+            day   (parse-integer str :start 8 :end 10)))
+    (when (> length 10)
+      ;; YYYY-MM-DD hh:mm:ss
+      (setf hour   (parse-integer str :start 11 :end 13)
+            minute (parse-integer str :start 14 :end 16)
+            second (parse-integer str :start 17 :end 19)))
+    (when (> length 19)
+      ;; YYYY-MM-DD hh:mm:ss.µµµµµµ
+      (setf microsecond (parse-integer str :start 20 :end 26)))
+    (make-instance 'mysql-date-time
+                   :year year
+                   :month month
+                   :day day
+                   :hour hour
+                   :minute minute
+                   :second second
+                   :microsecond microsecond)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; MySQL Time Interval
 
@@ -156,6 +183,27 @@
                          :minutes minutes
                          :seconds seconds))))))
 
+(defun parse-time-interval-string (str)
+  (let ((negativep (starts-with str "-")))
+    (multiple-value-bind (hours end)
+        (parse-integer str :start (if negativep 1 0) :junk-allowed t)
+      (multiple-value-bind (days hours)
+          (truncate hours 24)
+        (multiple-value-bind (minutes end)
+            (parse-integer str :start (1+ end) :junk-allowed t)
+          (multiple-value-bind (seconds end)
+              (parse-integer str :start (1+ end) :junk-allowed t)
+            (let ((microseconds
+                    (if (> (length str) end)
+                        (parse-integer str :start (1+ end))
+                        0)))
+              (make-instance 'mysql-time-interval
+                             :days days
+                             :hours hours
+                             :minutes minutes
+                             :seconds seconds
+                             :microseconds microseconds))))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; MySQL Year
 
@@ -169,4 +217,3 @@
   (with-prefixed-accessors (year)
       (mysql-year- year)
     (format stream "#<MYSQL-YEAR ~4,'0D>" year)))
-

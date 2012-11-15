@@ -107,54 +107,7 @@
                (with-standard-io-syntax
                  (let ((*read-default-float-format* float-format))
                    (with-input-from-string (s (str))
-                     (read s)))))
-             (parse-datetime ()
-               ;; Look into replacing this with a library, or moving it to utilities.lisp.
-               (let ((year 0) (month 0) (day 0)
-                     (hour 0) (minute 0) (second 0)
-                     (microsecond 0)
-                     (length (length octets)))
-                 (when (> length 0)
-                   ;; YYYY-MM-DD
-                   (setf year  (parse-integer (str) :start 0 :end  4)
-                         month (parse-integer (str) :start 5 :end  7)
-                         day   (parse-integer (str) :start 8 :end 10)))
-                 (when (> length 10)
-                   ;; YYYY-MM-DD hh:mm:ss
-                   (setf hour   (parse-integer (str) :start 11 :end 13)
-                         minute (parse-integer (str) :start 14 :end 16)
-                         second (parse-integer (str) :start 17 :end 19)))
-                 (when (> length 19)
-                   ;; YYYY-MM-DD hh:mm:ss.µµµµµµ
-                   (setf microsecond (parse-integer (str) :start 20 :end 26)))
-                 (make-instance 'mysql-date-time
-                                :year year
-                                :month month
-                                :day day
-                                :hour hour
-                                :minute minute
-                                :second second
-                                :microsecond microsecond)))
-             (parse-time ()
-               (let ((negativep (starts-with (str) "-")))
-                 (multiple-value-bind (hours end)
-                     (parse-integer (str) :start (if negativep 1 0) :junk-allowed t)
-                   (multiple-value-bind (days hours)
-                       (truncate hours 24)
-                     (multiple-value-bind (minutes end)
-                         (parse-integer (str) :start (1+ end) :junk-allowed t)
-                       (multiple-value-bind (seconds end)
-                           (parse-integer (str) :start (1+ end) :junk-allowed t)
-                         (let ((microseconds
-                                 (if (> (length (str)) end)
-                                     (parse-integer (str) :start (1+ end))
-                                     0)))
-                           (make-instance 'mysql-time-interval
-                                          :days days
-                                          :hours hours
-                                          :minutes minutes
-                                          :seconds seconds
-                                          :microseconds microseconds)))))))))
+                     (read s))))))
       (cond
         ;; Integers
         ((member column-type (list +mysql-type-tiny+
@@ -187,14 +140,14 @@
                                    +mysql-type-datetime+
                                    +mysql-type-newdate+)
                  :test #'=)
-         (parse-datetime))
+         (parse-date-time-string (str)))
 
         ((= column-type +mysql-type-year+)
          (make-instance 'mysql-year
                         :year (parse-integer (str))))
 
         ((= column-type +mysql-type-time+)
-         (parse-time))
+         (parse-time-interval-string (str)))
 
         ;; Strings
         ((member column-type (list +mysql-type-varchar+
