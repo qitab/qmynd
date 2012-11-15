@@ -32,16 +32,14 @@
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
   (let* ((initial-payload (mysql-read-packet))
          (tag (aref initial-payload 0)))
-    (case tag
-      (#.+mysql-response-error+
-       (parse-response initial-payload))
-      (otherwise
-       (coerce
-        (loop
-          for payload = initial-payload then (mysql-read-packet)
-          until (and (= (aref payload 0) +mysql-response-end-of-file+)
-                     (< (length payload) 9))
-          collect (parse-column-definition-v41 payload)
-          ;; Consume the EOF packet or signal an error for an ERR packet.
-          finally (parse-response payload))
-        'vector)))))
+    (if (= tag +mysql-response-error+)
+        (parse-response initial-payload)
+        (coerce
+         (loop
+           for payload = initial-payload then (mysql-read-packet)
+           until (and (= (aref payload 0) +mysql-response-end-of-file+)
+                      (< (length payload) 9))
+           collect (parse-column-definition-v41 payload)
+           ;; Consume the EOF packet or signal an error for an ERR packet.
+           finally (parse-response payload))
+         'vector))))

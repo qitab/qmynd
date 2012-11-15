@@ -53,37 +53,36 @@
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
   (let* ((payload (mysql-read-packet))
          (tag (aref payload 0)))
-    (case tag
-      ((#.+mysql-response-error+) (parse-response payload))
-      (otherwise
-       (let* ((sp-ok (parse-command-statement-prepare-ok payload))
-              (parameter-count (command-statement-prepare-ok-packet-num-params sp-ok))
-              (column-count (command-statement-prepare-ok-packet-num-columns sp-ok))
-              (parameters (coerce
-                           (unless (zerop parameter-count)
-                             (loop
-                               repeat parameter-count
-                               collect (parse-column-definition-v41 (mysql-read-packet))
-                               ;; Consume the EOF packet or signal an error for an ERR packet.
-                               finally (parse-response (mysql-read-packet))))
-                           'vector))
-              (columns (coerce
-                        (unless (zerop column-count)
-                          (loop
-                            repeat column-count
-                            collect (parse-column-definition-v41 (mysql-read-packet))
-                            ;; Consume the EOF packet or signal an error for an ERR packet.
-                            finally (parse-response (mysql-read-packet))))
-                        'vector)))
-         (let ((statement
-                 (make-instance 'mysql-prepared-statement
-                                :connection *mysql-connection*
-                                :query-string query-string
-                                :statement-id (command-statement-prepare-ok-packet-statement-id sp-ok)
-                                :columns columns
-                                :parameters parameters)))
-           (push statement (mysql-connection-prepared-statements *mysql-connection*))
-           statement))))))
+    (if (= tag +mysql-response-error+)
+        (parse-response payload)
+        (let* ((sp-ok (parse-command-statement-prepare-ok payload))
+               (parameter-count (command-statement-prepare-ok-packet-num-params sp-ok))
+               (column-count (command-statement-prepare-ok-packet-num-columns sp-ok))
+               (parameters (coerce
+                            (unless (zerop parameter-count)
+                              (loop
+                                repeat parameter-count
+                                collect (parse-column-definition-v41 (mysql-read-packet))
+                                ;; Consume the EOF packet or signal an error for an ERR packet.
+                                finally (parse-response (mysql-read-packet))))
+                            'vector))
+               (columns (coerce
+                         (unless (zerop column-count)
+                           (loop
+                             repeat column-count
+                             collect (parse-column-definition-v41 (mysql-read-packet))
+                             ;; Consume the EOF packet or signal an error for an ERR packet.
+                             finally (parse-response (mysql-read-packet))))
+                         'vector)))
+          (let ((statement
+                  (make-instance 'mysql-prepared-statement
+                                 :connection *mysql-connection*
+                                 :query-string query-string
+                                 :statement-id (command-statement-prepare-ok-packet-statement-id sp-ok)
+                                 :columns columns
+                                 :parameters parameters)))
+            (push statement (mysql-connection-prepared-statements *mysql-connection*))
+            statement)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 15.7.5 command-statement-send-long-data
@@ -172,21 +171,20 @@
 (defmethod parse-command-statement-execute-response ((statement mysql-prepared-statement))
   (let* ((payload (mysql-read-packet))
          (tag (aref payload 0)))
-    (case tag
-      ((#.+mysql-response-ok+ #.+mysql-response-error+) (parse-response payload))
-      (otherwise
-       (let* ((column-count (parse-column-count payload))
-              (column-definitions (coerce
-                                   (loop
-                                     repeat column-count
-                                     collect (parse-column-definition-v41 (mysql-read-packet))
-                                     ;; Consume the EOF packet or signal an error for an ERR packet.
-                                     finally (parse-response (mysql-read-packet)))
-                                   'vector))
-              (rows (parse-binary-resultset-rows column-count column-definitions)))
-         ;; The column definitions may have changed.
-         (setf (mysql-prepared-statement-columns statement) column-definitions)
-         (values rows column-definitions))))))
+    (if (member tag '(+mysql-response-ok+ +mysql-response-error+))
+        (parse-response payload)
+        (let* ((column-count (parse-column-count payload))
+               (column-definitions (coerce
+                                    (loop
+                                      repeat column-count
+                                      collect (parse-column-definition-v41 (mysql-read-packet))
+                                      ;; Consume the EOF packet or signal an error for an ERR packet.
+                                      finally (parse-response (mysql-read-packet)))
+                                    'vector))
+               (rows (parse-binary-resultset-rows column-count column-definitions)))
+          ;; The column definitions may have changed.
+          (setf (mysql-prepared-statement-columns statement) column-definitions)
+          (values rows column-definitions)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 15.7.7 command-statement-close

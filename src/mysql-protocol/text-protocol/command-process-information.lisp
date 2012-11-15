@@ -28,19 +28,18 @@
   (mysql-write-packet (vector +mysql-command-process-information+))
   (let* ((payload (mysql-read-packet))
          (tag (aref payload 0)))
-    (case tag
-      ((#.+mysql-response-error+) (parse-response payload))
-      (otherwise
-       (let* ((column-count (parse-column-count payload))
-              (column-definitions (coerce
-                                   (loop
-                                     repeat column-count
-                                     collect (parse-column-definition-v41 (mysql-read-packet))
-                                     ;; Consume the EOF packet, or signal an error for an ERR packet.
-                                     finally (parse-response (mysql-read-packet)))
-                                   'vector))
-              (rows (parse-resultset-rows column-count column-definitions)))
-         (values rows column-definitions))))))
+    (if (= tag +mysql-response-error+)
+        (parse-response payload)
+        (let* ((column-count (parse-column-count payload))
+               (column-definitions (coerce
+                                    (loop
+                                      repeat column-count
+                                      collect (parse-column-definition-v41 (mysql-read-packet))
+                                      ;; Consume the EOF packet, or signal an error for an ERR packet.
+                                      finally (parse-response (mysql-read-packet)))
+                                    'vector))
+               (rows (parse-resultset-rows column-count column-definitions)))
+          (values rows column-definitions)))))
 
 #|
 ;; If COM_PROCESS_INFO ever gets disabled, compatability stub:
