@@ -134,10 +134,10 @@
 ;;    (values :mysql-type (octets :eof) :predicate (= 1 new-parameters))))
 
 (defmethod send-command-statement-execute  ((statement mysql-prepared-statement) &key parameters)
-  ;; asedeno-TODO: signal new condition here.
-  (assert (member (length parameters)
+  (unless (member (length parameters)
                   (list 0 (length (mysql-prepared-statement-parameters statement)))
-                  :test #'=))
+                  :test #'=)
+    (error 'unexpected-parameter-count))
   (assert (eq *mysql-connection* (mysql-prepared-statement-connection statement)))
   (mysql-command-init +mysql-command-statement-execute+)
   (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
