@@ -85,7 +85,7 @@
    #:send-command-statistics
 
    ;; Internal Helpers
-   #:bind-mysql-connection
+   #:with-mysql-connection
    #:mysql-command-init
    #:mysql-has-capability
    #:mysql-has-some-capability
