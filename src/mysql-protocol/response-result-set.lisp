@@ -198,7 +198,7 @@
                     (= tag +mysql-response-error+))
                 (parse-response payload))
                ((= tag 0)
-                (let* ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload :start 1)))
+                (let* ((s (flexi-streams:make-in-memory-input-stream payload :start 1))
                        (row (make-array column-count :initial-element nil))
                        (null-bitmap (read-fixed-length-integer (ceiling (+ column-count 2) 8) s)))
                   (loop for i from 0 below column-count
@@ -325,11 +325,11 @@
                           :second s
                           :microsecond µs)))
 
-        ;; These types are not encoded in the binary format:
+        ((member column-type (list +mysql-type-enum+
+                                   +mysql-type-set+
+                                   +mysql-type-geometry+))
+         (read-rest-of-packet-string stream))
         ;; +mysql-type-null+ (encoded in null bitmap)
-        ;; +mysql-type-enum+
-        ;; +mysql-type-set+
-        ;; +mysql-type-geometry+
         (t
          ;; asedeno-TODO: signal parsing error
          (assert "Unknown type"))))))
