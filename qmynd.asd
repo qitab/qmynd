@@ -69,7 +69,8 @@
                                    (:file "command-process-information")
                                    (:file "command-process-kill")
                                    (:file "command-debug")
-                                   (:file "command-ping")))
+                                   (:file "command-ping")
+                                   (:file "command-change-user")))
                      (:module "prepared-statements"
                       :serial nil
                       :depends-on ("connection" "response-result-set")
