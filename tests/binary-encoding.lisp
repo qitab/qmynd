@@ -8,6 +8,8 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; NB: The unicode tests will fail if this file is not parsed as UTF-8.
+
 (in-package :qmynd-test)
 
 (defmacro generate-binary-encoding-test (value expected-value-encoding expected-type-encoding)
