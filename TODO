@@ -17,3 +17,6 @@ Cleanup:
 
 Convenience
 • Convenience functions for toggling bits in status and capability.
+
+Query Results
+• Row at a time result processing
