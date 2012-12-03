@@ -163,7 +163,11 @@
                                    +mysql-type-long-blob+
                                    +mysql-type-blob+)
                  :test #'=)
-         octets)
+         (let ((encoding (column-definition-encoding column-definition)))
+           (cond (encoding
+                  (let ((babel::*default-character-encoding* encoding))
+                    (str)))
+                 (t octets))))
 
         ;; No idea how to parse and represent these yet
         ;; ((= column-type +mysql-type-enum+)
