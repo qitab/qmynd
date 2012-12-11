@@ -280,11 +280,11 @@
 
         ((= column-type +mysql-type-time+)
          (let ((length (read-byte stream))
-               (sign 0) (days 0)
-               (h 0) (m 0) (s 0) (µs 0))
+               negativep
+               (days 0) (h 0) (m 0) (s 0) (µs 0))
            (assert (member length (list 0 8 12) :test #'=))
            (when (>= length 8)
-             (setf sign (if (zerop (read-byte stream)) 1 -1)
+             (setf negativep (not (zerop (read-byte stream)))
                    days (read-fixed-length-integer 4 stream)
                    h (read-byte stream)
                    m (read-byte stream)
@@ -292,6 +292,7 @@
            (when (>= length 12)
              (setf µs (read-fixed-length-integer 4 stream)))
            (make-instance 'mysql-time-interval
+                          :negativep negativep
                           :days days
                           :hours h
                           :minutes m
