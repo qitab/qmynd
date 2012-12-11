@@ -197,6 +197,11 @@
    (make-instance 'mysql-time-interval :microseconds 1 :negativep t)
    #(#x0c #x01 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x01 #x00 #x00 #x00)
    #(#.+mysql-type-time+ #x00)))
+(define-test binary-encoding-time-5 ()
+  (generate-binary-encoding-test
+   (make-instance 'mysql-time-interval :negativep t :days 1 :hours 2 :minutes 3 :seconds 4)
+   #(#x08 #x01 #x01 #x00 #x00 #x00 #x02 #x03 #x04)
+   #(#.+mysql-type-time+ #x00)))
 ;; Years, which travel like shorts
 (define-test binary-encoding-year-1 ()
   (generate-binary-encoding-test
@@ -218,6 +223,7 @@
   binary-encoding-time-2
   binary-encoding-time-3
   binary-encoding-time-4
+  binary-encoding-time-5
   binary-encoding-year-1
   binary-encoding-year-2)
 
