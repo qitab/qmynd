@@ -17,9 +17,9 @@
          (ts (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
      (qmynd-impl::encode-binary-parameter ,value vs ts)
      (assert-equal (flexi-streams:get-output-stream-sequence vs)
-                   ,expected-value-encoding :test equalp)
+                   ,expected-value-encoding :test #'equalp)
      (assert-equal (flexi-streams:get-output-stream-sequence ts)
-                   ,expected-type-encoding :test equalp)))
+                   ,expected-type-encoding :test #'equalp)))
 
 ;; Octets
 (define-test binary-encoding-octets-1 ()

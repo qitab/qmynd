@@ -104,7 +104,7 @@
            (let ((stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
              (write-fixed-length-integer int len stream)
              (assert-equal (flexi-streams:get-output-stream-sequence stream)
-                           expected :test equalp))))
+                           expected :test #'equalp))))
     ;; 1 byte
     (encode-test 0 1 #(0))
     (encode-test #x10 1 #(#x10))
@@ -172,7 +172,7 @@
            (let ((stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
              (write-length-encoded-integer int stream)
              (assert-equal (flexi-streams:get-output-stream-sequence stream)
-                           expected :test equalp))))
+                           expected :test #'equalp))))
     (encode-test #x00 #(#x00))
     (encode-test #x80 #(#x80))
     (encode-test #xfa #(#xfa))
@@ -206,17 +206,17 @@
       (assert-equal
        (babel:octets-to-string (read-fixed-length-string 7 s))
        "Testing"
-       :test string=)
+       :test #'string=)
 
       (assert-equal
        (babel:octets-to-string (read-length-encoded-string s))
        "Hello, world!"
-       :test string=)
+       :test #'string=)
 
       (assert-equal
        (babel:octets-to-string (read-null-terminated-string s))
        "Hello"
-       :test string=)
+       :test #'string=)
 
       (let ((str (babel:octets-to-string (read-length-encoded-string s))))
         (assert-equal (length str) 251)
@@ -229,7 +229,7 @@
       (assert-equal
        (babel:octets-to-string (read-null-terminated-string s))
        "Goodbye"
-       :test string=))))
+       :test #'string=))))
 
 (define-test-suite mysql-basic-types-suite ()
   (decode-fixed-length-integers)
