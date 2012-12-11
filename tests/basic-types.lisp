@@ -232,10 +232,10 @@
        :test #'string=))))
 
 (define-test-suite mysql-basic-types-suite ()
-  (decode-fixed-length-integers)
-  (encode-fixed-length-integers)
-  (decode-length-encoded-integers)
-  (encode-length-encoded-integers)
-  (decode-strings))
+  (decode-fixed-length-integers
+   encode-fixed-length-integers
+   decode-length-encoded-integers
+   encode-length-encoded-integers
+   decode-strings))
 
 (register-test 'mysql-basic-types-suite)

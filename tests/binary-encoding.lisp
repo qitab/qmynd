@@ -36,8 +36,8 @@
      #(#.+mysql-type-var-string+ #x00))))
 
 (define-test-suite binary-encoding-octets-suite ()
-  binary-encoding-octets-1
-  binary-encoding-octets-2)
+  (binary-encoding-octets-1
+   binary-encoding-octets-2))
 
 ;; Strings
 (define-test binary-encoding-ascii-string ()
@@ -63,10 +63,10 @@
      #(#.+mysql-type-var-string+ #x00))))
 
 (define-test-suite binary-encoding-string-suite ()
-  binary-encoding-ascii-string
-  binary-encoding-unicode-string
-  binary-encoding-unicode-string-2
-  binary-encoding-latin-1-string)
+  (binary-encoding-ascii-string
+   binary-encoding-unicode-string
+   binary-encoding-unicode-string-2
+   binary-encoding-latin-1-string))
 
 ;; Integers (signed if negative)
 (define-test binary-encoding-tiny-1 () (generate-binary-encoding-test #x00  #(#x00) #(#.+mysql-type-tiny+ #x00)))
@@ -91,20 +91,20 @@
   (generate-binary-encoding-test #x-8000000000000000 #(#x00 #x00 #x00 #x00 #x00 #x00 #x00 #x80) #(#.+mysql-type-longlong+ #x80)))
 
 (define-test-suite binary-encoding-integer-suite ()
-  binary-encoding-tiny-1
-  binary-encoding-tiny-2
-  binary-encoding-tiny-3
-  binary-encoding-tiny-4
-  binary-encoding-tiny-5
-  binary-encoding-short-1
-  binary-encoding-short-2
-  binary-encoding-short-3
-  binary-encoding-long-1
-  binary-encoding-long-2
-  binary-encoding-long-3
-  binary-encoding-longlong-1
-  binary-encoding-longlong-2
-  binary-encoding-longlong-3)
+  (binary-encoding-tiny-1
+   binary-encoding-tiny-2
+   binary-encoding-tiny-3
+   binary-encoding-tiny-4
+   binary-encoding-tiny-5
+   binary-encoding-short-1
+   binary-encoding-short-2
+   binary-encoding-short-3
+   binary-encoding-long-1
+   binary-encoding-long-2
+   binary-encoding-long-3
+   binary-encoding-longlong-1
+   binary-encoding-longlong-2
+   binary-encoding-longlong-3))
 
 ;; Ratios
 ;; as decimals, which travel as length-encoded strings.
@@ -131,10 +131,10 @@
    #(#.+mysql-type-double+ #x80)))
 
 (define-test-suite binary-encoding-ratio-suite ()
-  binary-encoding-ratio-decimal-1
-  binary-encoding-ratio-decimal-2
-  binary-encoding-ratio-double-1
-  binary-encoding-ratio-double-2)
+  (binary-encoding-ratio-decimal-1
+   binary-encoding-ratio-decimal-2
+   binary-encoding-ratio-double-1
+   binary-encoding-ratio-double-2))
 
 ;; Floating Point
 ;; single - expects lisp single-float to be encoded as 32-bit
@@ -151,8 +151,8 @@
    #(#.+mysql-type-double+ #x80)))
 
 (define-test-suite binary-encoding-float-suite ()
-  binary-encoding-float-1
-  binary-encoding-double-1)
+  (binary-encoding-float-1
+   binary-encoding-double-1))
 
 ;; MySQL Date/Time Structs
 ;; Date-Time, at lengths 0, 4, 7, and 11
@@ -215,24 +215,24 @@
    #(#.+mysql-type-year+ #x00)))
 
 (define-test-suite binary-encoding-date-time-suite ()
-  binary-encoding-datetime-1
-  binary-encoding-datetime-2
-  binary-encoding-datetime-3
-  binary-encoding-datetime-4
-  binary-encoding-time-1
-  binary-encoding-time-2
-  binary-encoding-time-3
-  binary-encoding-time-4
-  binary-encoding-time-5
-  binary-encoding-year-1
-  binary-encoding-year-2)
+  (binary-encoding-datetime-1
+   binary-encoding-datetime-2
+   binary-encoding-datetime-3
+   binary-encoding-datetime-4
+   binary-encoding-time-1
+   binary-encoding-time-2
+   binary-encoding-time-3
+   binary-encoding-time-4
+   binary-encoding-time-5
+   binary-encoding-year-1
+   binary-encoding-year-2))
 
 (define-test-suite mysql-binary-encoding-suite ()
-  binary-encoding-octets-suite
-  binary-encoding-string-suite
-  binary-encoding-integer-suite
-  binary-encoding-ratio-suite
-  binary-encoding-float-suite
-  binary-encoding-date-time-suite)
+  (binary-encoding-octets-suite
+   binary-encoding-string-suite
+   binary-encoding-integer-suite
+   binary-encoding-ratio-suite
+   binary-encoding-float-suite
+   binary-encoding-date-time-suite))
 
 (register-test 'mysql-binary-encoding-suite)
