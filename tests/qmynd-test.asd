@@ -19,7 +19,6 @@
   :maintainer '("Alejandro Sedeño")
   :description      "Test code for MySQL Native Driver"
   :long-description "Test code for MySQL Native Driver for Common Lisp"
-  :defsystem-depends-on (:qmynd)
   :depends-on (:babel :flexi-streams :qmynd)
   :serial nil
   :components
