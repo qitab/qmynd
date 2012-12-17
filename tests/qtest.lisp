@@ -46,7 +46,7 @@
     (format t "~&Running test ~A" test)
     (funcall test)))
 
-(defmacro assert-equal (actual expected &key (test '#'eql))
+(defmacro assert-equal (actual expected &key (test '#'equal))
   `(unless (funcall ,test ,actual ,expected)
      (warn "The value ~S is not equal to the expected value ~S"
            ',actual ',expected)))
