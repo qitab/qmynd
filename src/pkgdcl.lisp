@@ -59,7 +59,7 @@
    #:mysql-statement-close))
 
 (defpackage qmynd-impl
-  (:use :common-lisp :qmynd)
+  (:use :common-lisp :list-of :qmynd)
 
   (:export
    ;; Dynamic Variables

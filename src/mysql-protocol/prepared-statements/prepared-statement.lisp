@@ -225,3 +225,5 @@
     (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
   (parse-response (mysql-read-packet)))
+
+(asdf-finalizers:final-forms)
