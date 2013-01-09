@@ -123,6 +123,7 @@
 
    ;; Auth Stuff
    #:generate-auth-response
+   #+mysql-insecure-password-hash
    #:mysql-weak-hash-password
    #:mysql-native-password-auth-response
    #:mysql-clear-password-auth-response
