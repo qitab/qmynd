@@ -52,6 +52,12 @@
    #:mysql-disconnect
    ;; Basic Commands
    #:mysql-query
+   ;; Basic Response Packet Types / Accessors
+   #:response-ok-packet
+   #:response-ok-packet-affected-rows
+   #:response-ok-packet-last-insert-id
+   #:response-ok-packet-status-flags
+   #:response-ok-packet-warnings
    ;; Prepared Statements
    #:mysql-statement-prepare
    #:mysql-statement-execute
