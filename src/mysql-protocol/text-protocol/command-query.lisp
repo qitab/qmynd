@@ -27,7 +27,7 @@
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
   (let* ((payload (mysql-read-packet))
          (tag (aref payload 0)))
-    (if (member tag '(+mysql-response-ok+ +mysql-response-error+))
+    (if (member tag (list +mysql-response-ok+ +mysql-response-error+))
         (parse-response payload)
         (let* ((column-count (parse-column-count payload))
                (column-definitions (coerce
