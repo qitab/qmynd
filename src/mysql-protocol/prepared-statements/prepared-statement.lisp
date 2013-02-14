@@ -23,7 +23,7 @@
    (columns :type (list-of column-definition-v41-packet)
             :initarg :columns
             :accessor mysql-prepared-statement-columns)
-   (parameters :type (list-of column-definition-v41)
+   (parameters :type (list-of column-definition-v41-packet)
                :initarg :parameters
                :accessor mysql-prepared-statement-parameters)))
 
