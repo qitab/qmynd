@@ -36,6 +36,8 @@
    #:mysql-date-time-minute
    #:mysql-date-time-second
    #:mysql-date-time-microsecond
+   #:mysql-date-time-to-universal-time
+   #:universal-time-to-mysql-date-time
    #:mysql-time-interval
    #:mysql-time-interval-negativep
    #:mysql-time-interval-days
@@ -43,6 +45,8 @@
    #:mysql-time-interval-minutes
    #:mysql-time-interval-seconds
    #:mysql-time-interval-microseconds
+   #:mysql-time-interval-to-seconds
+   #:seconds-to-mysql-time-interval
    #:mysql-year
    #:mysql-year-year
 
