@@ -438,7 +438,7 @@
                                          (ldb (byte 16 0) high)
                                          (ldb (byte 16 16) low)
                                          (ldb (byte 16 0) low))
-  #+ccl  (ccl::double-float-from-bits high low)
+  #+ccl  (ccl::double-float-from-bits (ilogand high #xffffffff) low)
   #+cmu  (kernel:make-double-float high low)
   #+sbcl (sb-kernel:make-double-float high low)
   #+lispworks (lispworks-float:make-double-float high low))
