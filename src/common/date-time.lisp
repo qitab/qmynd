@@ -73,27 +73,34 @@
 ;;         (error 'invalid-date-time-parameter :value date-time)))))
 
 (defun mysql-date-time-to-universal-time (date-time)
+  "Converts a MySQL DateTime to a Lisp integer-time. Returns NIL if all elements of the date-time
+   are zero."
   (assert (typep date-time 'mysql-date-time))
   (with-prefixed-accessors (year month day hour minute second microsecond)
       (mysql-date-time- date-time)
-    (assert (>= year 1900))
-    ;; asedeno-TODO: log loss of microseconds if non-zero
-    (values (encode-universal-time second minute hour day month year 0)
-            microsecond)))
+    (unless (every #'zerop (list year month day hour minute second microsecond))
+      (assert (>= year 1900))
+      ;; asedeno-TODO: log loss of microseconds if non-zero
+      (values (encode-universal-time second minute hour day month year 0)
+              microsecond))))
 
 (defun universal-time-to-mysql-date-time (integer-time &optional (microseconds 0))
-  (assert (typep integer-time 'integer))
-  (multiple-value-bind (second minute hour day month year tz)
-      (decode-universal-time integer-time 0)
-    (declare (ignore tz))
-    (make-instance 'mysql-date-time
-                   :year year
-                   :month month
-                   :day day
-                   :hour hour
-                   :minute minute
-                   :second second
-                   :microsecond microseconds)))
+  "Converts a Lisp integer-time to a MySQL DateTime. If integer-time is NIL, returns a MySQL
+  DateTime with all elements set to zero."
+  (assert (typep integer-time '(or integer null)))
+  (if integer-time
+      (multiple-value-bind (second minute hour day month year tz)
+          (decode-universal-time integer-time 0)
+        (declare (ignore tz))
+        (make-instance 'mysql-date-time
+                       :year year
+                       :month month
+                       :day day
+                       :hour hour
+                       :minute minute
+                       :second second
+                       :microsecond microseconds))
+      (make-instance 'mysql-date-time)))
 
 (defun parse-date-time-string (str)
   (let ((year 0) (month 0) (day 0)
