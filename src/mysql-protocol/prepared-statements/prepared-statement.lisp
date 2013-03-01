@@ -20,10 +20,10 @@
    (statement-id :type (unsigned-byte 32)
                  :initarg :statement-id
                  :accessor mysql-prepared-statement-statement-id)
-   (columns :type (list-of column-definition-v41-packet)
+   (columns :type (vector-of column-definition-v41-packet)
             :initarg :columns
             :accessor mysql-prepared-statement-columns)
-   (parameters :type (list-of column-definition-v41-packet)
+   (parameters :type (vector-of column-definition-v41-packet)
                :initarg :parameters
                :accessor mysql-prepared-statement-parameters)))
 
