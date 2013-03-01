@@ -68,7 +68,7 @@
    ;; API
    ;; Connections
    #:mysql-connect
-   #+(or ccl)
+   #+(or ccl sbcl)
    #:mysql-local-connect
    #:mysql-disconnect
    #:mysql-connection-has-status
