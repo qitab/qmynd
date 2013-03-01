@@ -67,6 +67,21 @@
   (usocket:socket-close (mysql-connection-socket c))
   (setf (mysql-connection-connected *mysql-connection*) nil))
 
+#+(or ccl)
+(progn
+
+  (defclass mysql-local-connection (mysql-base-connection)
+    ((socket :initarg :socket
+             :accessor mysql-connection-socket)))
+
+  (defmethod mysql-connection-close-socket ((c mysql-local-connection))
+    (let ((socket (mysql-connection-socket c)))
+      #+ccl (ccl::close (mysql-connection-socket c))
+      )
+    (setf (mysql-connection-connected *mysql-connection*) nil))
+
+) ; progn
+
 (defmethod mysql-connection-remove-stale-prepared-statements ((c mysql-base-connection))
   (setf (mysql-connection-prepared-statements *mysql-connection*)
         (delete-if-not

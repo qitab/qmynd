@@ -25,6 +25,22 @@
                                 :ssl ssl
                                 :ssl-verify ssl-verify)))
 
+;;; AF_LOCAL sockets should really be folded into usocket. For now, just implement CCL support.
+#+(or ccl)
+(defun mysql-local-connect (&key (path #P"/var/run/mysqld/mysqld.sock") (username "") (password "") database)
+  ;; Open Socket
+  (let* ((socket
+           #+ccl (ccl:make-socket :address-family :file
+                                  :connect :active
+                                  :remote-filename path)
+           )
+         (connection (make-instance 'mysql-local-connection
+                                    :socket socket
+                                    :stream
+                                    #+ccl socket
+                                    :default-schema database)))
+    (mysql-connect-do-handshake connection username password database :ssl nil)))
+
 (defun mysql-connect-do-handshake (connection username password database &key ssl ssl-verify)
   ;; Read a wire packet
   (let ((initial-handshake-payload (mysql-connection-read-packet connection)))
