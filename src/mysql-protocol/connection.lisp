@@ -76,6 +76,9 @@
     (:some   (not (zerop (logand bits-to-test bits-available))))
     (:notany (zerop (logand bits-to-test bits-available)))))
 
+(defmethod mysql-connection-has-status ((c mysql-connection) &rest status-bits)
+  (flagsp status-bits (mysql-connection-status-flags c)))
+
 (defmethod mysql-connection-has-capability ((c mysql-connection) cap-bits)
   (flagsp cap-bits (mysql-connection-capabilities c)))
 
