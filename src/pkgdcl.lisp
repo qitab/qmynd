@@ -23,6 +23,20 @@
    #:value-is-not-decimal
    #:invalid-date-time
 
+   ;; Constants
+   #:+mysql-server-status-in-transaction+
+   #:+mysql-server-status-autocommit+
+   #:+mysql-server-more-results-exist+
+   #:+mysql-server-status-no-good-index-used+
+   #:+mysql-server-status-no-index-used+
+   #:+mysql-server-status-cursor-exists+
+   #:+mysql-server-server-status-last-row-sent+
+   #:+mysql-server-status-database-dropped+
+   #:+mysql-server-status-no-backslash-escapes+
+   #:+mysql-server-status-metadata-changed+
+   #:+mysql-server-query-was-slow+
+   #:+mysql-server-ps-out-params+
+
    ;; Opaque Structures
    #:mysql-connection
    #:mysql-prepared-statement
@@ -54,6 +68,8 @@
    ;; Connections
    #:mysql-connect
    #:mysql-disconnect
+   #:mysql-connection-has-status
+   #:mysql-connection-has-capability
    ;; Basic Commands
    #:mysql-query
    ;; Basic Response Packet Types / Accessors
@@ -99,7 +115,6 @@
    #:mysql-command-init
    #:mysql-has-capability
    #:mysql-has-some-capability
-   #:mysql-connection-has-capability
    #:mysql-connection-has-some-capability
    #:mysql-connection-stream
    #:mysql-current-command-p
