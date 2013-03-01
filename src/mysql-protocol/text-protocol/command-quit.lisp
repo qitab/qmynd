@@ -26,5 +26,4 @@
   (mysql-command-init +mysql-command-quit+)
   (mysql-write-packet (vector +mysql-command-quit+))
   ;; Don't bother listening for the OK packet, just close the connection.
-  (usocket:socket-close (mysql-connection-socket *mysql-connection*))
-  (setf (mysql-connection-connected *mysql-connection*) nil))
+  (mysql-connection-close-socket *mysql-connection*))

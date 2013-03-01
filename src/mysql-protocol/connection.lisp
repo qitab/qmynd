@@ -20,12 +20,9 @@
           (babel::*default-character-encoding* (mysql-connection-character-set *mysql-connection*)))
      ,@body))
 
-(defclass mysql-connection ()
+(defclass mysql-base-connection ()
   ((connected       :type boolean
                     :accessor mysql-connection-connected)
-   (socket          :type (or usocket:stream-usocket null)
-                    :initarg :socket
-                    :accessor mysql-connection-socket)
    (stream          :initarg :stream
                     :accessor mysql-connection-stream)
    (server-version  :type (or string null)
@@ -61,7 +58,16 @@
                         :initform nil
                         :accessor mysql-connection-prepared-statements)))
 
-(defmethod mysql-connection-remove-stale-prepared-statements ((c mysql-connection))
+(defclass mysql-inet-connection (mysql-base-connection)
+  ((socket :type (or usocket:stream-usocket null)
+           :initarg :socket
+           :accessor mysql-connection-socket)))
+
+(defmethod mysql-connection-close-socket ((c mysql-inet-connection))
+  (usocket:socket-close (mysql-connection-socket c))
+  (setf (mysql-connection-connected *mysql-connection*) nil))
+
+(defmethod mysql-connection-remove-stale-prepared-statements ((c mysql-base-connection))
   (setf (mysql-connection-prepared-statements *mysql-connection*)
         (delete-if-not
          #'(lambda (ps)
@@ -76,13 +82,13 @@
     (:some   (not (zerop (logand bits-to-test bits-available))))
     (:notany (zerop (logand bits-to-test bits-available)))))
 
-(defmethod mysql-connection-has-status ((c mysql-connection) status-bits)
+(defmethod mysql-connection-has-status ((c mysql-base-connection) status-bits)
   (flagsp status-bits (mysql-connection-status-flags c)))
 
-(defmethod mysql-connection-has-capability ((c mysql-connection) cap-bits)
+(defmethod mysql-connection-has-capability ((c mysql-base-connection) cap-bits)
   (flagsp cap-bits (mysql-connection-capabilities c)))
 
-(defmethod mysql-connection-has-some-capability ((c mysql-connection) cap-bits)
+(defmethod mysql-connection-has-some-capability ((c mysql-base-connection) cap-bits)
   (flagsp cap-bits (mysql-connection-capabilities c) :some))
 
 (defun mysql-has-capability (cap-bits)
@@ -93,21 +99,21 @@
 
 
 ;;; Packet utilities
-(defmethod mysql-connection-write-packet ((c mysql-connection) payload)
+(defmethod mysql-connection-write-packet ((c mysql-base-connection) payload)
   (setf (mysql-connection-sequence-id c)
         (write-wire-packet (mysql-connection-stream c)
                            payload
                            :sequence-id (mysql-connection-sequence-id c)))
   (values))
 
-(defmethod mysql-connection-read-packet ((c mysql-connection))
+(defmethod mysql-connection-read-packet ((c mysql-base-connection))
   (multiple-value-bind (payload seq-id)
       (read-wire-packet (mysql-connection-stream c)
                         :expected-sequence-id (mysql-connection-sequence-id c))
     (setf (mysql-connection-sequence-id c) seq-id)
     payload))
 
-(defmethod mysql-connection-command-init ((c mysql-connection) command)
+(defmethod mysql-connection-command-init ((c mysql-base-connection) command)
   (let ((stream (mysql-connection-stream c)))
     (when (typep stream 'mysql-compressed-stream)
       (setf (mysql-compressed-stream-sequence-id stream) 0)))
