@@ -69,6 +69,7 @@
              (eq (mysql-prepared-statement-connection ps) *mysql-connection*))
          (mysql-connection-prepared-statements *mysql-connection*))))
 
+
 ;;; Flag utilities
 (defun flagsp (bits-to-test bits-available &optional (mode :every))
   (ecase mode
