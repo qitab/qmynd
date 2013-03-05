@@ -231,24 +231,24 @@
       (cond
         ;; Stuff encoded as strings
         ((member column-type (list +mysql-type-varchar+
-                                   +mysql-type-bit+
-                                   +mysql-type-tiny-blob+
-                                   +mysql-type-medium-blob+
-                                   +mysql-type-blob+
-                                   +mysql-type-long-blob+
                                    +mysql-type-var-string+
                                    +mysql-type-string+)
                  :test #'=)
-         (let ((octets (read-length-encoded-string stream)))
-           (if (flagsp +mysql-flag-column-binary+
-                       (column-definition-v41-packet-flags column-definition))
-               octets
-               (to-string octets))))
+         (to-string (read-length-encoded-string stream)))
 
         ((member column-type (list +mysql-type-decimal+
                                    +mysql-type-newdecimal+)
                  :test #'=)
          (parse-decimal (to-string (read-length-encoded-string stream))))
+
+        ;; Stuff encoded as octets
+        ((member column-type (list +mysql-type-bit+
+                                   +mysql-type-tiny-blob+
+                                   +mysql-type-medium-blob+
+                                   +mysql-type-blob+
+                                   +mysql-type-long-blob+)
+                 :test #'=)
+         (read-length-encoded-string stream))
 
         ;; Integers
         ((= column-type +mysql-type-longlong+)
