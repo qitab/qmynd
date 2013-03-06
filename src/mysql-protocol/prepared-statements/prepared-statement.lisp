@@ -159,6 +159,8 @@
             do (encode-binary-parameter parameter parameter-stream parameter-type-stream)
           else
             do (setf (ldb (byte 1 i) null-bitmap) 1)
+               (write-byte +mysql-type-null+ parameter-type-stream)
+               (write-byte 0 parameter-type-stream)
           end
           finally (write-fixed-length-integer null-bitmap (ceiling i 8) s)
                   (let ((types (flexi-streams:get-output-stream-sequence parameter-type-stream)))
