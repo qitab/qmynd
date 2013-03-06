@@ -24,9 +24,9 @@
     (etypecase value
       ;; Octets
       ((vector (unsigned-byte 8))
-               (write-length-encoded-string value value-stream)
-               (write-byte +mysql-type-var-string+ type-stream)
-               (write-byte #x00 type-stream))
+       (write-length-encoded-string value value-stream)
+       (write-byte +mysql-type-var-string+ type-stream)
+       (write-byte #x00 type-stream))
 
       ;; Strings (→ octets)
       (string
