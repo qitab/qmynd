@@ -248,7 +248,11 @@
                                    +mysql-type-blob+
                                    +mysql-type-long-blob+)
                  :test #'=)
-         (read-length-encoded-string stream))
+         (let ((octets (read-length-encoded-string stream)))
+           (if (flagsp +mysql-flag-column-binary+
+                       (column-definition-v41-packet-flags column-definition))
+               octets
+               (to-string octets))))
 
         ;; Integers
         ((= column-type +mysql-type-longlong+)
