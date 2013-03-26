@@ -219,10 +219,11 @@
 
 (defun parse-binary-protocol-result-column (stream column-definition)
   (let ((column-type (column-definition-type column-definition))
-        (encoding (or (column-definition-encoding column-definition)
-                      babel::*default-character-encoding*)))
+        (encoding (column-definition-encoding column-definition)))
     (labels ((to-string (octets)
-               (babel:octets-to-string octets :encoding encoding))
+               (if encoding
+                 (babel:octets-to-string octets :encoding encoding)
+                 octets))
              (parse-binary-integer (length)
                (read-fixed-length-integer
                 length stream
@@ -231,28 +232,21 @@
       (cond
         ;; Stuff encoded as strings
         ((member column-type (list +mysql-type-varchar+
+                                   +mysql-type-bit+
+                                   +mysql-type-tiny-blob+
+                                   +mysql-type-medium-blob+
+                                   +mysql-type-blob+
+                                   +mysql-type-long-blob+
                                    +mysql-type-var-string+
                                    +mysql-type-string+)
                  :test #'=)
-         (to-string (read-length-encoded-string stream)))
+         (let ((octets (read-length-encoded-string stream)))
+           (to-string octets)))
 
         ((member column-type (list +mysql-type-decimal+
                                    +mysql-type-newdecimal+)
                  :test #'=)
          (parse-decimal (to-string (read-length-encoded-string stream))))
-
-        ;; Stuff encoded as octets
-        ((member column-type (list +mysql-type-bit+
-                                   +mysql-type-tiny-blob+
-                                   +mysql-type-medium-blob+
-                                   +mysql-type-blob+
-                                   +mysql-type-long-blob+)
-                 :test #'=)
-         (let ((octets (read-length-encoded-string stream)))
-           (if (flagsp +mysql-flag-column-binary+
-                       (column-definition-v41-packet-flags column-definition))
-               octets
-               (to-string octets))))
 
         ;; Integers
         ((= column-type +mysql-type-longlong+)
