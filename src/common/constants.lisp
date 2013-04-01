@@ -101,6 +101,9 @@
 (defconstant +mysql-capability-client-connect-attrs+ #x100000)   ;; New in v5.6.6
 (defconstant +mysql-capability-client-plugin-auth-lenec-client-data+ #x200000) ;; New in v5.6.7
 
+(defconstant +mysql-capability-client-verify-server-cert+ #x40000000)
+(defconstant +mysql-capability-client-remember-options+ #x80000000)
+
 (defconstant +mysql-capabilities-required+
   (logior
    +mysql-capability-client-long-password+
