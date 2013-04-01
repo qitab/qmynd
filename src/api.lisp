@@ -12,7 +12,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Conncetion entry-point
-(defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database)
+(defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database (ssl nil ssl-p) ssl-verify)
   ;; Open Socket
   (let* ((socket (usocket:socket-connect host port
                                          :protocol :stream
@@ -32,8 +32,18 @@
               (logandc2 (mysql-connection-capabilities connection)
                         +mysql-capability-client-connect-with-db+)))
 
+      ;; Deal with SSL
+      (cond
+        ((and ssl (not (mysql-has-capability +mysql-capability-client-ssl+)))
+         ;; SSL requested, but we don't have it.
+         (error 'ssl-not-supported))
+        ((and ssl-p (null ssl))
+         ;; SSL explicitly disabled
+         (setf (mysql-connection-capabilities connection)
+               (logandc2 (mysql-connection-capabilities connection)
+                         +mysql-capability-client-ssl+))))
       (when (mysql-has-capability +mysql-capability-client-ssl+)
-        (send-ssl-request-packet))
+        (send-ssl-request-packet ssl-verify))
 
       ;; Prepare Auth Response
       (handler-case

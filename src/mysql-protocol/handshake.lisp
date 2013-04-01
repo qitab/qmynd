@@ -92,7 +92,7 @@
             (mysql-connection-capabilities *mysql-connection*))
     (values)))
 
-(defun send-ssl-request-packet ()
+(defun send-ssl-request-packet (verify)
   "Sends a MySQL SSL Connection Request Packet and begins SSL Negotiation."
   (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
     (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
@@ -100,12 +100,16 @@
     (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
     (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s))
-    (setf (mysql-connection-stream *mysql-connection*)
-          ;; We may not have CL+SSL, in which case we'll never get to this function,
-          ;; but we still want it to compile.
-          (uiop/package:symbol-call
-           :cl+ssl :make-ssl-client-stream
-           (mysql-connection-stream *mysql-connection*)))))
+    ;; We may not have CL+SSL, in which case we'll never get to this function,
+    ;; but we still want it to compile.
+    (let ((stream (uiop/package:symbol-call
+                   :cl+ssl :make-ssl-client-stream
+                   (mysql-connection-stream *mysql-connection*))))
+      (when verify
+        (uiop/package:symbol-call
+         :cl+ssl :ssl-stream-check-verify
+         stream))
+      (setf (mysql-connection-stream *mysql-connection*) stream))))
 
 ;; (define-packet handshake-response-v41
 ;;   ((capability-flags :mysql-type (integer 4))

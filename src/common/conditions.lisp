@@ -42,6 +42,9 @@
                      (mysql-error-code e)
                      (mysql-error-message e)))))
 
+(define-condition ssl-not-supported (mysql-external-error)
+  ())
+
 (define-condition invalid-prepared-statement (mysql-external-error)
   ())
 

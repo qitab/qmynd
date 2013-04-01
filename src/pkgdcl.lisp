@@ -22,6 +22,7 @@
    #:unexpected-packet
    #:value-is-not-decimal
    #:invalid-date-time
+   #:ssl-not-supported
 
    ;; Constants
    #:+mysql-server-status-in-transaction+

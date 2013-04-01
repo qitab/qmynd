@@ -101,7 +101,7 @@
 (defconstant +mysql-capability-client-connect-attrs+ #x100000)   ;; New in v5.6.6
 (defconstant +mysql-capability-client-plugin-auth-lenec-client-data+ #x200000) ;; New in v5.6.7
 
-(defconstant +mysql-capability-client-verify-server-cert+ #x40000000) ;; Not used.
+(defconstant +mysql-capability-client-verify-server-cert+ #x40000000) ;; Not used; specify :SSL-VERIFY T at connect time.
 (defconstant +mysql-capability-client-remember-options+ #x80000000)   ;; Not used.
 
 (defconstant +mysql-capabilities-required+
