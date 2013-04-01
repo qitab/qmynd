@@ -9,3 +9,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package :qmynd-impl)
+
+(defun have-compression ()
+  (and (find-package "CHIPZ")
+       (find-package "SALZA2")))

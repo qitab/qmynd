@@ -20,6 +20,7 @@
   :description      "MySQL Native Driver"
   :long-description "MySQL Native Driver for Common Lisp"
   :depends-on (:babel :flexi-streams :ironclad :list-of :usocket)
+  :weakly-depends-on (:chipz :salza2)
   :around-compile "asdf-finalizers:check-finalizers-around-compile"
   :serial nil
   :components
@@ -43,6 +44,8 @@
         :depends-on ("common")
         :components ((:file "basic-types")
                      (:file "wire-packet"
+                      :depends-on ("basic-types"))
+                     (:file "compressed-protocol"
                       :depends-on ("basic-types"))))
        (module "mysql-protocol"
         :serial nil

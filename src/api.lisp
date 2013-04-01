@@ -46,7 +46,12 @@
             (parse-response (mysql-read-packet)))
         (mysql-base-error (e)
           (usocket:socket-close socket)
-          (error e))))
+          (error e)))
+
+      (when (mysql-has-capability +mysql-capability-client-compress+)
+        (setf (mysql-connection-stream connection)
+              (make-instance 'mysql-compressed-stream
+                             :stream (mysql-connection-stream connection)))))
 
     (setf (mysql-connection-connected connection) t)
     connection))

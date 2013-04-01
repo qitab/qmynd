@@ -88,7 +88,7 @@
             auth-data
             (babel:octets-to-string auth-plugin-name)
             capability-flags
-            +mysql-capabilities-supported+
+            (mysql-capabilities-supported)
             (mysql-connection-capabilities *mysql-connection*))
     (values)))
 
