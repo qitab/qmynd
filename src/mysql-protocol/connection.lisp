@@ -54,7 +54,7 @@
    (current-command :type (or integer null)
                     :initform nil
                     :accessor mysql-connection-current-command)
-   ;; This is internal library state. It may be destructively by the library.
+   ;; This is internal library state. It may be destructively modified by the library.
    (prepared-statements :type list
                         :initform nil
                         :accessor mysql-connection-prepared-statements)))
