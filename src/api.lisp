@@ -30,8 +30,8 @@
 
       (unless database
         (setf (mysql-connection-capabilities connection)
-              (logxor (mysql-connection-capabilities connection)
-                      +mysql-capability-client-connect-with-db+)))
+              (logandc2 (mysql-connection-capabilities connection)
+                        +mysql-capability-client-connect-with-db+)))
 
       ;; 4) Prepare Auth Response
       (handler-case
