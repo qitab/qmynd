@@ -149,15 +149,11 @@
         ((= column-type +mysql-type-time+)
          (parse-time-interval-string (str)))
 
-        ;; Strings
+        ;; Strings and Binary Objects
         ((member column-type (list +mysql-type-varchar+
                                    +mysql-type-var-string+
-                                   +mysql-type-string+)
-                 :test #'=)
-         (str))
-
-        ;; Binary Objects
-        ((member column-type (list +mysql-type-bit+
+                                   +mysql-type-string+
+                                   +mysql-type-bit+
                                    +mysql-type-tiny-blob+
                                    +mysql-type-medium-blob+
                                    +mysql-type-long-blob+
