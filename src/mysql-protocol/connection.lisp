@@ -26,6 +26,8 @@
    (socket          :type (or usocket:stream-usocket null)
                     :initarg :socket
                     :accessor mysql-connection-socket)
+   (stream          :initarg :stream
+                    :accessor mysql-connection-stream)
    (server-version  :type (or string null)
                     :accessor mysql-connection-server-version)
    (connection-id   :type (or integer null)
@@ -58,9 +60,6 @@
    (prepared-statements :type list
                         :initform nil
                         :accessor mysql-connection-prepared-statements)))
-
-(defmethod mysql-connection-stream ((c mysql-connection))
-  (usocket:socket-stream (mysql-connection-socket c)))
 
 (defmethod mysql-connection-remove-stale-prepared-statements ((c mysql-connection))
   (setf (mysql-connection-prepared-statements *mysql-connection*)

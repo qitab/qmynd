@@ -19,6 +19,7 @@
                                          :element-type '(unsigned-byte 8)))
          (connection (make-instance 'mysql-connection
                                     :socket socket
+                                    :stream (usocket:socket-stream socket)
                                     :default-schema database))
          ;; 2) Read a wire packet
          (initial-handshake-payload (mysql-connection-read-packet connection)))
