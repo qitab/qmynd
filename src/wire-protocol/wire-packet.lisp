@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -47,7 +47,8 @@ each Command Phase.
       end
       when (plusp length)
         do (adjust-array payload (+ pos length))
-        and do (setf pos (read-sequence payload stream :start pos))
+           (loop do (setf pos (read-sequence payload stream :start pos))
+                 until (= pos (length payload)))
       when (< length #xffffff) return (values payload expected-sequence-id))))
 
 (defun write-wire-packet (stream payload &key (sequence-id 0))
