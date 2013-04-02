@@ -33,9 +33,6 @@ each Command Phase.
 
 |#
 
-;;; Utilities for reading/writing 3-byte integers to/from a stream for
-;;; encoding packet length.
-
 ;;; Functions to read and write wire packets.
 (defun read-wire-packet (stream &key (expected-sequence-id 0))
   (let ((payload (make-array 0 :element-type '(unsigned-byte 8) :adjustable t))
