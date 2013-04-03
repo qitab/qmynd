@@ -74,13 +74,6 @@
     (with-mysql-connection (connection)
       (send-command-statement-execute statement :parameters parameters))))
 
-(defmethod mysql-statement-reset ((statement mysql-prepared-statement))
-  (let ((connection (mysql-prepared-statement-connection statement)))
-    (unless connection (error 'invalid-prepared-statement))
-    (with-mysql-connection (connection)
-      (send-command-statement-reset statement)
-      (values))))
-
 (defmethod mysql-statement-close ((statement mysql-prepared-statement))
   (let ((connection (mysql-prepared-statement-connection statement)))
     (unless connection (error 'invalid-prepared-statement))

@@ -84,7 +84,6 @@
    ;; Prepared Statements
    #:mysql-statement-prepare
    #:mysql-statement-execute
-   #:mysql-statement-reset
    #:mysql-statement-close))
 
 (defpackage qmynd-impl
