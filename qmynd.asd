@@ -18,7 +18,12 @@
   :maintainer '("Alejandro Sedeño")
   :description      "MySQL Native Driver"
   :long-description "MySQL Native Driver for Common Lisp"
-  :depends-on (:babel :flexi-streams :ironclad :list-of :usocket)
+  :depends-on (:babel
+               :flexi-streams
+               :ironclad
+               :list-of
+               :trivial-gray-streams
+               :usocket)
   :weakly-depends-on (:cl+ssl :chipz :salza2)
   :around-compile "asdf-finalizers:check-finalizers-around-compile"
   :serial nil
