@@ -90,11 +90,17 @@
 ;;; Protocol::NulTerminatedString
 ;;; A string terminated by a NUL byte.
 
-(defun read-null-terminated-string (stream &optional (eof-error-p t))
-  (let* ((length 16)
-         (octets (make-array length :element-type '(unsigned-byte 8)
-                                    :initial-element 0
-                                    :adjustable t)))
+(defgeneric read-null-terminated-string (stream &optional eof-error-p)
+  (:documentation
+  "Read bytes from STREAM until we find a NUL byte.
+   Accepts the following keyword arguments:
+    EOF-ERROR-P - if NIL, treat EOF as NUL. (default: T)"))
+
+(defmethod read-null-terminated-string (stream &optional (eof-error-p t)
+                                        &aux (length 16))
+  (let ((octets (make-array length :element-type '(unsigned-byte 8)
+                                   :initial-element 0
+                                   :adjustable t)))
     (loop
       for i fixnum from 0
       as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
@@ -105,6 +111,27 @@
         return (adjust-array octets i)
       do (setf (aref octets i) b))))
 
+(defmethod read-null-terminated-string ((stream flexi-streams::vector-input-stream)
+                                        &optional (eof-error-p t))
+  ;; We're going to break the flexi-streams abstraction here to get an
+  ;; exact length.
+  (with-accessors ((index flexi-streams::vector-stream-index)
+                   (end flexi-streams::vector-stream-end)
+                   (vector flexi-streams::vector-stream-vector))
+      stream
+    (let ((position (position 0 vector :start index)))
+      (cond
+        ((and eof-error-p (null position))
+         ;; Consume the stream and signal EOF
+         (setf index end)
+         (error 'end-of-file :stream stream))
+        (t
+         (let ((octets (make-array (- (or position end) index) :element-type '(unsigned-byte 8)
+                                                               :initial-element 0)))
+           (read-sequence octets stream)
+           (when position (incf index)) ; Consume the NUL byte if necessary.
+           octets))))))
+
 (defun write-null-terminated-string (octets stream)
   (assert (notany #'zerop octets))
   (write-sequence octets stream)
@@ -112,7 +139,8 @@
 
 ;;; Protocol::VariableLengthString
 ;;; A string with a length determine by another field
-;;; This will be implemented at a higher level using fixed-length-strings and knowledge of the other field.
+;;; This will be implemented at a higher level using fixed-length-strings
+;;; and knowledge of the other field.
 
 ;;; Protocol::LengthEncodedString
 ;;; A string prefixed by its length as a length-encoded integer
