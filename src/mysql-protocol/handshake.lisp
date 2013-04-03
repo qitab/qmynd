@@ -45,9 +45,8 @@
                 :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))))
 
 (defun process-initial-handshake-v10 (payload)
-  ;; 1) Parse the payload
+  "Parse an INITIAL-HANDSHAKE-V10 Packet and populate the default MySQL connection."
   (let ((packet (parse-initial-handshake-v10 payload)))
-    ;; 2) Populate *mysql-connection* slots with data from initial handshake
     (setf (mysql-connection-server-version *mysql-connection*)
           (initial-handshake-v10-packet-server-version packet)
 
@@ -93,7 +92,7 @@
     (values)))
 
 (defun send-ssl-request-packet (verify)
-  "Sends a MySQL SSL Connection Request Packet and begins SSL Negotiation."
+  "Sends a MySQL SSL Connection Request Packet and begins SSL negotiation."
   (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
     (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
     (write-fixed-length-integer #x1000000 4 s)
@@ -110,6 +109,8 @@
          :cl+ssl :ssl-stream-check-verify
          stream))
       (setf (mysql-connection-stream *mysql-connection*) stream))))
+
+;; We don't actually receive a Handshake Response packet as a client, but it looks like this.
 
 ;; (define-packet handshake-response-v41
 ;;   ((capability-flags :mysql-type (integer 4))
@@ -144,6 +145,7 @@
 ;;     :predicate (flagsp +mysql-capability-client-connect-attrs+ capability-flags))))
 
 (defun send-handshake-response-41 (&key username auth-plugin auth-response database)
+  "Send a MySQL Handshake Response v41 to the default MySQL connection."
   (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
     (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
     (write-fixed-length-integer #x1000000 4 s)
@@ -173,11 +175,13 @@
     (mysql-write-packet (flexi-streams:get-output-stream-sequence s))))
 
 (defun process-initial-handshake-payload (payload)
+  "Initial handshake processing dispatch."
   (ecase (aref payload 0)
     (10 (process-initial-handshake-v10 payload))))
 
 
 (defun mysql-connect-do-handshake (connection username password database &key ssl ssl-verify)
+  "Perform the MySQL Initial Handshake with CONNECTION."
   ;; Read a wire packet
   (let ((initial-handshake-payload (mysql-connection-read-packet connection)))
     (with-mysql-connection (connection)
@@ -217,6 +221,7 @@
           (mysql-connection-close-socket connection)
           (error e)))
 
+      ;; Enable compression if possible
       (when (mysql-has-capability +mysql-capability-client-compress+)
         (setf (mysql-connection-stream connection)
               (make-instance 'mysql-compressed-stream
