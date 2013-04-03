@@ -13,7 +13,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Conncetion entry-point
 (defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database)
-  ;; 1) Open Socket
+  ;; Open Socket
   (let* ((socket (usocket:socket-connect host port
                                          :protocol :stream
                                          :element-type '(unsigned-byte 8)))
@@ -21,10 +21,10 @@
                                     :socket socket
                                     :stream (usocket:socket-stream socket)
                                     :default-schema database))
-         ;; 2) Read a wire packet
+         ;; Read a wire packet
          (initial-handshake-payload (mysql-connection-read-packet connection)))
     (with-mysql-connection (connection)
-      ;; 3) Process Initial Handshake
+      ;; Process Initial Handshake
       (process-initial-handshake-payload initial-handshake-payload)
 
       ;; asedeno-TODO: Negotiate SSL
@@ -34,11 +34,11 @@
               (logandc2 (mysql-connection-capabilities connection)
                         +mysql-capability-client-connect-with-db+)))
 
-      ;; 4) Prepare Auth Response
+      ;; Prepare Auth Response
       (handler-case
           (with-prefixed-accessors (auth-data auth-plugin)
               (mysql-connection- connection)
-            ;; 5) Prepare Initial Response OR Close and Signal
+            ;; Prepare Initial Response OR Close and Signal
             (send-handshake-response-41 :username username
                                         :auth-response (generate-auth-response password auth-data auth-plugin)
                                         :auth-plugin auth-plugin
