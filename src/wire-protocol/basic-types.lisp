@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -78,7 +78,8 @@
 ;;; A string with a known length
 
 (defun read-fixed-length-string (length stream)
-  (let ((octets (make-sequence '(vector (unsigned-byte 8)) length)))
+  (let ((octets (make-array length :element-type '(unsigned-byte 8)
+                                   :initial-element 0)))
     (read-sequence octets stream)
     octets))
 
