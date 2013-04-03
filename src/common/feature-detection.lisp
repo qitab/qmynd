@@ -12,3 +12,7 @@
 
 (defun have-ssl ()
   (find-package "CL+SSL"))
+
+(defun have-compression ()
+  (and (find-package "CHIPZ")
+       (find-package "SALZA2")))

@@ -108,6 +108,9 @@
     payload))
 
 (defmethod mysql-connection-command-init ((c mysql-connection) command)
+  (let ((stream (mysql-connection-stream c)))
+    (when (typep stream 'mysql-compressed-stream)
+      (setf (mysql-compressed-stream-sequence-id stream) 0)))
   (setf (mysql-connection-sequence-id c) 0
         (mysql-connection-current-command c) command))
 

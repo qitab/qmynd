@@ -196,6 +196,8 @@
 (defconstant +minutes-per-hour+ 60)
 (defconstant +hours-per-day+ 24)
 
+(defconstant +mysql-minimum-compression-length+ 50)
+
 ) ;eval-when
 
 (defun mysql-capabilities-supported ()
@@ -205,6 +207,9 @@
    +mysql-capability-client-connect-with-db+
    (if (have-ssl)
        +mysql-capability-client-ssl+
+       0)
+   (if (have-compression)
+       +mysql-capability-client-compress+
        0)
    ;;+mysql-capability-client-no-schema+
    ;;+mysql-capability-client-ignore-space+
