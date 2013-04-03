@@ -21,10 +21,10 @@
 
 (defun send-command-query (query-string)
   (mysql-command-init +mysql-command-query+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-query+ s)
-    (write-sequence (babel:string-to-octets query-string) s)
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-query+ s)
+     (write-sequence (babel:string-to-octets query-string) s)))
   (let* ((payload (mysql-read-packet))
          (tag (aref payload 0)))
     (if (member tag (list +mysql-response-ok+ +mysql-response-error+))

@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -23,10 +23,10 @@
 
 (defun send-command-initialize-database (schema-name)
   (mysql-command-init +mysql-command-initialize-database+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-initialize-database+ s)
-    (write-sequence (babel:string-to-octets schema-name) s)
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-initialize-database+ s)
+     (write-sequence (babel:string-to-octets schema-name) s)))
   (prog1
       (parse-response (mysql-read-packet))
     (setf (mysql-connection-default-schema *mysql-connection*) schema-name)))

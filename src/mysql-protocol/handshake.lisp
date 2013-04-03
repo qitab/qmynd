@@ -94,22 +94,22 @@
 
 (defun send-ssl-request-packet (verify)
   "Sends a MySQL SSL Connection Request Packet and begins SSL Negotiation."
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
-    (write-fixed-length-integer #x1000000 4 s)
-    (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
-    (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s))
-    ;; We may not have CL+SSL, in which case we'll never get to this function,
-    ;; but we still want it to compile.
-    (let ((stream (uiop/package:symbol-call
-                   :cl+ssl :make-ssl-client-stream
-                   (mysql-connection-stream *mysql-connection*))))
-      (when verify
-        (uiop/package:symbol-call
-         :cl+ssl :ssl-stream-check-verify
-         stream))
-      (setf (mysql-connection-stream *mysql-connection*) stream))))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
+     (write-fixed-length-integer #x1000000 4 s)
+     (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
+     (write-fixed-length-integer 0 23 s))) ; 23 reserved bytes
+  ;; We may not have CL+SSL, in which case we'll never get to this function,
+  ;; but we still want it to compile.
+  (let ((stream (uiop/package:symbol-call
+                 :cl+ssl :make-ssl-client-stream
+                 (mysql-connection-stream *mysql-connection*))))
+    (when verify
+      (uiop/package:symbol-call
+       :cl+ssl :ssl-stream-check-verify
+       stream))
+    (setf (mysql-connection-stream *mysql-connection*) stream)))
 
 ;; (define-packet handshake-response-v41
 ;;   ((capability-flags :mysql-type (integer 4))
@@ -144,33 +144,33 @@
 ;;     :predicate (flagsp +mysql-capability-client-connect-attrs+ capability-flags))))
 
 (defun send-handshake-response-41 (&key username auth-plugin auth-response database)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
-    (write-fixed-length-integer #x1000000 4 s)
-    (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
-    (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
-    (write-null-terminated-string (babel:string-to-octets username) s)
-    (cond
-      ((mysql-has-capability +mysql-capability-client-plugin-auth-lenec-client-data+)
-       (write-length-encoded-integer (length auth-response) s)
-       (write-sequence auth-response s))
-      ((mysql-has-capability +mysql-capability-client-secure-connection+)
-       (write-byte (length auth-response) s)
-       (write-sequence auth-response s))
-      (T
-       (write-null-terminated-string auth-response s)))
-    ;; If the bit is still set at this point, then we have a database schema to specify.
-    (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
-      (write-null-terminated-string (babel:string-to-octets database) s))
-    (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
-      (write-null-terminated-string auth-plugin s))
-    #+mysql-client-connect-attributes
-    (when (mysql-has-capability +mysql-capability-client-connect-attrs+)
-      ;; asedeno-TODO: When this is implemented, what sort of
-      ;; attributes do we want to send? Are they hard-coded? Supplied
-      ;; by the user? Both? Stored in the connection object?
-      nil)
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s))))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
+     (write-fixed-length-integer #x1000000 4 s)
+     (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
+     (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
+     (write-null-terminated-string (babel:string-to-octets username) s)
+     (cond
+       ((mysql-has-capability +mysql-capability-client-plugin-auth-lenec-client-data+)
+        (write-length-encoded-integer (length auth-response) s)
+        (write-sequence auth-response s))
+       ((mysql-has-capability +mysql-capability-client-secure-connection+)
+        (write-byte (length auth-response) s)
+        (write-sequence auth-response s))
+       (T
+        (write-null-terminated-string auth-response s)))
+     ;; If the bit is still set at this point, then we have a database schema to specify.
+     (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
+       (write-null-terminated-string (babel:string-to-octets database) s))
+     (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
+       (write-null-terminated-string auth-plugin s))
+     #+mysql-client-connect-attributes
+     (when (mysql-has-capability +mysql-capability-client-connect-attrs+)
+       ;; asedeno-TODO: When this is implemented, what sort of
+       ;; attributes do we want to send? Are they hard-coded? Supplied
+       ;; by the user? Both? Stored in the connection object?
+       nil))))
 
 (defun process-initial-handshake-payload (payload)
   (ecase (aref payload 0)
