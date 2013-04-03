@@ -51,9 +51,6 @@
 (define-condition unexpected-parameter-count (mysql-external-error)
   ())
 
-(define-condition unexpected-column-type (mysql-external-error)
-  ())
-
 (define-condition mysql-insufficient-capabilities (mysql-external-error)
   ((server-flags :initarg server-flags
                  :reader mysql-insufficient-capabilities-server-flags)))
@@ -69,6 +66,3 @@
 (define-condition value-is-not-decimal (mysql-external-error)
   ((value :initarg :value)))
 
-(define-condition invalid-date-time (mysql-external-error)
-  ((value :initarg :value
-          :reader invalid-date-time-parameter-value)))
