@@ -51,55 +51,6 @@
                                     :default-schema database)))
     (mysql-connect-do-handshake connection username password database :ssl nil)))
 
-(defun mysql-connect-do-handshake (connection username password database &key ssl ssl-verify)
-  ;; Read a wire packet
-  (let ((initial-handshake-payload (mysql-connection-read-packet connection)))
-    (with-mysql-connection (connection)
-      ;; Process Initial Handshake
-      (process-initial-handshake-payload initial-handshake-payload)
-
-      (unless database
-        (setf (mysql-connection-capabilities connection)
-              (logandc2 (mysql-connection-capabilities connection)
-                        +mysql-capability-client-connect-with-db+)))
-
-      ;; Deal with SSL
-      (unless (eq ssl :unspecified)
-        (cond
-          ((and ssl (not (mysql-has-capability +mysql-capability-client-ssl+)))
-           ;; SSL requested, but we don't have it.
-           (error 'ssl-not-supported))
-          ((null ssl)
-           ;; SSL explicitly disabled
-           (setf (mysql-connection-capabilities connection)
-                 (logandc2 (mysql-connection-capabilities connection)
-                           +mysql-capability-client-ssl+)))))
-      (when (mysql-has-capability +mysql-capability-client-ssl+)
-        (send-ssl-request-packet ssl-verify))
-
-      ;; Prepare Auth Response
-      (handler-case
-          (with-prefixed-accessors (auth-data auth-plugin)
-            (mysql-connection- connection)
-            ;; Prepare Initial Response OR Close and Signal
-            (send-handshake-response-41 :username username
-                                        :auth-response (generate-auth-response password auth-data auth-plugin)
-                                        :auth-plugin auth-plugin
-                                        :database database)
-            (parse-response (mysql-read-packet)))
-        (mysql-base-error (e)
-          (mysql-connection-close-socket connection)
-          (error e)))
-
-      (when (mysql-has-capability +mysql-capability-client-compress+)
-        (setf (mysql-connection-stream connection)
-              (make-instance 'mysql-compressed-stream
-                             :stream (mysql-connection-stream connection)))))
-
-    (setf (mysql-connection-connected connection) t)
-    connection))
-
-
 (defmethod mysql-disconnect ((c mysql-base-connection))
   (when (mysql-connection-connected c)
     (with-mysql-connection (c)
