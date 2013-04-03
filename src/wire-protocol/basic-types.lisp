@@ -132,15 +132,30 @@
 
 (defgeneric read-rest-of-packet-string (stream)
   (:documentation
-   "Returns the rest of a stream as an array. Only implemented on
-   flexi-streams::vector-input-stream."))
+   "Returns the rest of a stream as an array."))
+
+(defmethod read-rest-of-packet-string (stream &aux (length 16))
+  (let ((octets (make-array length :element-type '(unsigned-byte 8)
+                                   :initial-element 0
+                                   :adjustable t)))
+    (loop
+      for i fixnum from 0
+      as b fixnum = (read-byte stream nil -1)
+      unless (< i length) do
+        (incf length length)
+        (setf octets (adjust-array octets length))
+      when (= b -1)
+        return (adjust-array octets i)
+      do (setf (aref octets i) b))))
 
 (defmethod read-rest-of-packet-string ((stream flexi-streams::vector-input-stream))
   ;; We're going to break the flexi-streams abstraction here to get an
   ;; exact length.
-  (let* ((length (- (flexi-streams::vector-stream-end stream)
-                    (flexi-streams::vector-stream-index stream)))
-         (octets (make-array length :element-type '(unsigned-byte 8)
-                                    :initial-element 0)))
-    (read-sequence octets stream)
-    octets))
+  (with-accessors ((index flexi-streams::vector-stream-index)
+                   (end flexi-streams::vector-stream-end)
+                   (vector flexi-streams::vector-stream-vector))
+      stream
+    (let ((octets (make-array (- end index) :element-type '(unsigned-byte 8)
+                                            :initial-element 0)))
+      (read-sequence octets stream)
+      octets)))
