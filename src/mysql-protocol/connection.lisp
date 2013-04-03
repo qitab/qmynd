@@ -56,12 +56,17 @@
    ;; This is internal library state. It may be destructively modified by the library.
    (prepared-statements :type list
                         :initform nil
-                        :accessor mysql-connection-prepared-statements)))
+                        :accessor mysql-connection-prepared-statements))
+  (:documentation "The base class for all MySQL connections."))
+
+(defgeneric mysql-connection-close-socket (connection)
+  (:documentation "Close the MySQL connection's socket."))
 
 (defclass mysql-inet-connection (mysql-base-connection)
   ((socket :type (or usocket:stream-usocket null)
            :initarg :socket
-           :accessor mysql-connection-socket)))
+           :accessor mysql-connection-socket))
+  (:documentation "An AF_INET MySQL connections."))
 
 (defmethod mysql-connection-close-socket ((c mysql-inet-connection))
   (usocket:socket-close (mysql-connection-socket c))
@@ -72,7 +77,8 @@
 
   (defclass mysql-local-connection (mysql-base-connection)
     ((socket :initarg :socket
-             :accessor mysql-connection-socket)))
+             :accessor mysql-connection-socket))
+  (:documentation "An AF_LOCAL MySQL connection."))
 
   (defmethod mysql-connection-close-socket ((c mysql-local-connection))
     (let ((socket (mysql-connection-socket c)))
@@ -84,6 +90,7 @@
 ) ; progn
 
 (defmethod mysql-connection-remove-stale-prepared-statements ((c mysql-base-connection))
+  "Removes from C all prepared statements that do not have C as their connection."
   (setf (mysql-connection-prepared-statements *mysql-connection*)
         (delete-if-not
          #'(lambda (ps)
@@ -116,6 +123,7 @@
 
 ;;; Packet utilities
 (defmethod mysql-connection-write-packet ((c mysql-base-connection) payload)
+  "Write PAYLOAD to C's stream as a wire packet."
   (setf (mysql-connection-sequence-id c)
         (write-wire-packet (mysql-connection-stream c)
                            payload
@@ -123,6 +131,7 @@
   (values))
 
 (defmethod mysql-connection-read-packet ((c mysql-base-connection))
+  "Read a wire packet from C's stream."
   (multiple-value-bind (payload seq-id)
       (read-wire-packet (mysql-connection-stream c)
                         :expected-sequence-id (mysql-connection-sequence-id c))
@@ -130,6 +139,8 @@
     payload))
 
 (defmethod mysql-connection-command-init ((c mysql-base-connection) command)
+  "Initialize connection for a new command.
+   Resets sequence-id in underlying stream(s)."
   (let ((stream (mysql-connection-stream c)))
     (when (typep stream 'mysql-compressed-stream)
       (setf (mysql-compressed-stream-sequence-id stream) 0)))
@@ -137,13 +148,18 @@
         (mysql-connection-current-command c) command))
 
 (defun mysql-command-init (command)
+  "Initialize the default MySQL connection for a new command.
+   Resets sequence-id in underlying stream(s)."
   (mysql-connection-command-init *mysql-connection* command))
 
 (defun mysql-current-command-p (command)
+  "Tests to see if COMMAND is the current command of the default MySQL connection."
   (eq (mysql-connection-current-command *mysql-connection*) command))
 
 (defun mysql-write-packet (payload)
+  "Write PAYLOAD to the default MySQL connection's stream as a wire packet."
   (mysql-connection-write-packet *mysql-connection* payload))
 
 (defun mysql-read-packet ()
+  "Read a wire packet from the default MySQL connection's stream."
   (mysql-connection-read-packet *mysql-connection*))
