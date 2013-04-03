@@ -32,6 +32,7 @@
         :depends-on ("pkgdcl")
         :components ((:file "constants")
                      (:file "conditions")
+                     (:file "feature-detection")
                      (:file "utilities")
                      (:file "date-time"
                       :depends-on ("constants" "utilities"))
