@@ -13,6 +13,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; MySQL DateTime
 
+;; MySQL can validate dates in several ways depending on how the server is configured.  Rather than
+;; enforcing anything here, we'll allow for the most liberal specification and let the server tell
+;; us when we're wrong.
+
 (defclass mysql-date-time ()
   ((year :type (integer 0 #xffff)
          :accessor mysql-date-time-year
@@ -48,29 +52,6 @@
       (mysql-date-time- date-time)
     (format stream "#<MYSQL-DATE-TIME ~4,'0D-~2,'0D-~2,'0D ~2,'0D:~2,'0D:~2,'0D.~6,'0D>"
             year month day hour minute second microsecond)))
-
-;; MySQL can validate dates in several ways depending on how the server is configured.  Rather than
-;; enforcing anything here, we'll allow for the most liberal specification and let the server tell
-;; us when we're wrong.
-
-;; (defmethod initialize-instance :after ((date-time mysql-date-time) &key)
-;;   (with-prefixed-accessors (year month day hour minute second microsecond)
-;;       (mysql-date-time- date-time)
-;;     (unless (= 0 year month day hour minute second microsecond)
-;;       (when (or (zerop month)
-;;                 (zerop month)
-;;                 (and (member month '(2 4 6 9 11))
-;;                      (> day 30))
-;;                 (and (= month 2)
-;;                      (cond
-;;                        ((zerop (mod year 400))
-;;                         (> day 29))
-;;                        ((zerop (mod year 100))
-;;                         (> day 28))
-;;                        ((zerop (mod year 4))
-;;                         (> day 29))
-;;                        (t (> day 28)))))
-;;         (error 'invalid-date-time-parameter :value date-time)))))
 
 (defun mysql-date-time-to-universal-time (date-time)
   "Converts a MySQL DateTime to a Lisp integer-time. Returns NIL if all elements of the date-time
