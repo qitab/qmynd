@@ -99,10 +99,10 @@
       for i fixnum from 0
       as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
       unless (< i length) do
-        (incf length length) and do
-          (adjust-array octets length)
-      when (= b 0) do
-        (adjust-array octets i) and return octets
+        (incf length length)
+        (setf octets (adjust-array octets length))
+      when (= b 0)
+        return (adjust-array octets i)
       do (setf (aref octets i) b))))
 
 (defun write-null-terminated-string (octets stream)
