@@ -92,10 +92,9 @@
 
 (defun read-null-terminated-string (stream &optional (eof-error-p t))
   (let* ((length 16)
-         (octets (make-array length
-                             :element-type '(unsigned-byte 8)
-                             :adjustable t
-                             :initial-element 0)))
+         (octets (make-array length :element-type '(unsigned-byte 8)
+                                    :initial-element 0
+                                    :adjustable t)))
     (loop
       for i fixnum from 0
       as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
@@ -141,8 +140,7 @@
   ;; exact length.
   (let* ((length (- (flexi-streams::vector-stream-end stream)
                     (flexi-streams::vector-stream-index stream)))
-         (octets (make-array length
-                             :element-type '(unsigned-byte 8)
-                             :initial-element 0)))
+         (octets (make-array length :element-type '(unsigned-byte 8)
+                                    :initial-element 0)))
     (read-sequence octets stream)
     octets))
