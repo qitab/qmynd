@@ -35,6 +35,7 @@ each Command Phase.
 
 ;;; Functions to read and write wire packets.
 (defun read-wire-packet (stream &key (expected-sequence-id 0))
+  "Read a packet from STREAM."
   (let ((payload (make-array 0 :element-type '(unsigned-byte 8) :adjustable t))
         (pos 0))
     (loop
@@ -52,6 +53,7 @@ each Command Phase.
       when (< length #xffffff) return (values payload expected-sequence-id))))
 
 (defun write-wire-packet (stream payload &key (sequence-id 0))
+  "Write PAYLOAD to STREAM as one or more packets."
   (loop
     for length from (length payload) downto 0 by #xffffff
     for start from 0 by #xffffff

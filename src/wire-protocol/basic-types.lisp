@@ -18,6 +18,9 @@
 ;;; Little endian fixed-length integers with lengths (1 2 3 4 6 8)
 
 (defun read-fixed-length-integer (length stream &key signed)
+  "Read LENGTH bytes from STREAM as an integer (little endian).
+   Accepts the following keyword arguments:
+    SIGNED - treat the integer as signed."
   (let ((result 0)
         negative)
     (loop
@@ -31,6 +34,7 @@
         result)))
 
 (defun write-fixed-length-integer (int length stream)
+  "Write INT to STREAM as a LENGTH byte integer."
   (loop
     repeat length
     for i fixnum from 0 by 8
@@ -39,6 +43,10 @@
 ;;; 15.1.1.1.2. length encoded integer
 
 (defun read-length-encoded-integer (stream &key null-ok)
+  "Read a MySQL Length-Encoded Integer from STREAM.
+   Accepts the following keyword arguments:
+    NULL-OK - Parse #xFB as NULL.
+   Signals an error when we fail to parse an integer."
   (let ((n (read-byte stream)))
     (cond
       ((< n #xfb) n)
@@ -56,6 +64,10 @@
                                 :text "Bad length while reading a length-encoded integer."))))))
 
 (defun write-length-encoded-integer (int stream)
+  "Write INT to STREAM as a MySQL Length-Encoded Integer.
+   Assumes INT is non-negative.
+   Signals an error if INT is too big."
+  (assert (not (minusp int)))
   (cond
     ((< int 251)
      (write-byte int stream))
@@ -81,6 +93,8 @@
 ;;; A string with a known length
 
 (defun read-fixed-length-string (length stream)
+  "Read LENGTH bytes from STREAM, returns them in a vector.
+   NB: MySQL calls this a string, but we treat it as a vector of octets."
   (let ((octets (make-array length :element-type '(unsigned-byte 8)
                                    :initial-element 0)))
     (read-sequence octets stream)
@@ -136,6 +150,8 @@
            octets))))))
 
 (defun write-null-terminated-string (octets stream)
+  "Write OCTETS to STREAM followed by a NUL byte.
+   Assumes no NUL bytes exist in OCTETS."
   (assert (notany #'zerop octets))
   (write-sequence octets stream)
   (write-byte 0 stream))
@@ -149,11 +165,16 @@
 ;;; A string prefixed by its length as a length-encoded integer
 
 (defun read-length-encoded-string (stream &key null-ok)
+  "Read a MySQL Length-Encoded Intgeer from STREAM, then read that many bytes from STREAM.
+   Accepts the following keyword arguments:
+    NULL-OK: Allow READ-LENGTH-ENCODED-INTEGER to treat #xFB as NULL."
   (let ((length (read-length-encoded-integer stream :null-ok null-ok)))
     (when length
       (read-fixed-length-string length stream))))
 
 (defun write-length-encoded-string (octets stream)
+  "Write the length of OCTETS to STREAM as a MySQL Length-Encoded Integer,
+   then write OCTETS to STREAM."
   (let ((length (length octets)))
     (write-length-encoded-integer length stream)
     (write-sequence octets stream)))

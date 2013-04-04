@@ -84,6 +84,11 @@
       (make-instance 'mysql-date-time)))
 
 (defun parse-date-time-string (str)
+  "Parses a date-time-string in one of the following forms and returns a MYSQL-DATE-TIME object.
+    \"\" -- All fields = 0
+    \"YYYY-MM-DD\" -- All time fields = 0
+    \"YYYY-MM-DD hh:mm:ss\" -- Microseconds = 0
+    \"YYYY-MM-DD hh:mm:ss.µµµµµµ\""
   (let ((year 0) (month 0) (day 0)
         (hour 0) (minute 0) (second 0)
         (microsecond 0)
@@ -148,6 +153,8 @@
             minutes seconds microseconds)))
 
 (defun mysql-time-interval-to-seconds (interval)
+  "Converts a MYSQL-TIME-INTERVAL to a whole number of seconds.
+   Returns microseconds as a second value."
   (assert (typep interval 'mysql-time-interval))
   (with-prefixed-accessors (negativep days hours minutes seconds microseconds)
     (mysql-time-interval- interval)
@@ -161,6 +168,8 @@
             microseconds)))
 
 (defun seconds-to-mysql-time-interval (value &optional (microseconds 0))
+  "Creates a MYSQL-TIME-INTERVAL representing VALUE seconds.
+   An optional second argument can be used to specify microseconds."
   (assert (typep value 'integer))
   (let ((negativep (minusp value))
         (value (abs value)))
@@ -176,6 +185,8 @@
                          :microseconds microseconds))))))
 
 (defun parse-time-interval-string (str)
+  "Parses the MySQL Text Protocol represetation of a time interval.
+   /(-)?(h+):(mm):(ss).(µµµµµµ)/"
   (let ((negativep (starts-with str "-")))
     (multiple-value-bind (hours end)
         (parse-integer str :start (if negativep 1 0) :junk-allowed t)

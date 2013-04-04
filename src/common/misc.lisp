@@ -14,6 +14,7 @@
 ;;; evolves.
 
 (defun mysql-cs-coll-to-character-encoding (cs-coll)
+  "Maps a MySQL Character Set / Collation identifier to an encoding."
   (ecase cs-coll
     (#.+mysql-cs-coll-latin1-swedish-ci+ :iso-8859-1)
     (#.+mysql-cs-coll-utf8-general-ci+ :utf-8)

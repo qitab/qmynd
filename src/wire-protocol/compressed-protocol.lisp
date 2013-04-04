@@ -10,8 +10,33 @@
 
 (in-package :qmynd-impl)
 
+;;; 5.4. Compression
+
+#|
+A MySQL Compressed Packet consists of:
+• 3 bytes        - length of packet (compressed)
+• 1 byte         - sequence id (reset with, but independent of the wire-packet sequence-id)
+• 3 bytes        - length of packet (uncompressed); 0 means payload was not compressed
+• string[length] - the payload
+
+The MySQL Compression Protocol is independent of the MySQL Wire Protocol
+and is implemented here as a Gray stream that wraps the connection stream.
+
+The wrapping occurs after the MySQL Handshake is complete if compression
+is supported by the server and this library.
+
+This functionality depends on the CHIPZ (decompression) and
+SALZA2 (compression) libraries.
+
+NB: A future version of this library may support the Compression protocol
+using CHIPZ without SALZA, falling back on transmitting packets
+uncompressed, but for now using the Compression protocol requires both.
+
+|#
+
 ;;; Functions to read and write wire packets for the compressed protocol.
 (defun read-compressed-wire-packet (stream &key (expected-sequence-id 0))
+  "Read a compressed packet from STREAM."
   (let (payload
         (pos 0)
         (compressed-length (read-fixed-length-integer 3 stream))
@@ -33,6 +58,7 @@
             sequence-id)))
 
 (defun write-compressed-wire-packet (stream payload &key (sequence-id 0))
+  "Write PAYLOAD to STREAM as one or more compressed packets."
   (let* ((payload-length (length payload)))
     (flet ((send-payload (compressed-payload compressed-payload-length uncompressed-payload-length &key (start 0) end)
              (write-fixed-length-integer compressed-payload-length 3 stream)
@@ -74,7 +100,7 @@
                                    trivial-gray-streams:fundamental-binary-output-stream)
   ((stream :initarg :stream
            :accessor mysql-compressed-stream-stream
-           :documentation "The underlying stream")
+           :documentation "The underlying stream.")
    (input-buffer :type (or flexi-streams:in-memory-input-stream null)
                  :initform nil
                  :accessor mysql-compressed-stream-input-buffer
@@ -85,11 +111,13 @@
                   :documentation "The container for the outgoing, to be deflated, byte stream.")
    (sequence-id :type integer
                 :initform 0
-                :accessor mysql-compressed-stream-sequence-id)))
+                :accessor mysql-compressed-stream-sequence-id
+                :documentation "Sequence IDs for the compressed protocol packet stream.")))
 
 (defun fill-input-buffer (stream &aux payload)
-  "Allocates a new input buffer stream from the results of parsing a new compressed packet off of
-   the captured stream"
+  "Allocates a new input buffer stream from the results of parsing a new
+   compressed packet off of the wrapped stream. Requires that the existing
+   input buffer, if any, be empty."
   (assert (typep stream 'mysql-compressed-stream))
   (with-accessors ((stream mysql-compressed-stream-stream)
                    (input-buffer mysql-compressed-stream-input-buffer)
