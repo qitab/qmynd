@@ -29,7 +29,7 @@
 ;;  ((count :mysql-type (integer :lenenc))))
 
 (defun parse-column-count (payload)
-  (let ((s (flexi-streams:make-in-memory-input-stream payload)))
+  (flexi-streams:with-input-from-sequence (s payload)
     (read-length-encoded-integer s)))
 
 (define-packet column-definition-v41
@@ -74,16 +74,16 @@
                     (= tag +mysql-response-error+))
                 (parse-response payload))
                (t
-                (let ((s (flexi-streams:make-flexi-stream (flexi-streams:make-in-memory-input-stream payload)))
-                      (row (make-array column-count :initial-element nil)))
-                  (loop for i from 0 below column-count
-                        for str = (read-length-encoded-string s :null-ok t)
-                        when str
-                          do (setf (aref row i)
-                                   (parse-text-protocol-result-column
-                                    str
-                                    (aref column-definitions i))))
-                  row))))))
+                (flexi-streams:with-input-from-sequence (s payload)
+                  (let ((row (make-array column-count :initial-element nil)))
+                    (loop for i from 0 below column-count
+                          for str = (read-length-encoded-string s :null-ok t)
+                          when str
+                            do (setf (aref row i)
+                                     (parse-text-protocol-result-column
+                                      str
+                                      (aref column-definitions i))))
+                    row)))))))
     (coerce (loop for row = (parse-resultset-row) then (parse-resultset-row)
                   until (typep row 'response-end-of-file-packet)
                   collect row)
@@ -197,16 +197,16 @@
                     (= tag +mysql-response-error+))
                 (parse-response payload))
                ((= tag 0)
-                (let* ((s (flexi-streams:make-in-memory-input-stream payload :start 1))
-                       (row (make-array column-count :initial-element nil))
-                       (null-bitmap (read-fixed-length-integer (ceiling (+ column-count 2) 8) s)))
-                  (loop for i from 0 below column-count
-                        when (zerop (ldb (byte 1 (+ i 2)) null-bitmap))
-                          do (setf (aref row i)
-                                   (parse-binary-protocol-result-column
-                                    s
-                                    (aref column-definitions i))))
-                  row))
+                (flexi-streams:with-input-from-sequence (s payload :start 1)
+                  (let* ((row (make-array column-count :initial-element nil))
+                         (null-bitmap (read-fixed-length-integer (ceiling (+ column-count 2) 8) s)))
+                    (loop for i from 0 below column-count
+                          when (zerop (ldb (byte 1 (+ i 2)) null-bitmap))
+                            do (setf (aref row i)
+                                     (parse-binary-protocol-result-column
+                                      s
+                                      (aref column-definitions i))))
+                    row)))
                (T (error "unexpected packet parsing binary resultset row"))))))
     (coerce (loop for row = (parse-binary-resultset-row) then (parse-binary-resultset-row)
                   until (typep row 'response-end-of-file-packet)

@@ -47,10 +47,10 @@
 
 (defun send-command-statement-prepare (query-string)
   (mysql-command-init +mysql-command-statement-prepare+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-statement-prepare+ s)
-    (write-sequence (babel:string-to-octets query-string) s)
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-statement-prepare+ s)
+     (write-sequence (babel:string-to-octets query-string) s)))
   (let* ((payload (mysql-read-packet))
          (tag (aref payload 0)))
     (if (= tag +mysql-response-error+)
@@ -106,12 +106,12 @@
                   (string (babel:string-to-octets data)))))
     (assert (eq *mysql-connection* (mysql-prepared-statement-connection statement)))
     (mysql-command-init +mysql-command-statement-send-long-data+)
-    (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-      (write-byte +mysql-command-statement-send-long-data+ s)
-      (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
-      (write-fixed-length-integer parameter-id 2 s)
-      (write-sequence octets s)
-      (mysql-write-packet (flexi-streams:get-output-stream-sequence s))))
+    (mysql-write-packet
+     (flexi-streams:with-output-to-sequence (s)
+       (write-byte +mysql-command-statement-send-long-data+ s)
+       (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
+       (write-fixed-length-integer parameter-id 2 s)
+       (write-sequence octets s))))
   (values))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -140,34 +140,37 @@
     (error 'unexpected-parameter-count))
   (assert (eq *mysql-connection* (mysql-prepared-statement-connection statement)))
   (mysql-command-init +mysql-command-statement-execute+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-statement-execute+ s)
-    (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
-    ;; asedeno-TODO: Implement flags
-    (write-byte 0 s)
-    ;; Iteration count: always 1
-    (write-fixed-length-integer 1 4 s)
-    (unless (zerop (length parameters))
-      (let ((parameters (coerce parameters 'vector))
-            (parameter-type-stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
-            (parameter-stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
-            (null-bitmap 0))
-        (loop
-          for i from 0
-          for parameter across parameters
-          if parameter
-            do (encode-binary-parameter parameter parameter-stream parameter-type-stream)
-          else
-            do (setf (ldb (byte 1 i) null-bitmap) 1)
-               (write-byte +mysql-type-null+ parameter-type-stream)
-               (write-byte 0 parameter-type-stream)
-          end
-          finally (write-fixed-length-integer null-bitmap (ceiling i 8) s)
-                  (let ((types (flexi-streams:get-output-stream-sequence parameter-type-stream)))
-                    (write-byte (if (zerop (length types)) 0 1) s)
-                    (write-sequence types s)
-                    (write-sequence (flexi-streams:get-output-stream-sequence parameter-stream) s)))))
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-statement-execute+ s)
+     (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
+     ;; asedeno-TODO: Implement flags
+     (write-byte 0 s)
+     ;; Iteration count: always 1
+     (write-fixed-length-integer 1 4 s)
+     (unless (zerop (length parameters))
+       (let ((parameters (coerce parameters 'vector))
+             (parameter-type-stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
+             (parameter-stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
+             (null-bitmap 0))
+         (unwind-protect
+              (loop
+                for i from 0
+                for parameter across parameters
+                if parameter
+                  do (encode-binary-parameter parameter parameter-stream parameter-type-stream)
+                else
+                  do (setf (ldb (byte 1 i) null-bitmap) 1)
+                     (write-byte +mysql-type-null+ parameter-type-stream)
+                     (write-byte 0 parameter-type-stream)
+                end
+                finally (write-fixed-length-integer null-bitmap (ceiling i 8) s)
+                        (let ((types (flexi-streams:get-output-stream-sequence parameter-type-stream)))
+                          (write-byte (if (zerop (length types)) 0 1) s)
+                          (write-sequence types s)
+                          (write-sequence (flexi-streams:get-output-stream-sequence parameter-stream) s)))
+           (when parameter-type-stream (close parameter-type-stream))
+           (when parameter-stream (close parameter-stream)))))))
   (parse-command-statement-execute-response statement))
 
 (defmethod parse-command-statement-execute-response ((statement mysql-prepared-statement))
@@ -200,10 +203,10 @@
 (defmethod send-command-statement-close ((statement mysql-prepared-statement))
   (assert (eq *mysql-connection* (mysql-prepared-statement-connection statement)))
   (mysql-command-init +mysql-command-statement-close+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-statement-close+ s)
-    (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-statement-close+ s)
+     (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)))
   ;; No response from server
   (setf (mysql-prepared-statement-connection statement) nil)
   (values))
@@ -222,10 +225,10 @@
 (defmethod send-command-statement-reset ((statement mysql-prepared-statement))
   (assert (eq *mysql-connection* (mysql-prepared-statement-connection statement)))
   (mysql-command-init +mysql-command-statement-reset+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-statement-reset+ s)
-    (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-statement-reset+ s)
+     (write-fixed-length-integer (mysql-prepared-statement-statement-id statement) 4 s)))
   (parse-response (mysql-read-packet)))
 
 (asdf-finalizers:final-forms)

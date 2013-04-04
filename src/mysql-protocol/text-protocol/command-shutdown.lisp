@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -26,9 +26,9 @@
 (defun send-command-shutdown (&optional shutdown-type)
   (assert (typep shutdown-type '(or (unsigned-byte 8) null)))
   (mysql-command-init +mysql-command-shutdown+)
-  (let ((s (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-    (write-byte +mysql-command-shutdown+ s)
-    (when (and shutdown-type (not (= shutdown-type +mysql-shutdown-default+)))
-      (write-byte shutdown-type s))
-    (mysql-write-packet (flexi-streams:get-output-stream-sequence s)))
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-byte +mysql-command-shutdown+ s)
+     (when (and shutdown-type (not (= shutdown-type +mysql-shutdown-default+)))
+       (write-byte shutdown-type s))))
   (parse-response (mysql-read-packet)))

@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -12,18 +12,18 @@
 
 (define-test decode-fixed-length-integers ()
   ;;prepare a stream with a bunch of integers for decoding
-  (with-open-stream (s (flexi-streams:make-in-memory-input-stream #(#x00 #x10 #x80 #xff
-                                                                    #x00 #x00 #xfe #xff
-                                                                    #x00 #x00 #x0
-                                                                    #xfd #xfe #xff
-                                                                    #x00 #x00 #x00 #x0
-                                                                    #xfc #xfd #xfe #xff
-                                                                    #x00 #x00 #x00 #x00 #x00 #x0
-                                                                    #xfa #xfb #xfc #xfd #xfe #xff
-                                                                    #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x0
-                                                                    #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
-                                                                    #xff #x7f #x80 #x00
-                                                                    #xff #xff #xff #x7f #x00 #x80 #x00 #x00)))
+  (flexi-streams:with-input-from-sequence (s #(#x00 #x10 #x80 #xff
+                                               #x00 #x00 #xfe #xff
+                                               #x00 #x00 #x0
+                                               #xfd #xfe #xff
+                                               #x00 #x00 #x00 #x0
+                                               #xfc #xfd #xfe #xff
+                                               #x00 #x00 #x00 #x00 #x00 #x0
+                                               #xfa #xfb #xfc #xfd #xfe #xff
+                                               #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x0
+                                               #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
+                                               #xff #x7f #x80 #x00
+                                               #xff #xff #xff #x7f #x00 #x80 #x00 #x00))
 
     ;; 1 byte
     (assert-equal
@@ -101,10 +101,10 @@
 
 (define-test encode-fixed-length-integers ()
   (flet ((encode-test (int len expected)
-           (let ((stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-             (write-fixed-length-integer int len stream)
-             (assert-equal (flexi-streams:get-output-stream-sequence stream)
-                           expected :test #'equalp))))
+           (assert-equal
+            (flexi-streams:with-output-to-sequence (s)
+              (write-fixed-length-integer int len s))
+            expected :test #'equalp)))
     ;; 1 byte
     (encode-test 0 1 #(0))
     (encode-test #x10 1 #(#x10))
@@ -133,15 +133,15 @@
     (encode-test #xfffefdfcfbfaf9f8 8 #(#xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff))))
 
 (define-test decode-length-encoded-integers ()
-  (with-open-stream (s (flexi-streams:make-in-memory-input-stream #(#x0
-                                                                    #x80
-                                                                    #xfa
-                                                                    #xfc #xfb #x0
-                                                                    #xfc #xfc #x0
-                                                                    #xfc #xfe #xff
-                                                                    #xfd #xfd #xfe #xff
-                                                                    #xfe #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
-                                                                    )))
+  (flexi-streams:with-input-from-sequence (s #(#x0
+                                               #x80
+                                               #xfa
+                                               #xfc #xfb #x0
+                                               #xfc #xfc #x0
+                                               #xfc #xfe #xff
+                                               #xfd #xfd #xfe #xff
+                                               #xfe #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
+                                               ))
     (assert-equal
      (read-length-encoded-integer s)
      #x0)
@@ -169,10 +169,10 @@
 
 (define-test encode-length-encoded-integers ()
   (flet ((encode-test (int expected)
-           (let ((stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-             (write-length-encoded-integer int stream)
-             (assert-equal (flexi-streams:get-output-stream-sequence stream)
-                           expected :test #'equalp))))
+           (assert-equal
+            (flexi-streams:with-output-to-sequence (s)
+              (write-length-encoded-integer int s))
+            expected :test #'equalp)))
     (encode-test #x00 #(#x00))
     (encode-test #x80 #(#x80))
     (encode-test #xfa #(#xfa))
@@ -185,22 +185,22 @@
 (define-test decode-strings ()
   (let ((babel:*default-character-encoding* :utf-8))
     ;; Preparing an octet stream with a bunch of strings in it.
-    (with-open-stream (s (flexi-streams:make-in-memory-input-stream (concatenate '(vector (unsigned-byte 8))
-                                                                                 (babel:string-to-octets "Testing")
-                                                                                 #(13)
-                                                                                 (babel:string-to-octets "Hello, world!")
-                                                                                 (babel:string-to-octets "Hello")
-                                                                                 #(0)
-                                                                                 #(#xfc #xfb #x0)
-                                                                                 (make-array #xfb
-                                                                                             :element-type '(unsigned-byte 8)
-                                                                                             :initial-element #x41)
-                                                                                 (make-array #x100
-                                                                                             :element-type '(unsigned-byte 8)
-                                                                                             :initial-element #x41)
-                                                                                 #(0)
-                                                                                 (babel:string-to-octets "Goodbye")
-                                                                                 #(0))))
+    (flexi-streams:with-input-from-sequence (s (concatenate '(vector (unsigned-byte 8))
+                                                            (babel:string-to-octets "Testing")
+                                                            #(13)
+                                                            (babel:string-to-octets "Hello, world!")
+                                                            (babel:string-to-octets "Hello")
+                                                            #(0)
+                                                            #(#xfc #xfb #x0)
+                                                            (make-array #xfb
+                                                                        :element-type '(unsigned-byte 8)
+                                                                        :initial-element #x41)
+                                                            (make-array #x100
+                                                                        :element-type '(unsigned-byte 8)
+                                                                        :initial-element #x41)
+                                                            #(0)
+                                                            (babel:string-to-octets "Goodbye")
+                                                            #(0)))
 
       ;; Pull strings out of the stream.
       (assert-equal

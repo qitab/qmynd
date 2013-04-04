@@ -2,7 +2,7 @@
 ;;;                                                                  ;;;
 ;;; Free Software published under an MIT-like license. See LICENSE   ;;;
 ;;;                                                                  ;;;
-;;; Copyright (c) 2012 Google, Inc.  All rights reserved.            ;;;
+;;; Copyright (c) 2012-2013 Google, Inc.  All rights reserved.       ;;;
 ;;;                                                                  ;;;
 ;;; Original author: Alejandro Sedeño                                ;;;
 ;;;                                                                  ;;;
@@ -228,24 +228,24 @@ Order of Operations:
 (defun emit-packet-parser (parser-name constructor-name slot-descriptors)
   (with-gensyms (stream #|local-bind-args|#)
     `(defun ,parser-name (payload)
-       (let ((,stream (flexi-streams:make-in-memory-input-stream payload))
+       (flexi-streams:with-input-from-sequence (,stream payload)
+         (let (,@(loop for slotd in slot-descriptors
+                       unless (member (packet-slot-name slotd) done)
+                         when (packet-slot-bind slotd)
+                           collect (packet-slot-name slotd)
+                       collect (packet-slot-name slotd) into done))
+           (block ,parser-name
              ,@(loop for slotd in slot-descriptors
-                     unless (member (packet-slot-name slotd) done)
-                       when (packet-slot-bind slotd)
-                         collect (packet-slot-name slotd)
-                     collect (packet-slot-name slotd) into done))
-         (block ,parser-name
-           ,@(loop for slotd in slot-descriptors
-                   collect (emit-packet-parser-slot parser-name slotd stream locals)
-                   when (packet-slot-bind slotd)
-                     collect (packet-slot-name slotd) into locals))
-         (,constructor-name
-          ,@(loop for slotd in slot-descriptors
-                  unless (or (packet-slot-transient slotd)
-                             (member (packet-slot-name slotd) done))
-                    collect (kintern "~A" (packet-slot-name slotd))
-                    and collect (packet-slot-name slotd)
-                  collect (packet-slot-name slotd) into done))))))
+                     collect (emit-packet-parser-slot parser-name slotd stream locals)
+                     when (packet-slot-bind slotd)
+                       collect (packet-slot-name slotd) into locals))
+           (,constructor-name
+            ,@(loop for slotd in slot-descriptors
+                    unless (or (packet-slot-transient slotd)
+                               (member (packet-slot-name slotd) done))
+                      collect (kintern "~A" (packet-slot-name slotd))
+                      and collect (packet-slot-name slotd)
+                    collect (packet-slot-name slotd) into done)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point macro
