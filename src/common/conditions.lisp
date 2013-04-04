@@ -27,6 +27,13 @@
   ((text :initarg :text
          :reader bad-mysql-type-spec-text)))
 
+(define-condition invalid-length-encoded-integer (mysql-internal-error)
+  ((text :initarg :text
+         :reader invalid-length-encoded-integer-text)))
+
+(define-condition unexpected-sequence-id (mysql-internal-error)
+  ())
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Exported Errors
 
@@ -65,4 +72,3 @@
 
 (define-condition value-is-not-decimal (mysql-external-error)
   ((value :initarg :value)))
-

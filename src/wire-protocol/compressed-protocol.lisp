@@ -17,7 +17,7 @@
         (compressed-length (read-fixed-length-integer 3 stream))
         (sequence-id (if (= (read-byte stream) expected-sequence-id)
                          (setf expected-sequence-id (mod (1+ expected-sequence-id) 256))
-                         (error "Unexpected sequence id")))
+                         (error (make-instance 'unexpected-sequence-id))))
         (decompressed-length (read-fixed-length-integer 3 stream)))
     (assert (plusp compressed-length))
     (setf payload (make-array compressed-length :element-type '(unsigned-byte 8)))

@@ -52,7 +52,8 @@
       ((= n #xfe)
        (read-fixed-length-integer 8 stream))
       ;; #xff here is undefined, though it may be an error packet in certain contexts.
-      (t (error "bad length-encoded-integer")))))
+      (t (error (make-condition 'invalid-length-encoded-integer
+                                :text "Bad length while reading a length-encoded integer."))))))
 
 (defun write-length-encoded-integer (int stream)
   (cond
@@ -67,7 +68,9 @@
     ((< int #x10000000000000000)
      (write-byte #xfe stream)
      (write-fixed-length-integer int 8 stream))
-    (t (error "invalid input to write-length-encoded-integer"))))
+    (t (error (make-condition
+               'invalid-length-encoded-integer
+               :text (format nil "Integer ~A too large while length-encoding integer." int))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 15.1.1.2. String - A sequence of bytes (aka octets).

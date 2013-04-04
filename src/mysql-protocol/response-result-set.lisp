@@ -207,7 +207,7 @@
                                       s
                                       (aref column-definitions i))))
                     row)))
-               (T (error "unexpected packet parsing binary resultset row"))))))
+               (t (error (make-condition 'unexpected-packet :payload payload)))))))
     (coerce (loop for row = (parse-binary-resultset-row) then (parse-binary-resultset-row)
                   until (typep row 'response-end-of-file-packet)
                   collect row)

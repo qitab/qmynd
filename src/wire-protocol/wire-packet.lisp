@@ -43,7 +43,7 @@ each Command Phase.
       if (= sequence-id expected-sequence-id)
         do (setf expected-sequence-id (mod (1+ expected-sequence-id) 256))
       else
-        do (error "Unexpected sequence id")
+        do (error (make-instance 'unexpected-sequence-id))
       end
       when (plusp length)
         do (adjust-array payload (+ pos length))
