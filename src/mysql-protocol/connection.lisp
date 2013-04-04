@@ -82,7 +82,7 @@
 
   (defmethod mysql-connection-close-socket ((c mysql-local-connection))
     (let ((socket (mysql-connection-socket c)))
-      #+ccl (ccl::close (mysql-connection-socket c))
+      #+ccl (ccl::close socket)
       #+sbcl (sb-bsd-sockets:socket-close socket)
       )
     (setf (mysql-connection-connected *mysql-connection*) nil))
