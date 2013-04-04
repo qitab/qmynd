@@ -87,37 +87,41 @@
                 :initform 0
                 :accessor mysql-compressed-stream-sequence-id)))
 
-(defun fill-input-buffer (stream)
+(defun fill-input-buffer (stream &aux payload)
   "Allocates a new input buffer stream from the results of parsing a new compressed packet off of
    the captured stream"
   (assert (typep stream 'mysql-compressed-stream))
-  (let ((input-buffer (mysql-compressed-stream-input-buffer stream)))
-    (assert (null (and input-buffer (listen input-buffer)))))
-  (multiple-value-bind (payload sequence-id)
-      (read-compressed-wire-packet (mysql-compressed-stream-stream stream)
-                                   :expected-sequence-id (mysql-compressed-stream-sequence-id stream))
-    (setf (mysql-compressed-stream-input-buffer stream)
-          (flexi-streams:make-in-memory-input-stream payload))
-    (setf (mysql-compressed-stream-sequence-id stream) sequence-id)))
+  (with-accessors ((stream mysql-compressed-stream-stream)
+                   (input-buffer mysql-compressed-stream-input-buffer)
+                   (sequence-id mysql-compressed-stream-sequence-id))
+      stream
+    (assert (null (and input-buffer (listen input-buffer))))
+    (multiple-value-setq (payload sequence-id)
+      (read-compressed-wire-packet stream :expected-sequence-id sequence-id))
+    (when input-buffer (close input-buffer))
+    (setq input-buffer (flexi-streams:make-in-memory-input-stream payload))))
 
 ;;; Gray Stream methods for our compressed stream.
 (defmethod trivial-gray-streams:stream-listen ((stream mysql-compressed-stream))
-  (or (let ((input-buffer (mysql-compressed-stream-input-buffer stream)))
-        (when input-buffer
-          (listen input-buffer)))
-      (listen (mysql-compressed-stream-stream stream))))
+  (with-accessors ((stream mysql-compressed-stream-stream)
+                   (input-buffer mysql-compressed-stream-input-buffer))
+      stream
+    (or (when input-buffer (listen input-buffer))
+        (listen stream))))
 
 (defmethod trivial-gray-streams:stream-read-byte ((stream mysql-compressed-stream))
-  (let ((input-buffer (mysql-compressed-stream-input-buffer stream)))
+  (with-accessors ((input-buffer mysql-compressed-stream-input-buffer))
+      stream
     (unless (and input-buffer (listen input-buffer))
-      (fill-input-buffer stream)))
-  (read-byte (mysql-compressed-stream-input-buffer stream)))
+      (fill-input-buffer stream))
+    (read-byte input-buffer)))
 
 (defmethod trivial-gray-streams:stream-read-sequence ((stream mysql-compressed-stream) sequence start end &key)
-  (let ((input-buffer (mysql-compressed-stream-input-buffer stream)))
+  (with-accessors ((input-buffer mysql-compressed-stream-input-buffer))
+      stream
     (unless (and input-buffer (listen input-buffer))
-      (fill-input-buffer stream)))
-  (read-sequence sequence (mysql-compressed-stream-input-buffer stream) :start start :end end))
+      (fill-input-buffer stream))
+    (read-sequence sequence input-buffer :start start :end end)))
 
 (defmethod trivial-gray-streams:stream-write-byte ((stream mysql-compressed-stream) byte)
   (write-byte byte (mysql-compressed-stream-output-buffer stream)))
@@ -126,8 +130,12 @@
   (write-sequence sequence (mysql-compressed-stream-output-buffer stream) :start start :end end))
 
 (defmethod trivial-gray-streams:stream-force-output ((stream mysql-compressed-stream))
-  (setf (mysql-compressed-stream-sequence-id stream)
-        (write-compressed-wire-packet (mysql-compressed-stream-stream stream)
-                                      (flexi-streams:get-output-stream-sequence
-                                       (mysql-compressed-stream-output-buffer stream))
-                                      :sequence-id (mysql-compressed-stream-sequence-id stream))))
+  (with-accessors ((stream mysql-compressed-stream-stream)
+                   (output-buffer mysql-compressed-stream-output-buffer)
+                   (sequence-id mysql-compressed-stream-sequence-id))
+      stream
+    (setq sequence-id
+          (write-compressed-wire-packet
+           stream
+           (flexi-streams:get-output-stream-sequence output-buffer)
+           :sequence-id sequence-id))))
