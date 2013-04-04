@@ -11,7 +11,7 @@
 (in-package :qmynd-impl)
 
 (defclass mysql-prepared-statement ()
-  ((connection :type (or mysql-connection null)
+  ((connection :type (or mysql-base-connection null)
                :initarg :connection
                :accessor mysql-prepared-statement-connection)
    (query-string :type string
