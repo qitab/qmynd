@@ -15,11 +15,15 @@
 (defmacro generate-binary-encoding-test (value expected-value-encoding expected-type-encoding)
   `(let ((vs (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
          (ts (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-     (qmynd-impl::encode-binary-parameter ,value vs ts)
-     (assert-equal (flexi-streams:get-output-stream-sequence vs)
-                   ,expected-value-encoding :test #'equalp)
-     (assert-equal (flexi-streams:get-output-stream-sequence ts)
-                   ,expected-type-encoding :test #'equalp)))
+     (unwind-protect
+          (progn
+            (qmynd-impl::encode-binary-parameter ,value vs ts)
+            (assert-equal (flexi-streams:get-output-stream-sequence vs)
+                          ,expected-value-encoding :test #'equalp)
+            (assert-equal (flexi-streams:get-output-stream-sequence ts)
+                          ,expected-type-encoding :test #'equalp))
+       (when vs (close vs))
+       (when ts (close ts)))))
 
 ;; Octets
 (define-test binary-encoding-octets-1 ()

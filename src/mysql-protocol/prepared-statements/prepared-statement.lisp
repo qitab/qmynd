@@ -153,21 +153,24 @@
              (parameter-type-stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
              (parameter-stream (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
              (null-bitmap 0))
-         (loop
-           for i from 0
-           for parameter across parameters
-           if parameter
-             do (encode-binary-parameter parameter parameter-stream parameter-type-stream)
-           else
-             do (setf (ldb (byte 1 i) null-bitmap) 1)
-                (write-byte +mysql-type-null+ parameter-type-stream)
-                (write-byte 0 parameter-type-stream)
-           end
-           finally (write-fixed-length-integer null-bitmap (ceiling i 8) s)
-                   (let ((types (flexi-streams:get-output-stream-sequence parameter-type-stream)))
-                     (write-byte (if (zerop (length types)) 0 1) s)
-                     (write-sequence types s)
-                     (write-sequence (flexi-streams:get-output-stream-sequence parameter-stream) s)))))))
+         (unwind-protect
+              (loop
+                for i from 0
+                for parameter across parameters
+                if parameter
+                  do (encode-binary-parameter parameter parameter-stream parameter-type-stream)
+                else
+                  do (setf (ldb (byte 1 i) null-bitmap) 1)
+                     (write-byte +mysql-type-null+ parameter-type-stream)
+                     (write-byte 0 parameter-type-stream)
+                end
+                finally (write-fixed-length-integer null-bitmap (ceiling i 8) s)
+                        (let ((types (flexi-streams:get-output-stream-sequence parameter-type-stream)))
+                          (write-byte (if (zerop (length types)) 0 1) s)
+                          (write-sequence types s)
+                          (write-sequence (flexi-streams:get-output-stream-sequence parameter-stream) s)))
+           (when parameter-type-stream (close parameter-type-stream))
+           (when parameter-stream (close parameter-stream)))))))
   (parse-command-statement-execute-response statement))
 
 (defmethod parse-command-statement-execute-response ((statement mysql-prepared-statement))
