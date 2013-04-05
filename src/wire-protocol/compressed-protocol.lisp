@@ -53,7 +53,7 @@ uncompressed, but for now using the Compression protocol requires both.
                 (let ((buffer (make-array decompressed-length :element-type '(unsigned-byte 8))))
                   (uiop/package:symbol-call
                    :chipz :decompress
-                   buffer (uiop/package:find-symbol* :zlib :chipz) payload)
+                   buffer :zlib payload)
                   buffer))
             sequence-id)))
 
