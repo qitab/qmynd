@@ -38,7 +38,7 @@
    #:+mysql-server-ps-out-params+
 
    ;; Opaque Structures
-   #:mysql-connection
+   #:mysql-base-connection
    #:mysql-prepared-statement
 
    ;; Transparent Structures
