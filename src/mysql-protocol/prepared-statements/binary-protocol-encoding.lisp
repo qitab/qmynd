@@ -19,7 +19,7 @@
             TYPE-STREAM, assumes a type code has already been written to TYPE-STREAM."
            (assert (typep value 'integer))
            (write-fixed-length-integer value length value-stream)
-           (write-byte (if (minusp value) #x80 #x00) type-stream)))
+           (write-byte (if (minusp value) #x00 #x80) type-stream)))
 
     (etypecase value
       ;; Octets
