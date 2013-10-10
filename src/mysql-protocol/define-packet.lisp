@@ -250,9 +250,9 @@ Order of Operations:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point macro
 (defmacro define-packet (name slots)
-  (let ((parser-name (fintern "PARSE-~A" name))
-        (struct-name (fintern "~A-PACKET" name))
-        (struct-constructor (fintern "MAKE-~A-PACKET" name))
+  (let ((parser-name (fintern "~A-~A" 'parse name))
+        (struct-name (fintern "~A-~A" name 'packet))
+        (struct-constructor (fintern "~A-~A-~A" 'make name 'packet))
         (slot-descriptors (mapcar #'parse-slot slots)))
       `(progn
          ;; Define a struct to hold non-transient data
@@ -261,6 +261,6 @@ Order of Operations:
          ;; Define a parser to parse a payload of this form and populate the struct
          ,(emit-packet-parser parser-name struct-constructor slot-descriptors)
          ;; Define a writer to generate a packet payload of this type from the struct
-         #| Implement writer here |#
+         #| Implement writer here (only needed for servers, not for mere clients) |#
          ;;
          ',name)))

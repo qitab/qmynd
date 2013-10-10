@@ -187,7 +187,7 @@
 (defun parse-time-interval-string (str)
   "Parses the MySQL Text Protocol represetation of a time interval.
    /(-)?(h+):(mm):(ss).(µµµµµµ)/"
-  (let ((negativep (starts-with str "-")))
+  (let ((negativep (string-prefix-p "-" str)))
     (multiple-value-bind (hours end)
         (parse-integer str :start (if negativep 1 0) :junk-allowed t)
       (multiple-value-bind (days hours)

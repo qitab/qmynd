@@ -9,9 +9,13 @@ Cleanup:
 • Replace ASSERT with conditions.
 • Drop “mysql-” prefix from everything: this is a MySQL driver, so
    it's redundant.
+• Replace qtest by 5am or stefil, etc.
 
-Convenience
+Convenience:
 • Convenience functions for toggling bits in status and capability.
 
-Query Results
+Query Results:
 • Row at a time result processing
+
+Good Citizenship:
+• export AF_LOCAL functionality to usocket

@@ -73,26 +73,6 @@
   `(the fixnum (ldb ,bytespec (the fixnum ,value))))
 
 
-;;; String utilities
-
-(defun starts-with (string prefix &key (start 0))
-  "Returns true if 'string' starts with the prefix 'prefix' (case insensitive)."
-  (and (i>= (length string) (i+ start (length prefix)))
-       (string-equal string prefix :start1 start :end1 (i+ start (length prefix)))
-       prefix))
-
-(defun ends-with (string suffix &key (end (length string)))
-  "Returns true if 'string' ends with the prefix 'prefix' (case insensitive)."
-  (and (i>= end (length suffix))
-       (string-equal string suffix :start1 (i- end (length suffix)) :end1 end)
-       suffix))
-
-(defun strcat (&rest strings)
-  "Concatenate a bunch of strings."
-  (declare (dynamic-extent strings))
-  (apply #'concatenate 'string strings))
-
-
 ;;; Managing symbols
 
 (defmacro with-gensyms ((&rest bindings) &body body)
@@ -130,36 +110,7 @@
         (t nil)))
 
 
-;;; Collectors, etc
-
-(defmacro with-collectors ((&rest collection-descriptions) &body body)
-  "'collection-descriptions' is a list of clauses of the form (coll function).
-   The body can call each 'function' to add a value to 'coll'. 'function'
-   runs in constant time, regardless of the length of the list."
-  (let ((let-bindings  ())
-        (flet-bindings ())
-        (dynamic-extents ())
-        (vobj '#:OBJECT))
-    (dolist (description collection-descriptions)
-      (destructuring-bind (place name) description
-        (let ((vtail (make-symbol (format nil "~A-TAIL" place))))
-          (setq dynamic-extents
-                (nconc dynamic-extents `(#',name)))
-          (setq let-bindings
-                (nconc let-bindings
-                       `((,place ())
-                         (,vtail nil))))
-          (setq flet-bindings
-                (nconc flet-bindings
-                       `((,name (,vobj)
-                           (setq ,vtail (if ,vtail
-                                          (setf (cdr ,vtail)  (list ,vobj))
-                                          (setf ,place (list ,vobj)))))))))))
-    `(let (,@let-bindings)
-       (flet (,@flet-bindings)
-         ,@(and dynamic-extents
-                `((declare (dynamic-extent ,@dynamic-extents))))
-         ,@body))))
+;;; with-prefixed-accessors
 
 (defmacro with-prefixed-accessors (names (prefix object) &body body)
   `(with-accessors (,@(loop for name in names
@@ -204,7 +155,7 @@
   (let ((start 0)
         (sign 1)
         found-decimal)
-    (when (starts-with str "-")
+    (when (string-prefix-p "-" str)
       (setq start 1
             sign -1))
     (loop

@@ -8,9 +8,6 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package "CL-USER")
-
-
 (asdf:defsystem :qmynd-test
   :name "MySQL Native Driver - Test Suite"
   :author "Alejandro Sedeño"
@@ -30,7 +27,7 @@
               :serial nil
               :pathname #p""
               :depends-on ("packages")
-              :components ((:file "qtest")))
+              :components (#-test-tools (:file "qtest")))
      (:module "parsing"
               :serial nil
               :pathname #p""
@@ -42,5 +39,3 @@
               :pathname #p""
               :depends-on ("common")
               :components ((:file "binary-encoding")))))
-
-(pushnew :cl-qmynd *features*)

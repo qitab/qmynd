@@ -11,7 +11,7 @@
 (in-package :qmynd-impl)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Conncetion entry-point
+;;; Connection entry-point
 (defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database (ssl :unspecified) ssl-verify)
   "Connect to a MySQL over a network (AF_INET) socket and begin the MySQL Handshake.
    Returns a QMYND:MYSQL-CONNECTION object or signals a QMYND:MYSQL-ERROR.

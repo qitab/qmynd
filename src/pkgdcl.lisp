@@ -87,6 +87,9 @@
 
 (defpackage qmynd-impl
   (:use :common-lisp :list-of :qmynd)
+  (:import-from :uiop
+   #:strcat
+   #:string-prefix-p)
 
   (:export
    ;; Dynamic Variables
@@ -149,8 +152,7 @@
 
    ;; Auth Stuff
    #:generate-auth-response
-   #+mysql-insecure-password-hash
-   #:mysql-weak-hash-password
+   #+mysql-insecure-password-hash #:mysql-weak-hash-password
    #:mysql-native-password-auth-response
    #:mysql-clear-password-auth-response
 

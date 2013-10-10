@@ -8,9 +8,7 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package "CL-USER")
-
-(asdf:defsystem :qmynd
+(defsystem :qmynd
   :name "MySQL Native Driver"
   :author "Alejandro Sedeño"
   :version "1.0"
@@ -23,7 +21,8 @@
                :ironclad
                :list-of
                :trivial-gray-streams
-               :usocket)
+               :usocket
+               #-asdf3 :uiop)
   :weakly-depends-on (:cl+ssl :chipz :salza2)
   :around-compile "asdf-finalizers:check-finalizers-around-compile"
   :serial nil
@@ -87,6 +86,6 @@
                                    (:file "prepared-statement"
                                     :depends-on ("binary-protocol-encoding"))))))
        (:file "api"
-        :depends-on ("mysql-protocol"))))))
-
-(pushnew :qmynd *features*)
+        :depends-on ("mysql-protocol")))))
+  :in-order-to ((test-op (load-op :qmynd-test)))
+  :perform (test-op :after (o c) (funcall (read-from-string "qmynd-test::run-all-tests"))))

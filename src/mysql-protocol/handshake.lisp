@@ -110,7 +110,7 @@
        stream))
     (setf (mysql-connection-stream *mysql-connection*) stream)))
 
-;; We don't actually receive a Handshake Response packet as a client, but it looks like this.
+;; We won't receive a Handshake Response packet (being a client only, not a server), but it looks like this.
 
 ;; (define-packet handshake-response-v41
 ;;   ((capability-flags :mysql-type (integer 4))
