@@ -19,7 +19,23 @@
 ;;   ((tag :mysql-type (integer 1) :value +mysql-command-query+ :transient t :bind nil)
 ;;    (query-string :mysql-type (string :eof))))
 
-(defun send-command-query (query-string)
+(defun send-command-query (query-string
+			   &key
+			     row-fn
+			     (as-text nil)
+			     (result-type 'vector))
+  "Send QUERY-STRING to the current MySQL connection.
+
+   When the ROW-FN parameter is given, it must be a function and is called
+   with each row as input, and the rows are discarded once the function is
+   called.
+
+   When AS-TEXT is t, the column values are not converted to native types
+   and returned as text instead.
+
+   By default the resultset is a vector of rows where each row is itself a
+   vector of columns. When RESULT-TYPE is list, the result is a list of list
+   of columns instead."
   (mysql-command-init +mysql-command-query+)
   (mysql-write-packet
    (flexi-streams:with-output-to-sequence (s)
@@ -30,12 +46,20 @@
     (if (member tag (list +mysql-response-ok+ +mysql-response-error+))
         (parse-response payload)
         (let* ((column-count (parse-column-count payload))
-               (column-definitions (coerce
-                                    (loop
-                                      repeat column-count
-                                      collect (parse-column-definition-v41 (mysql-read-packet))
-                                      ;; Consume the EOF packet or signal an error for an ERR packet.
-                                      finally (parse-response (mysql-read-packet)))
-                                    'vector))
-               (rows (parse-resultset-rows column-count column-definitions)))
+               (column-definitions
+		(coerce
+		 (loop
+		    repeat column-count
+		    collect (parse-column-definition-v41 (mysql-read-packet))
+		    ;; Consume the EOF packet or signal an error for an ERR packet.
+		    finally (parse-response (mysql-read-packet)))
+		 'vector))
+               (rows
+		(if row-fn
+		    (map-resultset-rows row-fn column-count column-definitions
+					:as-text as-text
+					:result-type result-type)
+		    (parse-resultset-rows column-count column-definitions
+					  :as-text as-text
+					  :result-type result-type))))
           (values rows column-definitions)))))

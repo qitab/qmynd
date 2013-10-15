@@ -79,7 +79,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Simple SQL Queries
-(defun mysql-query (connection query-string)
+(defun mysql-query (connection query-string
+		    &key row-fn (as-text nil) (result-type 'vector))
   "Send a SQL Query over the connection using the MySQL Text Protocol.
    For queries that return rows, returns two values:
     A vector of rows, each of which is a vector of columns.
@@ -87,7 +88,10 @@
    For queries that don't return rows, returns a QMYND:RESPONSE-OK-PACKET.
    May signal a QMYND:MYSQL-ERROR."
   (with-mysql-connection (connection)
-    (send-command-query query-string)))
+    (send-command-query query-string
+			:row-fn row-fn
+			:as-text as-text
+			:result-type result-type)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Prepared Statements
