@@ -44,9 +44,9 @@
    (auth-plugin :mysql-type (string :null-eof)
                 :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))))
 
-(defun process-initial-handshake-v10 (payload)
+(defun process-initial-handshake-v10 (stream)
   "Parse an INITIAL-HANDSHAKE-V10 Packet and populate the default MySQL connection."
-  (let ((packet (parse-initial-handshake-v10 payload)))
+  (let ((packet (parse-initial-handshake-v10 stream)))
     (setf (mysql-connection-server-version *mysql-connection*)
           (initial-handshake-v10-packet-server-version packet)
 
@@ -174,13 +174,14 @@
        ;; by the user? Both? Stored in the connection object?
        nil))))
 
-(defun process-initial-handshake-payload (payload)
+(defun process-initial-handshake-payload (stream)
   "Initial handshake processing dispatch."
-  (ecase (aref payload 0)
-    (10 (process-initial-handshake-v10 payload))))
+  (ecase (peek-first-byte stream)
+    (10 (process-initial-handshake-v10 stream))))
 
 
-(defun mysql-connect-do-handshake (connection username password database &key ssl ssl-verify)
+(defun mysql-connect-do-handshake (connection username password database
+                                   &key compress ssl ssl-verify)
   "Perform the MySQL Initial Handshake with CONNECTION."
   ;; Read a wire packet
   (let ((initial-handshake-payload (mysql-connection-read-packet connection)))
@@ -192,6 +193,11 @@
         (setf (mysql-connection-capabilities connection)
               (logandc2 (mysql-connection-capabilities connection)
                         +mysql-capability-client-connect-with-db+)))
+
+      (unless compress
+        (setf (mysql-connection-capabilities connection)
+              (logandc2 (mysql-connection-capabilities connection)
+                        +mysql-capability-client-compress+)))
 
       ;; Deal with SSL
       (unless (eq ssl :unspecified)

@@ -12,7 +12,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Connection entry-point
-(defun mysql-connect (&key (host "localhost") (port 3306) (username "") (password "") database (ssl :unspecified) ssl-verify)
+(defun mysql-connect (&key
+			(host "localhost")
+			(port 3306)
+			(username "")
+			(password "")
+			database
+			(compress nil)
+			(ssl :unspecified)
+			ssl-verify)
   "Connect to a MySQL over a network (AF_INET) socket and begin the MySQL Handshake.
    Returns a QMYND:MYSQL-CONNECTION object or signals a QMYND:MYSQL-ERROR.
    Accepts the following keyword arguments:
@@ -21,6 +29,7 @@
     USERNAME: User to authenticate as.
     PASSWORD: Password to authenticate with.
     DATABASE: What database to use upon connecting. (default: nil)
+    COMPRESS: Whether or not to use compression. (default: nil).
     SSL: Whether or not to use SSL. (default: :UNSPECIFIED)
                      T - Forces SSL (or error out if it's not available).
                    NIL - Disable SSL, even if it is available.
@@ -35,6 +44,7 @@
                                     :stream (usocket:socket-stream socket)
                                     :default-schema database)))
     (mysql-connect-do-handshake connection username password database
+				:compress compress
                                 :ssl ssl
                                 :ssl-verify ssl-verify)))
 

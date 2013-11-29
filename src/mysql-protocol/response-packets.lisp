@@ -44,25 +44,27 @@
      (status-flags :mysql-type (integer 2)
                    :predicate (mysql-has-capability +mysql-capability-client-protocol-41+))))
 
-(defun parse-response (payload)
-  "Parse a generic (OK, ERR, EOF) payload. Update MySQL connection status flags as necessary."
-  (let ((tag (aref payload 0)))
+(defun parse-response (stream)
+  "Parse a generic (OK, ERR, EOF) packet.
+   Update MySQL connection status flags as necessary."
+  (declare (type my-packet-stream stream))
+  (let ((tag (peek-first-byte stream)))
     (cond
       ((= tag +mysql-response-ok+)
-       (let ((packet (parse-response-ok payload)))
+       (let ((packet (parse-response-ok stream)))
          (setf (mysql-connection-status-flags *mysql-connection*)
                (response-ok-packet-status-flags packet))
          packet))
       ((= tag +mysql-response-error+)
-       (let ((packet (parse-response-error payload)))
+       (let ((packet (parse-response-error stream)))
          (error (make-condition 'mysql-error
                                 :code    (response-error-packet-error-code packet)
                                 :message (response-error-packet-error-message packet)
                                 :state   (response-error-packet-sql-state packet)))))
       ((= tag +mysql-response-end-of-file+)
-       (let ((packet (parse-response-end-of-file payload)))
+       (let ((packet (parse-response-end-of-file stream)))
          (setf (mysql-connection-status-flags *mysql-connection*)
                (response-end-of-file-packet-status-flags packet))
          packet))
       (t
-       (error (make-condition 'unexpected-packet :payload payload))))))
+       (error (make-condition 'unexpected-packet :stream stream))))))

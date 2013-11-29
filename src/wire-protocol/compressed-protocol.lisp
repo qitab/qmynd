@@ -39,15 +39,15 @@ uncompressed, but for now using the Compression protocol requires both.
   "Read a compressed packet from STREAM."
   (let (payload
         (pos 0)
-        (compressed-length (read-fixed-length-integer 3 stream))
+        (compressed-length (%read-3-bytes stream))
         (sequence-id (if (= (read-byte stream) expected-sequence-id)
                          (setf expected-sequence-id (mod (1+ expected-sequence-id) 256))
                          (error (make-instance 'unexpected-sequence-id))))
-        (decompressed-length (read-fixed-length-integer 3 stream)))
+        (decompressed-length (%read-3-bytes stream)))
     (assert (plusp compressed-length))
     (setf payload (make-array compressed-length :element-type '(unsigned-byte 8)))
     (loop do (setf pos (read-sequence payload stream :start pos))
-          until (= pos (length payload)))
+       until (= pos (length payload)))
     (values (if (zerop decompressed-length)
                 payload
                 (let ((buffer (make-array decompressed-length :element-type '(unsigned-byte 8))))

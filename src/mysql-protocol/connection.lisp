@@ -132,11 +132,11 @@
 
 (defmethod mysql-connection-read-packet ((c mysql-base-connection))
   "Read a wire packet from C's stream."
-  (multiple-value-bind (payload seq-id)
+  (multiple-value-bind (stream seq-id)
       (read-wire-packet (mysql-connection-stream c)
                         :expected-sequence-id (mysql-connection-sequence-id c))
     (setf (mysql-connection-sequence-id c) seq-id)
-    payload))
+    stream))
 
 (defmethod mysql-connection-command-init ((c mysql-base-connection) command)
   "Initialize connection for a new command.
