@@ -40,15 +40,17 @@
 (defun mysql-native-password-auth-response (password auth-data)
   ;; (xor (sha1 password)
   ;;      (sha1 (concatenate auth-data (sha1 (sha1 password)))))
-  (let* ((password-octets (babel:string-to-octets password))
-         (hash-stage-1 (ironclad:digest-sequence :sha1 password-octets))
-         (hash-stage-2 (ironclad:digest-sequence :sha1 hash-stage-1)))
-    (map-into hash-stage-1 #'logxor
-              hash-stage-1
-              (let ((digester (ironclad:make-digest :sha1)))
-                (ironclad:update-digest digester auth-data :end 20)
-                (ironclad:update-digest digester hash-stage-2)
-                (ironclad:produce-digest digester)))))
+  (if (null password)
+      ""
+      (let* ((password-octets (babel:string-to-octets password))
+             (hash-stage-1 (ironclad:digest-sequence :sha1 password-octets))
+             (hash-stage-2 (ironclad:digest-sequence :sha1 hash-stage-1)))
+        (map-into hash-stage-1 #'logxor
+                  hash-stage-1
+                  (let ((digester (ironclad:make-digest :sha1)))
+                    (ironclad:update-digest digester auth-data :end 20)
+                    (ironclad:update-digest digester hash-stage-2)
+                    (ironclad:produce-digest digester))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; mysql_clear_password (15.3.4)
