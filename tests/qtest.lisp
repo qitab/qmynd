@@ -18,7 +18,7 @@
      (handler-case
          (progn ,@body)
        (error (e)
-         (warn "An error was signalled executing ~S: ~A"
+         (warn "An error was signalled executing ~S:~% ~A"
                ',test-name e)))))
 
 (defmacro define-test-suite (suite-name () &body body)
@@ -46,10 +46,13 @@
     (format t "~&Running test ~A" test)
     (funcall test)))
 
-(defmacro assert-equal (actual expected &key (test '#'equal))
-  `(unless (funcall ,test ,actual ,expected)
-     (warn "The value ~S is not equal to the expected value ~S"
-           ',actual ',expected)))
+(defmacro assert-equal (actual expected &key (test ''equal))
+  `(assert-equal-helper ',actual ,actual ',expected ,expected ,test))
+
+(defun assert-equal-helper (actual-form actual expected-form expected test)
+  (unless (funcall test actual expected)
+     (warn "These two expressions yield values that are not ~S:~% ~S => ~S~%~S => ~S"
+           test actual-form actual expected-form expected)))
 
 (defmacro assert-true (form)
   `(unless ,form
