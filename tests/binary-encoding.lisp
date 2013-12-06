@@ -12,18 +12,30 @@
 
 (in-package :qmynd-test)
 
+(defun sequence-equal (x y)
+  ;; smooths over difference in type, fill-pointer, etc.
+  (and (typep x 'sequence) (typep y 'sequence)
+       (equal (coerce x 'list) (coerce y 'list))))
+
 (defmacro generate-binary-encoding-test (value expected-value-encoding expected-type-encoding)
-  `(let ((vs (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
-         (ts (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
-     (unwind-protect
-          (progn
-            (qmynd-impl::encode-binary-parameter ,value vs ts)
-            (assert-equal (flexi-streams:get-output-stream-sequence vs)
-                          ,expected-value-encoding :test #'equalp)
-            (assert-equal (flexi-streams:get-output-stream-sequence ts)
-                          ,expected-type-encoding :test #'equalp))
-       (when vs (close vs))
-       (when ts (close ts)))))
+  `(generate-binary-encoding-test-helper
+    ',value ,value ,expected-value-encoding ,expected-type-encoding))
+
+(defun generate-binary-encoding-test-helper
+    (value-form value expected-value-encoding expected-type-encoding)
+  (let ((vs (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8)))
+        (ts (flexi-streams:make-in-memory-output-stream :element-type '(unsigned-byte 8))))
+    (unwind-protect
+         (progn
+           (encode-binary-parameter value vs ts)
+           (assert-equal-helper
+            `(binary-encoding ,value-form :value) (flexi-streams:get-output-stream-sequence vs)
+            'expected expected-value-encoding 'sequence-equal)
+           (assert-equal-helper
+            `(binary-encoding ,value-form :type) (flexi-streams:get-output-stream-sequence ts)
+            'expected expected-type-encoding 'sequence-equal))
+         (when vs (close vs))
+         (when ts (close ts)))))
 
 ;; Octets
 (define-test binary-encoding-octets-1 ()
