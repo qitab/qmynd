@@ -16,14 +16,14 @@
 
 ;;; 15.1.1.1.1. fixed length integer
 ;;; Little endian fixed-length integers with lengths (1 2 3 4 6 8)
-(define-compiler-macro read-fixed-length-integer (&whole form bytes stream)
+(define-compiler-macro read-fixed-length-integer (&whole form bytes stream &rest keys)
   (case bytes
-    (1 `(read-my-byte ,stream))
-    (2 `(read-2-bytes-integer ,stream))
-    (3 `(read-3-bytes-integer ,stream))
-    (4 `(read-4-bytes-integer ,stream))
-    (8 `(read-8-bytes-integer ,stream))
-    (10 `(read-10-bytes-integer ,stream))
+    (1 `(read-my-byte ,stream ,@keys))
+    (2 `(read-2-bytes-integer ,stream ,@keys))
+    (3 `(read-3-bytes-integer ,stream ,@keys))
+    (4 `(read-4-bytes-integer ,stream ,@keys))
+    (8 `(read-8-bytes-integer ,stream ,@keys))
+    (10 `(read-10-bytes-integer ,stream ,@keys))
     (t form)))
 
 (defun read-fixed-length-integer (length stream &key signed)
@@ -40,7 +40,7 @@
 (declaim (inline unsigned-to-signed read-fixed-length-integer))
 
 (defun unsigned-to-signed (byte n)
-  (declare (type fixnum byte n))
+  (declare (type fixnum n) (type unsigned-byte byte))
   (logior byte (- (mask-field (byte 1 (1- (* n 8))) byte))))
 
 (defun read-2-bytes-integer (stream &key signed)
@@ -49,7 +49,6 @@
   (let* ((byte-1    (read-my-byte stream))
          (byte-2    (read-my-byte stream))
          (unsigned  (logior (ash byte-2 8) byte-1)))
-    (declare (type fixnum unsigned))
     (if signed (unsigned-to-signed unsigned 2) unsigned)))
 
 (defun read-3-bytes-integer (stream  &key signed)
@@ -59,7 +58,6 @@
          (byte-3    (read-my-byte stream))
          (unsigned
           (logior (ash byte-3 16) (ash byte-2  8) byte-1)))
-    (declare (type fixnum unsigned))
     (if signed (unsigned-to-signed unsigned 3) unsigned)))
 
 (defun read-4-bytes-integer (stream  &key signed)
@@ -69,8 +67,7 @@
          (byte-3    (read-my-byte stream))
          (byte-4    (read-my-byte stream))
          (unsigned
-          (logior (ash byte-4 24) (ash byte-3 16) (ash byte-2  8) byte-1)))
-    (declare (type fixnum unsigned))
+          (logior (ash byte-4 24) (ash byte-3 16) (ash byte-2 8) byte-1)))
     (if signed (unsigned-to-signed unsigned 3) unsigned)))
 
 (defun read-6-bytes-integer (stream  &key signed)
@@ -83,15 +80,14 @@
          (byte-6    (read-my-byte stream))
          (unsigned
           (logior (ash byte-6 40) (ash byte-5 32) (ash byte-4 24)
-                  (ash byte-3 16) (ash byte-2  8) byte-1)))
-    (declare (type fixnum unsigned))
+                  (ash byte-3 16) (ash byte-2 8) byte-1)))
     (if signed (unsigned-to-signed unsigned 3) unsigned)))
 
 (defun read-8-bytes-integer (stream &key signed)
   (declare (type my-packet-stream stream))
   (let ((unsigned
-         (logior (ash (read-4-bytes-integer stream) 32)
-                 (read-4-bytes-integer stream))))
+         (logior (read-4-bytes-integer stream)
+                 (ash (read-4-bytes-integer stream) 32))))
     (if signed (unsigned-to-signed unsigned 8) unsigned)))
 
 (defun read-10-bytes-integer (stream  &key signed)
@@ -111,8 +107,7 @@
                   (ash byte-9 64) (ash byte-8 56) (ash byte-7 48)
                   (ash byte-6 40) (ash byte-5 32) (ash byte-4 24)
                   (ash byte-3 16) (ash byte-2  8) byte-1)))
-    (declare (type fixnum unsigned))
-    (if signed (unsigned-to-signed unsigned 3) unsigned)))
+    (if signed (unsigned-to-signed unsigned 10) unsigned)))
 
 (defun write-fixed-length-integer (int length stream)
   "Write INT to STREAM as a LENGTH byte integer."
