@@ -48,7 +48,7 @@
        (flexi-streams:with-output-to-sequence (s)
          (let ((auth-response (generate-auth-response password auth-data auth-plugin)))
            (write-byte +mysql-command-change-user+ s)
-           (write-null-terminated-string (babel:string-to-octets username) s)
+           (write-null-terminated-octets (babel:string-to-octets username) s)
            (cond
              ((mysql-has-capability +mysql-capability-client-secure-connection+)
               (let ((auth-response-length (length auth-response)))
@@ -56,12 +56,12 @@
                 (write-byte auth-response-length s)
                 (write-sequence auth-response s)))
              (t
-              (write-null-terminated-string auth-response s)))
-           (write-null-terminated-string (babel:string-to-octets schema) s)
+              (write-null-terminated-octets auth-response s)))
+           (write-null-terminated-octets (babel:string-to-octets schema) s)
            ;; Requires +mysql-capability-client-protocol-41+, which this library assumes is always set,
            (write-fixed-length-integer (mysql-connection-cs-coll *mysql-connection*) 2 s)
            (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
-             (write-null-terminated-string (babel:string-to-octets auth-plugin) s)))))
+             (write-null-terminated-octets (babel:string-to-octets auth-plugin) s)))))
       ;; Once the packet has been sent, do whatever state resetting we need to do.
       (reset-state)
       ;; asedeno-TODO: When we finally support +mysql-capability-client-plugin-auth+, we'll need to

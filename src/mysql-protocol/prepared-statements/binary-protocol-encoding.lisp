@@ -15,7 +15,7 @@
 ;;; caller to override that type.
 (defun encode-binary-parameter (value value-stream type-stream)
   (flet ((encode-binary-integer (length)
-           "Writes an n-byte integer to VALUE-STREAM and the type flags (signed vs unsigned) to
+           "Writes an n-octet integer to VALUE-STREAM and the type flags (signed vs unsigned) to
             TYPE-STREAM, assumes a type code has already been written to TYPE-STREAM."
            (assert (typep value 'integer))
            (write-fixed-length-integer value length value-stream)
@@ -24,7 +24,7 @@
     (etypecase value
       ;; Octets
       ((vector (unsigned-byte 8))
-       (write-length-encoded-string value value-stream)
+       (write-length-encoded-octets value value-stream)
        (write-byte +mysql-type-var-string+ type-stream)
        (write-byte #x00 type-stream))
 

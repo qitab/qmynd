@@ -48,7 +48,7 @@
   "Parse a generic (OK, ERR, EOF) packet.
    Update MySQL connection status flags as necessary."
   (declare (type my-packet-stream stream))
-  (let ((tag (peek-first-byte stream)))
+  (let ((tag (peek-first-octet stream)))
     (cond
       ((= tag +mysql-response-ok+)
        (let ((packet (parse-response-ok stream)))

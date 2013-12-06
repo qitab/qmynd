@@ -39,7 +39,7 @@
    (auth-data :mysql-type (octets auth-data-length)
               :predicate (flagsp +mysql-capability-client-secure-connection+ capability-flags)
               ;; can we simplify the transform?
-              :reduce #'(lambda (x y) (concatenate'(vector (unsigned-byte 8)) x y)))
+              :reduce #'(lambda (x y) (concatenate '(vector (unsigned-byte 8)) x y)))
 
    (auth-plugin :mysql-type (string :null-eof)
                 :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))))
@@ -98,7 +98,7 @@
      (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
      (write-fixed-length-integer #x1000000 4 s)
      (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
-     (write-fixed-length-integer 0 23 s))) ; 23 reserved bytes
+     (write-fixed-length-integer 0 23 s))) ; 23 reserved octets
   ;; We may not have CL+SSL, in which case we'll never get to this function,
   ;; but we still want it to compile.
   (let ((stream (uiop/package:symbol-call
@@ -140,7 +140,7 @@
 ;;     :mysql-type (string :null)
 ;;     :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))
 ;;    ;; requires additional parsing
-;;    (client-capability-string
+;;    (client-capability-octets
 ;;     :mysql-type (octets :lenenc)
 ;;     :predicate (flagsp +mysql-capability-client-connect-attrs+ capability-flags))))
 
@@ -151,8 +151,8 @@
      (write-fixed-length-integer (mysql-connection-capabilities *mysql-connection*) 4 s)
      (write-fixed-length-integer #x1000000 4 s)
      (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
-     (write-fixed-length-integer 0 23 s) ; 23 reserved bytes
-     (write-null-terminated-string (babel:string-to-octets username) s)
+     (write-fixed-length-integer 0 23 s) ; 23 reserved octets
+     (write-null-terminated-octets (babel:string-to-octets username) s)
      (cond
        ((mysql-has-capability +mysql-capability-client-plugin-auth-lenec-client-data+)
         (write-length-encoded-integer (length auth-response) s)
@@ -161,12 +161,12 @@
         (write-byte (length auth-response) s)
         (write-sequence auth-response s))
        (T
-        (write-null-terminated-string auth-response s)))
+        (write-null-terminated-octets auth-response s)))
      ;; If the bit is still set at this point, then we have a database schema to specify.
      (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
-       (write-null-terminated-string (babel:string-to-octets database) s))
+       (write-null-terminated-octets (babel:string-to-octets database) s))
      (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
-       (write-null-terminated-string auth-plugin s))
+       (write-null-terminated-octets auth-plugin s))
      #+mysql-client-connect-attributes
      (when (mysql-has-capability +mysql-capability-client-connect-attrs+)
        ;; asedeno-TODO: When this is implemented, what sort of
@@ -176,7 +176,7 @@
 
 (defun process-initial-handshake-payload (stream)
   "Initial handshake processing dispatch."
-  (ecase (peek-first-byte stream)
+  (ecase (peek-first-octet stream)
     (10 (process-initial-handshake-v10 stream))))
 
 

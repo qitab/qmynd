@@ -14,9 +14,9 @@
 
 #|
 A MySQL Compressed Packet consists of:
-• 3 bytes        - length of packet (compressed)
-• 1 byte         - sequence id (reset with, but independent of the wire-packet sequence-id)
-• 3 bytes        - length of packet (uncompressed); 0 means payload was not compressed
+• 3 octets       - length of packet (compressed)
+• 1 octet        - sequence id (reset with, but independent of the wire-packet sequence-id)
+• 3 octets       - length of packet (uncompressed); 0 means payload was not compressed
 • string[length] - the payload
 
 The MySQL Compression Protocol is independent of the MySQL Wire Protocol
@@ -39,11 +39,11 @@ uncompressed, but for now using the Compression protocol requires both.
   "Read a compressed packet from STREAM."
   (let (payload
         (pos 0)
-        (compressed-length (%read-3-bytes stream))
+        (compressed-length (%read-3-octets stream))
         (sequence-id (if (= (read-byte stream) expected-sequence-id)
                          (setf expected-sequence-id (mod (1+ expected-sequence-id) 256))
                          (error (make-instance 'unexpected-sequence-id))))
-        (decompressed-length (%read-3-bytes stream)))
+        (decompressed-length (%read-3-octets stream)))
     (assert (plusp compressed-length))
     (setf payload (make-array compressed-length :element-type '(unsigned-byte 8)))
     (loop do (setf pos (read-sequence payload stream :start pos))
@@ -104,11 +104,11 @@ uncompressed, but for now using the Compression protocol requires both.
    (input-buffer :type (or flexi-streams:in-memory-input-stream null)
                  :initform nil
                  :accessor mysql-compressed-stream-input-buffer
-                 :documentation "The container for the incoming, just inflated, byte stream.")
+                 :documentation "The container for the incoming, just inflated, octet stream.")
    (output-buffer :type flexi-streams:in-memory-output-stream
                   :initform (flexi-streams:make-in-memory-output-stream)
                   :accessor mysql-compressed-stream-output-buffer
-                  :documentation "The container for the outgoing, to be deflated, byte stream.")
+                  :documentation "The container for the outgoing, to be deflated, octet stream.")
    (sequence-id :type integer
                 :initform 0
                 :accessor mysql-compressed-stream-sequence-id

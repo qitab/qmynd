@@ -34,7 +34,7 @@
                           #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
                           #xff #x7f #x80 #x00
                           #xff #xff #xff #x7f #x00 #x80 #x00 #x00))
-    ;; 1 byte
+    ;; 1 octet
     (assert-equal
      (read-fixed-length-integer 1 s)
      #x0)
@@ -47,35 +47,35 @@
     (assert-equal
      (read-fixed-length-integer 1 s)
      #xff)
-    ;; 2 byte
+    ;; 2 octet
     (assert-equal
      (read-fixed-length-integer 2 s)
      #x0)
     (assert-equal
      (read-fixed-length-integer 2 s)
      #xfffe)
-    ;; 3 byte
+    ;; 3 octet
     (assert-equal
      (read-fixed-length-integer 3 s)
      #x0)
     (assert-equal
      (read-fixed-length-integer 3 s)
      #xfffefd)
-    ;; 4 byte
+    ;; 4 octet
     (assert-equal
      (read-fixed-length-integer 4 s)
      #x0)
     (assert-equal
      (read-fixed-length-integer 4 s)
      #xfffefdfc)
-    ;; 6 byte
+    ;; 6 octet
     (assert-equal
      (read-fixed-length-integer 6 s)
      #x0)
     (assert-equal
      (read-fixed-length-integer 6 s)
      #xfffefdfcfbfa)
-    ;; 8 byte
+    ;; 8 octet
     (assert-equal
      (read-fixed-length-integer 8 s)
      #x0)
@@ -114,30 +114,30 @@
             (flexi-streams:with-output-to-sequence (s)
               (write-fixed-length-integer int len s))
             expected :test #'equalp)))
-    ;; 1 byte
+    ;; 1 octet
     (encode-test 0 1 #(0))
     (encode-test #x10 1 #(#x10))
     (encode-test #x80 1 #(#x80))
     (encode-test #xff 1 #(#xff))
     (encode-test -1 1 #(#xff))
     (encode-test 127 1 #(#x7f))
-    ;; 1 byte fun with aliasing
+    ;; 1 octet fun with aliasing
     (encode-test 128 1 #(#x80))
     (encode-test -128 1 #(#x80))
-    ;; 2 byte
+    ;; 2 octet
     (encode-test 0 2 #(0 0))
     (encode-test #xfffe 2 #(#xfe #xff))
     (encode-test -1 2 #(#xff #xff))
-    ;; 3 byte
+    ;; 3 octet
     (encode-test 0 3 #(0 0 0))
     (encode-test #xfffefd 3 #(#xfd #xfe #xff))
-    ;; 4 byte
+    ;; 4 octet
     (encode-test 0 4 #(0 0 0 0))
     (encode-test #xfffefdfc 4 #(#xfc #xfd #xfe #xff))
-    ;; 6 byte
+    ;; 6 octet
     (encode-test 0 6 #(0 0 0 0 0 0))
     (encode-test #xfffefdfcfbfa 6 #(#xfa #xfb #xfc #xfd #xfe #xff))
-    ;; 8 byte
+    ;; 8 octet
     (encode-test 0 8 #(0 0 0 0 0 0 0 0))
     (encode-test #xfffefdfcfbfaf9f8 8 #(#xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff))))
 
@@ -212,30 +212,30 @@
                                        #(0)))
       ;; Pull strings out of the stream.
       (assert-equal
-       (babel:octets-to-string (read-fixed-length-string 7 s))
+       (babel:octets-to-string (read-fixed-length-octets 7 s))
        "Testing"
        :test #'string=)
 
       (assert-equal
-       (babel:octets-to-string (read-length-encoded-string s))
+       (babel:octets-to-string (read-length-encoded-octets s))
        "Hello, world!"
        :test #'string=)
 
       (assert-equal
-       (babel:octets-to-string (read-null-terminated-string s))
+       (babel:octets-to-string (read-null-terminated-octets s))
        "Hello"
        :test #'string=)
 
-      (let ((str (babel:octets-to-string (read-length-encoded-string s))))
+      (let ((str (babel:octets-to-string (read-length-encoded-octets s))))
         (assert-equal (length str) 251)
         (assert-true (every #'(lambda (x) (char= x #\A)) str)))
 
-      (let ((str (babel:octets-to-string (read-null-terminated-string s))))
+      (let ((str (babel:octets-to-string (read-null-terminated-octets s))))
         (assert-equal (length str) 256)
         (assert-true (every #'(lambda (x) (char= x #\A)) str)))
 
       (assert-equal
-       (babel:octets-to-string (read-null-terminated-string s))
+       (babel:octets-to-string (read-null-terminated-octets s))
        "Goodbye"
        :test #'string=))))
 

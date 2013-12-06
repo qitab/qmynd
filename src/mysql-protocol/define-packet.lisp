@@ -31,8 +31,8 @@ slot-options ::= {:bind boolean } |
 parser-type-spec ::= (integer integer-size) |
                      (string-type string-termination-spec)
 
-integer-size ::= byte-count | :lenenc
- byte-count - read this many bytes
+integer-size ::= octet-count | :lenenc
+ octet-count - read this many octets
  :lenenc - read a length-encoded integer
  :lenenc-null-ok - read a length-encoded integer, allowing integer to be NULL.
 
@@ -46,8 +46,8 @@ string-termination-spec ::= integer | :eof | :lenenc | :null | :null-eof
  :eof - read until the end of the packet.
  :lenenc - read a length-encoded integer first, then use that as the length.
  :lenenc-null-ok - read a length-encoded integer first; if not null then use that as the length.
- :null - read until a null byte is encountered.
- :null-eof - read until a null byte is encountered or we hit the end of the packet.
+ :null - read until a null octet is encountered.
+ :null-eof - read until a null octet is encountered or we hit the end of the packet.
              Used to deal with a bug in some forms of the initial handshake packet.
 
 eof-action ::= :error | :end
@@ -176,19 +176,19 @@ Order of Operations:
                (cond
                  ((or (typep termination-spec 'integer)
                       (member termination-spec locals))
-                  `(read-fixed-length-string ,termination-spec ,stream))
+                  `(read-fixed-length-octets ,termination-spec ,stream))
                  (t
                   (ecase termination-spec
                     (:eof
-                     `(read-rest-of-packet-string ,stream))
+                     `(read-rest-of-packet-octets ,stream))
                     (:lenenc
-                     `(read-length-encoded-string ,stream))
+                     `(read-length-encoded-octets ,stream))
                     (:lenenc-null-ok
-                     `(read-length-encoded-string ,stream :null-ok t))
+                     `(read-length-encoded-octets ,stream :null-ok t))
                     (:null
-                     `(read-null-terminated-string ,stream))
+                     `(read-null-terminated-octets ,stream))
                     (:null-eof
-                     `(read-null-terminated-string ,stream nil)))))))
+                     `(read-null-terminated-octets ,stream nil)))))))
          (if (eq mysql-type 'string)
              (with-gensyms (octets)
                `(let ((,octets ,parser))

@@ -14,18 +14,18 @@
 
 #|
 A MySQL Packet consists of:
-• 3 bytes        - length of packet
-• 1 byte         - sequence id
+• 3 octets        - length of packet
+• 1 octet         - sequence id
 • string[length] - the payload
 
 5.1.2.1. Big packets
-The largest packet is 2^24-1 bytes long. If more data must be
+The largest packet is 2^24-1 octets long. If more data must be
 transmitted, a series of packets of length #xffffff are sent, with
 increasing sequence ids, until the remaining payload is less than
-2^24-1 bytes, at which point the remaining payload is transmitted with
-its actual size. This means that a packet of exactly 2^24-1 bytes is
+2^24-1 octets, at which point the remaining payload is transmitted with
+its actual size. This means that a packet of exactly 2^24-1 octets is
 transmitted as a full packet followed by a packet with a payload of 0
-bytes.
+octets.
 
 5.1.2.2. Sequence IDs
 The sequence_id is allowed to wrap. It is reset to 0 at the start of
@@ -41,7 +41,7 @@ each Command Phase.
 ;;; Each time we switch from a chunk to the next while reading the current
 ;;; packet, the slots of the my-stream instance are reset to whatever the
 ;;; next chunk properties are, including the chunk contents: we preload the
-;;; payload bytes.
+;;; payload octets.
 ;;;
 ;;; The methods are implemented as functions because we care enough about
 ;;; performances here to want to avoid the cost of CLOS dispatching.
@@ -52,10 +52,10 @@ each Command Phase.
 ;;; The define-packet API and basic types implementation then fetch data
 ;;; from the stream by using the following low-level functions:
 ;;;
-;;;  - read-my-byte
-;;;  - peek-my-byte
+;;;  - read-my-octet
+;;;  - peek-my-octet
 ;;;  - read-my-sequence
-;;;  - read-all-remaining-bytes
+;;;  - read-rest-of-packet-octets
 ;;;
 ;;; Higher level functions such as read-fixed-length-integer or
 ;;; read-length-encoded-integer are defined in basic-types.lisp and build on
@@ -87,24 +87,24 @@ each Command Phase.
 ;;;
 ;;; Low level protocol handling
 ;;;
-(declaim (inline %read-3-bytes))
+(declaim (inline %read-3-octets))
 
-(defun %read-3-bytes (stream)
+(defun %read-3-octets (stream)
   "Internal for wire protocol use only."
   (declare (type stream stream))
   ;; As we don't have a proper my-packet-stream yet, we can't use
-  ;; the usual read-3-bytes-integer implementation. We also know we
-  ;; are readding unsigned integer...
-  (let ((byte-1 (read-byte stream))
-        (byte-2 (read-byte stream))
-        (byte-3 (read-byte stream)))
-    (declare (type (unsigned-byte 8) byte-1 byte-2 byte-3))
-    (logior (ash byte-3 16) (ash byte-2  8) byte-1)))
+  ;; the usual read-3-octets-integer implementation.
+  ;; We also know we are reading unsigned integer...
+  (let ((octet-1 (read-byte stream))
+        (octet-2 (read-byte stream))
+        (octet-3 (read-byte stream)))
+    (declare (type (unsigned-byte 8) octet-1 octet-2 octet-3))
+    (logior (ash octet-3 16) (ash octet-2  8) octet-1)))
 
 (defun prepare-next-chunk (my-stream)
   "Prepare reading from a new packet from our source stream."
   (let ((expected-sequence-id (my-seq-id my-stream)))
-    (setf (my-len my-stream)     (%read-3-bytes (my-source my-stream))
+    (setf (my-len my-stream)     (%read-3-octets (my-source my-stream))
           (my-seq-id my-stream)  (read-byte (my-source my-stream)))
 
     (assert (= expected-sequence-id (my-seq-id my-stream))
@@ -127,6 +127,7 @@ each Command Phase.
 (defun maybe-read-next-chunk (stream &optional eof-error-p eof-value)
   "Check if we are at the end of the packet, or if we need to read from the
    next chunk from the network within the same \"logical\" packet."
+  (declare (special *mysql-connection*))
   (when (= (my-pos stream) (my-len stream))
     (if (< (my-len stream) +max-packet-length+)
       ;; no extra packet was needed
@@ -140,20 +141,20 @@ each Command Phase.
         (setf (mysql-connection-sequence-id *mysql-connection*)
               (my-seq-id stream))))))
 
-(defun read-my-byte (stream &optional eof-error-p eof-value)
-  "Read a single byte from STREAM."
+(defun read-my-octet (stream &optional eof-error-p eof-value)
+  "Read a single octet from STREAM."
   (declare (type my-packet-stream stream))
 
-  ;; support for the peek-my-byte API
+  ;; support for the peek-my-octet API
   (maybe-read-next-chunk stream eof-error-p eof-value)
 
-  ;; now read a single byte from our source
+  ;; now read a single octet from our source
   (prog1
       (aref (my-payload stream) (my-pos stream))
     (incf (my-pos stream))))
 
-(defun peek-first-byte (stream)
-  "Get the first byte in this stream's chunk."
+(defun peek-first-octet (stream)
+  "Get the first octet in this stream's chunk."
   (aref (my-payload stream) 0))
 
 (defun read-my-sequence (sequence stream)
@@ -162,16 +163,16 @@ each Command Phase.
            (type (simple-array (unsigned-byte 8) (*)) sequence))
 
   (if (<= (+ (length sequence) (my-pos stream)) (my-len stream))
-      ;; we already have the bytes we're asked for, just grab'em
+      ;; we already have the octets we're asked for, just grab'em
       (progn
         (replace sequence (my-payload stream) :start2 (my-pos stream))
         (incf (my-pos stream) (length sequence)))
 
       ;; in that case we're going to cross a packet boundary, so read one
-      ;; byte at a time, read-my-byte knows how to cross boundaries.
+      ;; octet at a time, read-my-octet knows how to cross boundaries.
       (loop
          for pos fixnum from 0 below (length sequence)
-         do (setf (aref sequence pos) (read-my-byte stream))
+         do (setf (aref sequence pos) (read-my-octet stream))
          finally (return pos))))
 
 ;;;
@@ -192,7 +193,7 @@ each Command Phase.
         vector)))
 
 (defun read-whole-chunk (length stream)
-  "Read LENGTH bytes from STREAM and return an array of them."
+  "Read LENGTH octets from STREAM and return an array of them."
   (declare (type my-packet-stream stream))
   (let ((vector (make-array length :element-type '(unsigned-byte 8))))
     (loop for pos = 0 then (read-sequence vector (my-source stream) :start pos)
@@ -200,7 +201,7 @@ each Command Phase.
     (incf (my-pos stream) length)
     vector))
 
-(defun read-all-remaining-bytes (stream)
+(defun read-rest-of-packet-octets (stream)
   "Copy the rest of the whole data set into an array and return it."
   (declare (type my-packet-stream stream))
 
@@ -219,7 +220,7 @@ each Command Phase.
      else do (prepare-next-chunk stream)))
 
 ;;;
-;;; Write bytes to the wire socket, as chunked packets.
+;;; Write octets to the wire socket, as chunked packets.
 ;;;
 (defun write-wire-packet (stream payload &key (sequence-id 0))
   "Write PAYLOAD to STREAM as one or more packets."

@@ -42,7 +42,7 @@
      (write-byte +mysql-command-query+ s)
      (write-sequence (babel:string-to-octets query-string) s)))
   (let* ((my-stream (mysql-read-packet))
-         (tag       (peek-first-byte my-stream)))
+         (tag       (peek-first-octet my-stream)))
     (if (member tag (list +mysql-response-ok+ +mysql-response-error+))
         (parse-response my-stream)
         (let* ((column-count (parse-column-count my-stream))

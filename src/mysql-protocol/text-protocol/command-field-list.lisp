@@ -27,7 +27,7 @@
   (mysql-write-packet
    (flexi-streams:with-output-to-sequence (s)
      (write-byte +mysql-command-field-list+ s)
-     (write-null-terminated-string (babel:string-to-octets table) s)
+     (write-null-terminated-octets (babel:string-to-octets table) s)
      (when field-wildcard
        (write-sequence (babel:string-to-octets field-wildcard) s))))
   (let* ((initial-payload (mysql-read-packet))

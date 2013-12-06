@@ -75,7 +75,7 @@
    parsed into native types depending on the meta data passed in
    COLUMNS-DEFINITIONS."
   (let* ((stream (mysql-read-packet))
-         (tag    (peek-first-byte stream)))
+         (tag    (peek-first-octet stream)))
     (labels
         ((parse-column (str column-definition)
            (when str
@@ -86,7 +86,7 @@
          (result-as-vector (stream)
            (let ((row (make-array column-count :initial-element nil)))
              (loop for i fixnum from 0 below column-count
-                for str = (read-length-encoded-string stream :null-ok t)
+                for str = (read-length-encoded-octets stream :null-ok t)
                 when str
                 do (setf (aref row i)
                          (parse-column str (aref column-definitions i))))
@@ -94,7 +94,7 @@
 
          (result-as-list (stream)
            (loop for i fixnum from 0 below column-count
-              for str = (read-length-encoded-string stream :null-ok t)
+              for str = (read-length-encoded-octets stream :null-ok t)
               collect (parse-column str (aref column-definitions i)))))
 
       (declare (inline parse-column
@@ -313,13 +313,13 @@
                                    +mysql-type-var-string+
                                    +mysql-type-string+)
                  :test #'=)
-         (let ((octets (read-length-encoded-string stream)))
+         (let ((octets (read-length-encoded-octets stream)))
            (to-string octets)))
 
         ((member column-type (list +mysql-type-decimal+
                                    +mysql-type-newdecimal+)
                  :test #'=)
-         (parse-decimal (to-string (read-length-encoded-string stream))))
+         (parse-decimal (to-string (read-length-encoded-octets stream))))
 
         ;; Integers
         ((= column-type +mysql-type-longlong+)
@@ -401,8 +401,8 @@
         ((member column-type (list +mysql-type-enum+
                                    +mysql-type-set+
                                    +mysql-type-geometry+))
-         (read-rest-of-packet-string stream))
+         (read-rest-of-packet-octets stream))
         ;; +mysql-type-null+ (encoded in null bitmap)
         (t
          ;; asedeno-TODO: log unknown type
-         (read-rest-of-packet-string stream))))))
+         (read-rest-of-packet-octets stream))))))
