@@ -18,7 +18,7 @@
 ;;; Little endian fixed-length integers with lengths (1 2 3 4 6 8)
 (define-compiler-macro read-fixed-length-integer (&whole form length stream &rest keys)
   (case length
-    (1 `(read-my-octet ,stream ,@keys))
+    (1 (if keys `(read-1-octet-integer ,stream ,@keys) `(read-my-octet ,stream)))
     (2 `(read-2-octets-integer ,stream ,@keys))
     (3 `(read-3-octets-integer ,stream ,@keys))
     (4 `(read-4-octets-integer ,stream ,@keys))
@@ -42,6 +42,12 @@
 (defun unsigned-to-signed (byte n)
   (declare (type fixnum n) (type unsigned-byte byte))
   (logior byte (- (mask-field (byte 1 (1- (* n 8))) byte))))
+
+(defun read-1-octet-integer (stream &key signed)
+  "Read 1 octet from STREAM as an integer."
+  (declare (type my-packet-stream stream))
+  (let ((unsigned (read-my-octet stream)))
+    (if signed (unsigned-to-signed unsigned 1) unsigned)))
 
 (defun read-2-octets-integer (stream &key signed)
   "Read 2 octets from STREAM as an integer."

@@ -22,18 +22,17 @@
 
 (define-test decode-fixed-length-integers ()
   ;;prepare a stream with a bunch of integers for decoding
-  (with-packet-input (s #(#x00 #x10 #x80 #xff
-                          #x00 #x00 #xfe #xff
-                          #x00 #x00 #x0
-                          #xfd #xfe #xff
-                          #x00 #x00 #x00 #x0
-                          #xfc #xfd #xfe #xff
+  (with-packet-input (s #(#x00  #x10  #x80  #xff
+                          #x00 #x00  #xfe #xff
+                          #x00 #x00 #x00  #xfd #xfe #xff
+                          #x00 #x00 #x00 #x00  #xfc #xfd #xfe #xff
                           #x00 #x00 #x00 #x00 #x00 #x0
                           #xfa #xfb #xfc #xfd #xfe #xff
                           #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x0
                           #xf8 #xf9 #xfa #xfb #xfc #xfd #xfe #xff
-                          #xff #x7f #x80 #x00
-                          #xff #xff #xff #x7f #x00 #x80 #x00 #x00))
+                          #xff  #x7f  #x80  #x00
+                          #xff #xff  #xff #x7f
+                          #x00 #x80  #x00 #x00))
     ;; 1 octet
     (assert-equal
      (read-fixed-length-integer 1 s)
