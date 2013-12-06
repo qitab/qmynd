@@ -16,22 +16,103 @@
 
 ;;; 15.1.1.1.1. fixed length integer
 ;;; Little endian fixed-length integers with lengths (1 2 3 4 6 8)
+(define-compiler-macro read-fixed-length-integer (&whole form bytes stream)
+  (case bytes
+    (1 `(read-my-byte ,stream))
+    (2 `(read-2-bytes-integer ,stream))
+    (3 `(read-3-bytes-integer ,stream))
+    (4 `(read-4-bytes-integer ,stream))
+    (8 `(read-8-bytes-integer ,stream))
+    (10 `(read-10-bytes-integer ,stream))
+    (t form)))
 
 (defun read-fixed-length-integer (length stream &key signed)
-  "Read LENGTH bytes from STREAM as an integer (little endian).
-   Accepts the following keyword arguments:
-    SIGNED - treat the integer as signed."
-  (let ((result 0)
-        negative)
-    (loop
-      repeat length
-      for i fixnum from 0 by 8
-      for byte = (read-byte stream) then (read-byte stream)
-      do (setf (ldb (byte 8 i) result) byte)
-      finally (setf negative (plusp (ash byte -7))))
-    (if (and signed negative)
-        (logxor (lognot result) (1- (ash 1 (* 8 length))))
-        result)))
+  "Read an integer of LENGTH bytes from STREAM."
+  (ecase length
+    (1 (read-my-byte stream))
+    (2 (read-2-bytes-integer stream :signed signed))
+    (3 (read-3-bytes-integer stream :signed signed))
+    (4 (read-4-bytes-integer stream :signed signed))
+    (6 (read-6-bytes-integer stream :signed signed))
+    (8 (read-8-bytes-integer stream :signed signed))
+    (10 (read-10-bytes-integer stream :signed signed))))
+
+(declaim (inline unsigned-to-signed read-fixed-length-integer))
+
+(defun unsigned-to-signed (byte n)
+  (declare (type fixnum byte n))
+  (logior byte (- (mask-field (byte 1 (1- (* n 8))) byte))))
+
+(defun read-2-bytes-integer (stream &key signed)
+  "Read 2 bytes from STREAM as an integer."
+  (declare (type my-packet-stream stream))
+  (let* ((byte-1    (read-my-byte stream))
+         (byte-2    (read-my-byte stream))
+         (unsigned  (logior (ash byte-2 8) byte-1)))
+    (declare (type fixnum unsigned))
+    (if signed (unsigned-to-signed unsigned 2) unsigned)))
+
+(defun read-3-bytes-integer (stream  &key signed)
+  (declare (type my-packet-stream stream))
+  (let* ((byte-1    (read-my-byte stream))
+         (byte-2    (read-my-byte stream))
+         (byte-3    (read-my-byte stream))
+         (unsigned
+          (logior (ash byte-3 16) (ash byte-2  8) byte-1)))
+    (declare (type fixnum unsigned))
+    (if signed (unsigned-to-signed unsigned 3) unsigned)))
+
+(defun read-4-bytes-integer (stream  &key signed)
+  (declare (type my-packet-stream stream))
+  (let* ((byte-1    (read-my-byte stream))
+         (byte-2    (read-my-byte stream))
+         (byte-3    (read-my-byte stream))
+         (byte-4    (read-my-byte stream))
+         (unsigned
+          (logior (ash byte-4 24) (ash byte-3 16) (ash byte-2  8) byte-1)))
+    (declare (type fixnum unsigned))
+    (if signed (unsigned-to-signed unsigned 3) unsigned)))
+
+(defun read-6-bytes-integer (stream  &key signed)
+  (declare (type my-packet-stream stream))
+  (let* ((byte-1    (read-my-byte stream))
+         (byte-2    (read-my-byte stream))
+         (byte-3    (read-my-byte stream))
+         (byte-4    (read-my-byte stream))
+         (byte-5    (read-my-byte stream))
+         (byte-6    (read-my-byte stream))
+         (unsigned
+          (logior (ash byte-6 40) (ash byte-5 32) (ash byte-4 24)
+                  (ash byte-3 16) (ash byte-2  8) byte-1)))
+    (declare (type fixnum unsigned))
+    (if signed (unsigned-to-signed unsigned 3) unsigned)))
+
+(defun read-8-bytes-integer (stream &key signed)
+  (declare (type my-packet-stream stream))
+  (let ((unsigned
+         (logior (ash (read-4-bytes-integer stream) 32)
+                 (read-4-bytes-integer stream))))
+    (if signed (unsigned-to-signed unsigned 8) unsigned)))
+
+(defun read-10-bytes-integer (stream  &key signed)
+  (declare (type my-packet-stream stream))
+  (let* ((byte-1    (read-my-byte stream))
+         (byte-2    (read-my-byte stream))
+         (byte-3    (read-my-byte stream))
+         (byte-4    (read-my-byte stream))
+         (byte-5    (read-my-byte stream))
+         (byte-6    (read-my-byte stream))
+         (byte-7    (read-my-byte stream))
+         (byte-8    (read-my-byte stream))
+         (byte-9    (read-my-byte stream))
+         (byte-10   (read-my-byte stream))
+         (unsigned
+          (logior (ash byte-10 72)
+                  (ash byte-9 64) (ash byte-8 56) (ash byte-7 48)
+                  (ash byte-6 40) (ash byte-5 32) (ash byte-4 24)
+                  (ash byte-3 16) (ash byte-2  8) byte-1)))
+    (declare (type fixnum unsigned))
+    (if signed (unsigned-to-signed unsigned 3) unsigned)))
 
 (defun write-fixed-length-integer (int length stream)
   "Write INT to STREAM as a LENGTH byte integer."
@@ -47,18 +128,18 @@
    Accepts the following keyword arguments:
     NULL-OK - Parse #xFB as NULL.
    Signals an error when we fail to parse an integer."
-  (let ((n (read-byte stream)))
+  (let ((n (read-my-byte stream)))
     (cond
       ((< n #xfb) n)
       ;; #xfb here is undefined, though it may mean NULL in certain contexts.
       ((and null-ok (= n #xfb))
        nil)
       ((= n #xfc)
-       (read-fixed-length-integer 2 stream))
+       (read-2-bytes-integer stream))
       ((= n #xfd)
-       (read-fixed-length-integer 3 stream))
+       (read-3-bytes-integer stream))
       ((= n #xfe)
-       (read-fixed-length-integer 8 stream))
+       (read-8-bytes-integer stream))
       ;; #xff here is undefined, though it may be an error packet in certain contexts.
       (t (error (make-condition 'invalid-length-encoded-integer
                                 :text "Bad length while reading a length-encoded integer."))))))
@@ -97,7 +178,7 @@
    NB: MySQL calls this a string, but we treat it as a vector of octets."
   (let ((octets (make-array length :element-type '(unsigned-byte 8)
                                    :initial-element 0)))
-    (read-sequence octets stream)
+    (read-my-sequence octets stream)
     octets))
 
 ;; Just use write-sequence directly
@@ -106,48 +187,23 @@
 
 ;;; Protocol::NulTerminatedString
 ;;; A string terminated by a NUL byte.
-
-(defgeneric read-null-terminated-string (stream &optional eof-error-p)
-  (:documentation
-  "Read bytes from STREAM until we find a NUL byte.
-   Accepts the following keyword arguments:
-    EOF-ERROR-P - if NIL, treat EOF as NUL. (default: T)"))
-
-(defmethod read-null-terminated-string (stream &optional (eof-error-p t)
-                                        &aux (length 16))
+(defun read-null-terminated-string (stream
+                                    &optional (eof-error-p t)
+                                    &aux (length 16))
+  (declare (type my-packet-stream stream)
+           (fixnum length))
   (let ((octets (make-array length :element-type '(unsigned-byte 8)
                                    :initial-element 0
                                    :adjustable t)))
     (loop
       for i fixnum from 0
-      as b fixnum = (read-byte stream eof-error-p (unless eof-error-p 0))
+      as b fixnum = (read-my-byte stream eof-error-p (unless eof-error-p 0))
       unless (< i length) do
         (incf length length)
         (setf octets (adjust-array octets length))
       when (= b 0)
         return (adjust-array octets i)
       do (setf (aref octets i) b))))
-
-(defmethod read-null-terminated-string ((stream flexi-streams::vector-input-stream)
-                                        &optional (eof-error-p t))
-  ;; We're going to break the flexi-streams abstraction here to get an
-  ;; exact length.
-  (with-accessors ((index flexi-streams::vector-stream-index)
-                   (end flexi-streams::vector-stream-end)
-                   (vector flexi-streams::vector-stream-vector))
-      stream
-    (let ((position (position 0 vector :start index)))
-      (cond
-        ((and eof-error-p (null position))
-         ;; Consume the stream and signal EOF
-         (setf index end)
-         (error 'end-of-file :stream stream))
-        (t
-         (let ((octets (make-array (- (or position end) index) :element-type '(unsigned-byte 8)
-                                                               :initial-element 0)))
-           (read-sequence octets stream)
-           (when position (incf index)) ; Consume the NUL byte if necessary.
-           octets))))))
 
 (defun write-null-terminated-string (octets stream)
   "Write OCTETS to STREAM followed by a NUL byte.
@@ -181,33 +237,8 @@
 
 ;;; Protocol::RestOfPacketString
 ;;; Just read the rest of the packet
+(defun read-rest-of-packet-string (stream)
+  "Read the rest of the current MySQL packet."
+  (declare (type my-packet-stream stream))
+  (read-all-remaining-bytes stream))
 
-(defgeneric read-rest-of-packet-string (stream)
-  (:documentation
-   "Returns the rest of a stream as an array."))
-
-(defmethod read-rest-of-packet-string (stream &aux (length 16))
-  (let ((octets (make-array length :element-type '(unsigned-byte 8)
-                                   :initial-element 0
-                                   :adjustable t)))
-    (loop
-      for i fixnum from 0
-      as b fixnum = (read-byte stream nil -1)
-      unless (< i length) do
-        (incf length length)
-        (setf octets (adjust-array octets length))
-      when (= b -1)
-        return (adjust-array octets i)
-      do (setf (aref octets i) b))))
-
-(defmethod read-rest-of-packet-string ((stream flexi-streams::vector-input-stream))
-  ;; We're going to break the flexi-streams abstraction here to get an
-  ;; exact length.
-  (with-accessors ((index flexi-streams::vector-stream-index)
-                   (end flexi-streams::vector-stream-end)
-                   (vector flexi-streams::vector-stream-vector))
-      stream
-    (let ((octets (make-array (- end index) :element-type '(unsigned-byte 8)
-                                            :initial-element 0)))
-      (read-sequence octets stream)
-      octets)))

@@ -41,11 +41,11 @@
    (flexi-streams:with-output-to-sequence (s)
      (write-byte +mysql-command-query+ s)
      (write-sequence (babel:string-to-octets query-string) s)))
-  (let* ((payload (mysql-read-packet))
-         (tag (aref payload 0)))
+  (let* ((my-stream (mysql-read-packet))
+         (tag       (peek-first-byte my-stream)))
     (if (member tag (list +mysql-response-ok+ +mysql-response-error+))
-        (parse-response payload)
-        (let* ((column-count (parse-column-count payload))
+        (parse-response my-stream)
+        (let* ((column-count (parse-column-count my-stream))
                (column-definitions
 		(coerce
 		 (loop

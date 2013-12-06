@@ -45,9 +45,9 @@
        (:module "wire-protocol"
         :serial nil
         :depends-on ("common")
-        :components ((:file "basic-types")
-                     (:file "wire-packet"
-                      :depends-on ("basic-types"))
+        :components ((:file "wire-packet")
+                     (:file "basic-types"
+                      :depends-on ("wire-packet"))
                      (:file "compressed-protocol"
                       :depends-on ("basic-types"))))
        (module "mysql-protocol"
