@@ -10,6 +10,7 @@ Cleanup:
 • Drop “mysql-” prefix from everything: this is a MySQL driver, so
    it's redundant.
 • Replace qtest by 5am or stefil, etc.
+• where appropriate, use -octets instead of -string and -raw instead of -as-text
 
 Convenience:
 • Convenience functions for toggling bits in status and capability.
