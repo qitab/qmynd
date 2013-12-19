@@ -152,11 +152,12 @@
                                      +mysql-type-set+
                                      +mysql-type-geometry+)
                    :test #'=)
-           (let ((encoding (column-definition-encoding column-definition)))
+           (let ((cs-coll  (column-definition-v41-packet-cs-coll column-definition))
+                 (encoding (column-definition-encoding column-definition)))
              (if (and encoding
-                      (not (member encoding '(+mysql-cs-coll-utf8-binary+
-                                              +mysql-cs-coll-ascii-binary+
-                                              +mysql-cs-coll-binary+))))
+                      (not (member cs-coll '(+mysql-cs-coll-utf8-binary+
+                                             +mysql-cs-coll-ascii-binary+
+                                             +mysql-cs-coll-binary+))))
                  (babel:octets-to-string octets :encoding encoding)
                  octets)))
 

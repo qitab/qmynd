@@ -133,14 +133,6 @@
 
 (defconstant +mysql-server-ps-out-params+ #x1000)
 
-;; Character Sets (partially taken from +MYSQL+/sql/share/charsets/Index.xml)
-(defconstant +mysql-cs-coll-latin1-swedish-ci+ 8)
-(defconstant +mysql-cs-coll-utf8-general-ci+ 33)
-(defconstant +mysql-cs-coll-utf8-binary+ 83)
-(defconstant +mysql-cs-coll-ascii-general-ci+ 11)
-(defconstant +mysql-cs-coll-ascii-binary+ 65)
-(defconstant +mysql-cs-coll-binary+ 63)
-
 ;; Column Types (15.6.4.1.1.1)
 (defconstant +mysql-type-decimal+ #x00)
 (defconstant +mysql-type-tiny+ #x01)
