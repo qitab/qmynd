@@ -34,7 +34,8 @@
        (:module "common"
         :serial nil
         :depends-on ("pkgdcl")
-        :components ((:file "constants")
+        :components ((:file "charsets")
+                     (:file "constants" :depends-on ("charsets"))
                      (:file "conditions")
                      (:file "feature-detection")
                      (:file "utilities")
