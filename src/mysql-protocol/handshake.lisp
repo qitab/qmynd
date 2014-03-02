@@ -57,12 +57,16 @@
           (logand (mysql-connection-capabilities *mysql-connection*)
                   (initial-handshake-v10-packet-capability-flags packet))
 
-          (mysql-connection-character-set *mysql-connection*)
-          (mysql-cs-coll-to-character-encoding
-           (initial-handshake-v10-packet-character-set packet))
+          ;; we receive the MySQL Server default character-set, which we
+          ;; don't care much about as the next packet we're sending is going
+          ;; to define the character set we actually use.
 
-          (mysql-connection-cs-coll *mysql-connection*)
-          (initial-handshake-v10-packet-character-set packet)
+          ;; (mysql-connection-character-set *mysql-connection*)
+          ;; (mysql-cs-coll-to-character-encoding
+          ;;  (initial-handshake-v10-packet-character-set packet))
+
+          ;; (mysql-connection-cs-coll *mysql-connection*)
+          ;; (initial-handshake-v10-packet-character-set packet)
 
           (mysql-connection-status-flags *mysql-connection*)
           (initial-handshake-v10-packet-status-flags packet)
@@ -152,7 +156,7 @@
      (write-fixed-length-integer #x1000000 4 s)
      (write-byte (mysql-connection-cs-coll *mysql-connection*) s)
      (write-fixed-length-integer 0 23 s) ; 23 reserved octets
-     (write-null-terminated-octets (babel:string-to-octets username) s)
+     (write-null-terminated-octets (babel:string-to-octets username :encoding (mysql-connection-character-set *mysql-connection*)) s)
      (cond
        ((mysql-has-capability +mysql-capability-client-plugin-auth-lenec-client-data+)
         (write-length-encoded-integer (length auth-response) s)
@@ -164,7 +168,7 @@
         (write-null-terminated-octets auth-response s)))
      ;; If the bit is still set at this point, then we have a database schema to specify.
      (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
-       (write-null-terminated-octets (babel:string-to-octets database) s))
+       (write-null-terminated-octets (babel:string-to-octets database :encoding (mysql-connection-character-set *mysql-connection*)) s))
      (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
        (write-null-terminated-octets auth-plugin s))
      #+mysql-client-connect-attributes
@@ -216,7 +220,7 @@
       ;; Prepare Auth Response
       (handler-case
           (with-prefixed-accessors (auth-data auth-plugin)
-            (mysql-connection- connection)
+              (mysql-connection- connection)
             ;; Prepare Initial Response OR Close and Signal
             (send-handshake-response-41 :username username
                                         :auth-response (generate-auth-response password auth-data auth-plugin)
@@ -231,7 +235,10 @@
       (when (mysql-has-capability +mysql-capability-client-compress+)
         (setf (mysql-connection-stream connection)
               (make-instance 'mysql-compressed-stream
-                             :stream (mysql-connection-stream connection)))))
+                             :stream (mysql-connection-stream connection))))
+
+      ;; force the resultset encoding to be what we asked for, nothing else
+      (send-command-query "SET character_set_results = null;"))
 
     (setf (mysql-connection-connected connection) t)
     connection))
