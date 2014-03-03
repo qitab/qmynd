@@ -15,9 +15,16 @@
   and must bind *mysql-connection* to that connection for internal
   function use.")
 
+(defvar *mysql-encoding* nil
+  "As it happens, it's quite easy to have data in an encoding known only by
+   the application, and completely unknown by MySQL which will keep sending
+   unrelated meta-data. Use this setting to force the Qmynd driver to be
+   using the encoding you know your data is encoded with.")
+
 (defmacro with-mysql-connection ((c) &body body)
   `(let* ((*mysql-connection* ,c)
-          (babel::*default-character-encoding* (mysql-connection-character-set *mysql-connection*)))
+          (babel::*default-character-encoding*
+           (mysql-connection-character-set *mysql-connection*)))
      ,@body))
 
 (defclass mysql-base-connection ()

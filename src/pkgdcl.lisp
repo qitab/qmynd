@@ -65,6 +65,8 @@
    #:mysql-year-year
 
    ;; API
+   ;; Dynamic bindings
+   #:*mysql-encoding*
    ;; Connections
    #:mysql-connect
    #+(or ccl sbcl)
@@ -94,6 +96,7 @@
   (:export
    ;; Dynamic Variables
    #:*mysql-connection*
+   #:*mysql-encoding*
 
    ;; Commands
    #:send-command-debug

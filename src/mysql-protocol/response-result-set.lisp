@@ -144,7 +144,9 @@
     - use-nil             decode octets as a nil value
     - use-empty-string    decode octets as an empty string (\"\")
     - use-value           decode octets as any given value."
-  (let ((encoding (or encoding babel::*default-character-encoding*)))
+  (let ((encoding (or *mysql-encoding*
+                      encoding
+                      babel::*default-character-encoding*)))
     (restart-case (babel:octets-to-string octets :encoding encoding)
       (use-nil ()
         :report "skip this column's value and use nil instead."
