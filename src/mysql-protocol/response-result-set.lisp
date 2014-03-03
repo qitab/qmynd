@@ -136,6 +136,24 @@
             collect row)))
     (coerce rows result-type)))
 
+(defun decode-octets-to-string (octets &optional encoding)
+  "Decode the given vector of OCTETS into an internal Common Lisp string,
+  given a known encoding for it. Provide a couple of restarts in case the
+  decoding fails:
+
+    - use-nil             decode octets as a nil value
+    - use-empty-string    decode octets as an empty string (\"\")
+    - use-value           decode octets as any given value."
+  (let ((encoding (or encoding babel::*default-character-encoding*)))
+    (restart-case (babel:octets-to-string octets :encoding encoding)
+      (use-nil ()
+        :report "skip this column's value and use nil instead."
+        nil)
+      (use-empty-string ()
+        :report "skip this column's value and use and empty-string instead."
+        "")
+      (use-value (value) value))))
+
 (defun parse-text-protocol-result-column-as-text (octets column-definition)
   "Refrain from parsing data into lisp types, some application will only use
    the text form anyway"
@@ -158,21 +176,17 @@
                              +mysql-cs-coll-binary+))
                octets
                (let ((encoding (column-definition-encoding column-definition)))
-                 (babel:octets-to-string octets :encoding encoding))))
+                 (decode-octets-to-string octets encoding))))
 
           (t
-           (let ((encoding
-                  (or (column-definition-encoding column-definition)
-                      babel::*default-character-encoding*)))
-             (babel:octets-to-string octets :encoding encoding))))))
+           (let ((encoding (column-definition-encoding column-definition)))
+             (decode-octets-to-string octets encoding))))))
 
 (defun parse-text-protocol-result-column (octets column-definition)
   (let ((column-type (column-definition-type column-definition))
         str)
     (labels ((str ()
-               (unless str (setf str
-                                 (babel:octets-to-string
-                                  octets)))
+               (unless str (setf str (decode-octets-to-string octets)))
                str)
              (parse-float (&optional (float-format 'single-float))
                ;; Look into replacing this with a library, or moving it to utilities.lisp.
@@ -295,8 +309,8 @@
         (encoding (column-definition-encoding column-definition)))
     (labels ((to-string (octets)
                (if encoding
-                 (babel:octets-to-string octets :encoding encoding)
-                 octets))
+                   (decode-octets-to-string octets encoding)
+                   octets))
              (parse-binary-integer (length)
                (read-fixed-length-integer
                 length stream
