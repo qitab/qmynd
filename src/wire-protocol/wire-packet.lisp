@@ -135,8 +135,8 @@ each Command Phase.
 
       ;; we reached the end of a +max-packet-length+ packet and need to read
       ;; from the next one now
-      (progn
-        (prepare-next-chunk stream)
+      (prog1
+          (prepare-next-chunk stream)
         ;; we have to care about the connection sequence id here
         (setf (mysql-connection-sequence-id *mysql-connection*)
               (my-seq-id stream))))))
@@ -205,19 +205,23 @@ each Command Phase.
   "Copy the rest of the whole data set into an array and return it."
   (declare (type my-packet-stream stream))
 
-  (loop
-     for length = (- (my-len stream) (my-pos stream))
+  (let* ((bytes-to-go (- (my-len stream) (my-pos stream)))
+         (current-chunk-rest-bytes
+          (make-array bytes-to-go :element-type '(unsigned-byte 8))))
 
-     when (plusp length)
-     collect (read-whole-chunk length stream) into vectors
-     and sum length into total-length
+    (when (< 0 bytes-to-go)
+      (read-my-sequence current-chunk-rest-bytes stream))
 
-     ;; we might read less than the full length of the current chunk, but we
-     ;; only get to stop when the current chunk total length is less than
-     ;; +max-packet-length+
-     if (< (my-len stream) +max-packet-length+)
-     return (concatenate-vectors total-length vectors)
-     else do (prepare-next-chunk stream)))
+    (loop for next-chunk = (maybe-read-next-chunk stream)
+       while next-chunk
+
+       collect (my-payload next-chunk) into vectors
+       sum (my-len stream) into total-length
+
+       finally
+         (return
+           (concatenate-vectors (+ bytes-to-go total-length)
+                                (cons current-chunk-rest-bytes vectors))))))
 
 ;;;
 ;;; Write octets to the wire socket, as chunked packets.
