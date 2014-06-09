@@ -282,15 +282,17 @@
 
 (defun parse-binary-resultset-rows (column-count column-definitions)
   (flet ((parse-binary-resultset-row ()
-           (let* ((payload (mysql-read-packet))
-                  (tag (aref payload 0)))
+           (let* ((my-stream (mysql-read-packet))
+                  (tag (peek-first-octet my-stream)))
+
              (cond
                ((or (and (= tag +mysql-response-end-of-file+)
-                         (< (length payload) 9))
+                         (< (my-len my-stream) 9))
                     (= tag +mysql-response-error+))
-                (parse-response payload))
+                (parse-response my-stream))
                ((= tag 0)
-                (flexi-streams:with-input-from-sequence (s payload :start 1)
+                (let ((s my-stream))
+                  (read-fixed-length-octets 1 s)
                   (let* ((row (make-array column-count :initial-element nil))
                          (null-bitmap (read-fixed-length-integer (ceiling (+ column-count 2) 8) s)))
                     (loop for i from 0 below column-count

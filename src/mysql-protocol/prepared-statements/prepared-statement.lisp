@@ -51,11 +51,11 @@
    (flexi-streams:with-output-to-sequence (s)
      (write-byte +mysql-command-statement-prepare+ s)
      (write-sequence (babel:string-to-octets query-string) s)))
-  (let* ((payload (mysql-read-packet))
-         (tag (aref payload 0)))
+  (let* ((my-stream (mysql-read-packet))
+         (tag (peek-first-octet my-stream)))
     (if (= tag +mysql-response-error+)
-        (parse-response payload)
-        (let* ((sp-ok (parse-command-statement-prepare-ok payload))
+        (parse-response my-stream)
+        (let* ((sp-ok (parse-command-statement-prepare-ok my-stream))
                (parameter-count (command-statement-prepare-ok-packet-num-params sp-ok))
                (column-count (command-statement-prepare-ok-packet-num-columns sp-ok))
                (parameters (coerce
@@ -174,11 +174,11 @@
   (parse-command-statement-execute-response statement))
 
 (defmethod parse-command-statement-execute-response ((statement mysql-prepared-statement))
-  (let* ((payload (mysql-read-packet))
-         (tag (aref payload 0)))
+  (let* ((my-stream (mysql-read-packet))
+         (tag (peek-first-octet my-stream)))
     (if (member tag (list +mysql-response-ok+ +mysql-response-error+))
-        (parse-response payload)
-        (let* ((column-count (parse-column-count payload))
+        (parse-response my-stream)
+        (let* ((column-count (parse-column-count my-stream))
                (column-definitions (coerce
                                     (loop
                                       repeat column-count
