@@ -106,7 +106,6 @@
 
 (defconstant +mysql-capabilities-required+
   (logior
-   +mysql-capability-client-long-password+
    +mysql-capability-client-found-rows+
    +mysql-capability-client-long-flag+
    +mysql-capability-client-connect-with-db+ ; required of server; client use not required.
@@ -197,6 +196,7 @@
   (logior
    +mysql-capabilities-required+
    +mysql-capability-client-connect-with-db+
+   +mysql-capability-client-plugin-auth+
    (if (have-ssl)
        +mysql-capability-client-ssl+
        0)

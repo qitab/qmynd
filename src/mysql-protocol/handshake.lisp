@@ -44,6 +44,34 @@
    (auth-plugin :mysql-type (string :null-eof)
                 :predicate (flagsp +mysql-capability-client-plugin-auth+ capability-flags))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Server can send this packet to ask client to use another authentication
+;;; method
+(define-packet auth-switch-request
+    ((tag :mysql-type (integer 1) :value #xfe)
+     (plugin-name :mysql-type (string :null))
+     (auth-plugin-data :mysql-type (string :eof))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Old Authentication Method Switch Request Packet consisting of a single
+;;; 0xfe byte. It is sent by server to request client to switch to Old
+;;; Password Authentication if CLIENT_PLUGIN_AUTH capability is not
+;;; supported (by either the client or the server)
+(define-packet old-auth-switch-request
+    ((tag :mysql-type (integer 1) :value #xfe)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Protocol::AuthSwitchResponse
+;;; We don't receive that packet (not being the server), but it would look
+;;; like the following:
+;; (define-packet auth-switch-response
+;;     ((auth-plugin-response :mysql-type (string :eof))))
+
+(defun send-auth-switch-response (auth-response)
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-sequence auth-response s))))
+
 (defun process-initial-handshake-v10 (stream)
   "Parse an INITIAL-HANDSHAKE-V10 Packet and populate the default MySQL connection."
   (let ((packet (parse-initial-handshake-v10 stream)))
@@ -170,7 +198,7 @@
      (when (mysql-has-capability +mysql-capability-client-connect-with-db+)
        (write-null-terminated-octets (babel:string-to-octets database :encoding (mysql-connection-character-set *mysql-connection*)) s))
      (when (mysql-has-capability +mysql-capability-client-plugin-auth+)
-       (write-null-terminated-octets auth-plugin s))
+       (write-null-terminated-octets (babel:string-to-octets auth-plugin :encoding (mysql-connection-character-set *mysql-connection*)) s))
      #+mysql-client-connect-attributes
      (when (mysql-has-capability +mysql-capability-client-connect-attrs+)
        ;; asedeno-TODO: When this is implemented, what sort of
@@ -226,7 +254,26 @@
                                         :auth-response (generate-auth-response password auth-data auth-plugin)
                                         :auth-plugin auth-plugin
                                         :database database)
-            (parse-response (mysql-read-packet)))
+            (let* ((packet      (mysql-read-packet))
+                   (auth-switch (= #xfe (peek-first-octet packet))))
+              (cond ((and auth-switch (= 1 (my-len packet)))
+                     ;; switch to old auth
+                     (let ((auth-plugin "mysql_old_password"))
+                       (send-auth-switch-response
+                        (generate-auth-response password auth-data auth-plugin))))
+
+                    (auth-switch
+                     (let* ((new-auth (parse-auth-switch-request packet))
+                            (auth-data
+                             (auth-switch-request-packet-auth-plugin-data new-auth))
+                            (auth-plugin
+                             (auth-switch-request-packet-plugin-name new-auth)))
+                       (send-auth-switch-response
+                        (generate-auth-response password auth-data auth-plugin)))))
+
+              ;; now read the read auth response
+              ;; unless we got an auth-switch packet, we already have the response.
+              (parse-response (if auth-switch (mysql-read-packet) packet))))
         (mysql-base-error (e)
           (mysql-connection-close-socket connection)
           (error e)))
