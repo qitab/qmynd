@@ -302,7 +302,7 @@
                                       s
                                       (aref column-definitions i))))
                     row)))
-               (t (error (make-condition 'unexpected-packet :payload payload)))))))
+               (t (error (make-condition 'unexpected-packet :payload (my-payload my-stream))))))))
     (coerce (loop for row = (parse-binary-resultset-row) then (parse-binary-resultset-row)
                   until (typep row 'response-end-of-file-packet)
                   collect row)
