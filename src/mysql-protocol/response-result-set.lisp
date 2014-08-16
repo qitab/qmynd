@@ -163,22 +163,24 @@
     (cond ((= column-type +mysql-type-null+)
            nil)
 
-          ((member column-type (list +mysql-type-bit+
-                                     +mysql-type-tiny-blob+
+          ;; support for BLOB and TEXT types
+          ((member column-type (list +mysql-type-tiny-blob+
                                      +mysql-type-medium-blob+
                                      +mysql-type-long-blob+
-                                     +mysql-type-blob+
+                                     +mysql-type-blob+))
+           (if (= (column-definition-v41-packet-cs-coll column-definition)
+                  +mysql-cs-coll-binary+)
+               octets
+               (let ((encoding (column-definition-encoding column-definition)))
+                 (decode-octets-to-string octets encoding))))
+
+          ;; Binary types
+          ((member column-type (list +mysql-type-bit+
                                      +mysql-type-enum+
                                      +mysql-type-set+
                                      +mysql-type-geometry+)
                    :test #'=)
-           (if (member (column-definition-v41-packet-cs-coll column-definition)
-                       (list +mysql-cs-coll-utf8-binary+
-                             +mysql-cs-coll-ascii-binary+
-                             +mysql-cs-coll-binary+))
-               octets
-               (let ((encoding (column-definition-encoding column-definition)))
-                 (decode-octets-to-string octets encoding))))
+           octets)
 
           (t
            (let ((encoding (column-definition-encoding column-definition)))
