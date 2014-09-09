@@ -208,9 +208,12 @@
 
 (defun process-initial-handshake-payload (stream)
   "Initial handshake processing dispatch."
-  (ecase (peek-first-octet stream)
-    (10 (process-initial-handshake-v10 stream))))
-
+  (let ((protocol-version (peek-first-octet stream)))
+    (case protocol-version
+      (10 (process-initial-handshake-v10 stream))
+      (t
+       (error (make-condition 'protocol-version-mismatch
+                              :version protocol-version))))))
 
 (defun mysql-connect-do-handshake (connection username password database
                                    &key compress ssl ssl-verify)

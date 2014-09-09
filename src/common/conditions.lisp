@@ -84,3 +84,7 @@
 (define-condition value-is-not-decimal (mysql-external-error)
   ((value :initarg :value))
   (:documentation "Signaled when calling #'WRITE-DECIMAL-TO-STRING with a value that is not a decimal."))
+
+(define-condition protocol-version-mismatch (mysql-external-error)
+  ((version :initarg :version))
+  (:documentation "Signaled when the initial handshake returns an unknown protocol value."))
