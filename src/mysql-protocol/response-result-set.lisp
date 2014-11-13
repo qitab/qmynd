@@ -182,6 +182,12 @@
                    :test #'=)
            octets)
 
+          ;; binary strings are strings with binary collations...
+          ((and (= column-type +mysql-type-string+)
+                (= (column-definition-v41-packet-cs-coll column-definition)
+                   +mysql-cs-coll-binary+))
+           octets)
+
           (t
            (let ((encoding (column-definition-encoding column-definition)))
              (decode-octets-to-string octets encoding))))))
