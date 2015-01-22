@@ -183,7 +183,8 @@
            octets)
 
           ;; binary strings are strings with binary collations...
-          ((and (= column-type +mysql-type-string+)
+          ((and (member column-type (list +mysql-type-string+
+                                          +mysql-type-var-string+))
                 (= (column-definition-v41-packet-cs-coll column-definition)
                    +mysql-cs-coll-binary+))
            octets)
