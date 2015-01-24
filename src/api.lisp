@@ -18,6 +18,7 @@
 			(username "")
 			(password "")
 			database
+                        (client-found-rows nil)
 			(compress nil)
 			(ssl :unspecified)
 			ssl-verify)
@@ -29,6 +30,7 @@
     USERNAME: User to authenticate as.
     PASSWORD: Password to authenticate with.
     DATABASE: What database to use upon connecting. (default: nil)
+    CLIENT-FOUND-ROWS: Whether or not to require the client-found-rows feature from the server (default: nil)
     COMPRESS: Whether or not to use compression. (default: nil).
     SSL: Whether or not to use SSL. (default: :UNSPECIFIED)
                      T - Forces SSL (or error out if it's not available).
@@ -43,21 +45,28 @@
                                     :socket socket
                                     :stream (usocket:socket-stream socket)
                                     :default-schema database)))
+
     (mysql-connect-do-handshake connection username password database
-				:compress compress
+                                :client-found-rows client-found-rows
+                                :compress compress
                                 :ssl ssl
                                 :ssl-verify ssl-verify)))
 
 ;;; AF_LOCAL sockets should really be folded into usocket. For now, just implement CCL and SBCL support.
 #+(or ccl sbcl)
-(defun mysql-local-connect (&key (path #P"/var/run/mysqld/mysqld.sock") (username "") (password "") database)
+(defun mysql-local-connect (&key (path #P"/var/run/mysqld/mysqld.sock")
+                              (username "")
+                              (password "")
+                              database
+                              (client-found-rows nil))
   "Connect to a MySQL over a local (AF_LOCAL) socket and begin the MySQL Handshake.
    Returns a QMYND:MYSQL-CONNECTION object or signals a QMYND:MYSQL-ERROR.
    Accepts the following keyword arguments:
     PATH: The path of the local socket to connect to. (default: #P\"/var/run/mysqld/mysqld.sock\")
     USERNAME: User to authenticate as.
     PASSWORD: Password to authenticate with.
-    DATABASE: What database to use upon connecting. (default: nil)"
+    DATABASE: What database to use upon connecting. (default: nil)
+    CLIENT-FOUND-ROWS: Whether or not to require the client-found-rows feature from the server (default: nil)"
   ;; Open Socket
   (let* ((socket
            #+ccl (ccl:make-socket :address-family :file
@@ -79,7 +88,9 @@
                                                    :output t
                                                    :element-type '(unsigned-byte 8))
                                     :default-schema database)))
-    (mysql-connect-do-handshake connection username password database :ssl nil)))
+    (mysql-connect-do-handshake connection username password database
+                                :client-found-rows client-found-rows
+                                :ssl nil)))
 
 (defmethod mysql-disconnect ((c mysql-base-connection))
   "Shut down a MySQL connection."

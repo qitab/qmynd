@@ -106,7 +106,6 @@
 
 (defconstant +mysql-capabilities-required+
   (logior
-   +mysql-capability-client-found-rows+
    +mysql-capability-client-long-flag+
    +mysql-capability-client-connect-with-db+ ; required of server; client use not required.
    +mysql-capability-client-protocol-41+

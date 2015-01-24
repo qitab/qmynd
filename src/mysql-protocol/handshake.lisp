@@ -216,11 +216,15 @@
                               :version protocol-version))))))
 
 (defun mysql-connect-do-handshake (connection username password database
-                                   &key compress ssl ssl-verify)
+                                   &key client-found-rows compress ssl ssl-verify)
   "Perform the MySQL Initial Handshake with CONNECTION."
   ;; Read a wire packet
   (let ((initial-handshake-payload (mysql-connection-read-packet connection)))
     (with-mysql-connection (connection)
+      ;; if required, add the client-found-rows capability
+      (when client-found-rows
+        (mysql-add-required-capability +mysql-capability-client-found-rows+))
+
       ;; Process Initial Handshake
       (process-initial-handshake-payload initial-handshake-payload)
 

@@ -127,6 +127,9 @@
 (defun mysql-has-some-capability (cap-bits)
   (mysql-connection-has-some-capability *mysql-connection* cap-bits))
 
+(defun mysql-add-required-capability (cap-bits)
+  (setf (mysql-connection-capabilities *mysql-connection*)
+        (logand (mysql-connection-capabilities *mysql-connection*) cap-bits)))
 
 ;;; Packet utilities
 (defmethod mysql-connection-write-packet ((c mysql-base-connection) payload)
