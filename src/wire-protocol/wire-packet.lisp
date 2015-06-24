@@ -174,12 +174,15 @@ each Command Phase.
         (replace sequence (my-payload stream) :start2 (my-pos stream))
         (incf (my-pos stream) (length sequence)))
 
-      ;; in that case we're going to cross a packet boundary, so read one
-      ;; octet at a time, read-my-octet knows how to cross boundaries.
-      (loop
-         for pos fixnum from 0 below (length sequence)
-         do (setf (aref sequence pos) (read-my-octet stream))
-         finally (return pos))))
+      ;; in that case we're going to cross at least a packet boundary
+      (loop for pos fixnum from 0 below (length sequence)
+         do (let ((bytes (- (my-len stream) (my-pos stream))))
+              (replace sequence (my-payload stream)
+                       :start1 pos
+                       :start2 (my-pos stream))
+              (incf (my-pos stream) bytes)
+              (incf pos (- bytes 1))
+              (maybe-read-next-chunk stream)))))
 
 ;;;
 ;;; API to finish reading all remaining chunks of a packet
