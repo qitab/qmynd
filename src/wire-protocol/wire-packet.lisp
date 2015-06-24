@@ -63,12 +63,18 @@ each Command Phase.
 ;;;
 (defconstant +max-packet-length+ #xffffff)
 
+;;;
+;;; Each packet len and pos is an (integer 0 #xffffff), but when a value
+;;; expands multiple packet read-my-sequence will append to the same
+;;; my-packet-stream instance the whole content in a single payload
+;;; sequence, thus len might be more than #xffffff.
+;;;
 (defstruct (my-packet-stream (:conc-name my-))
   (source  nil :type (or null stream))
   (payload nil :type (or null (simple-array (unsigned-byte 8) *)))
   (seq-id  0   :type (integer 0 255))
-  (len     0   :type (integer 0 #xffffff))
-  (pos     0   :type (integer 0 #xffffff)))
+  (len     0   :type integer)
+  (pos     0   :type integer))
 
 (defmethod print-object ((stream my-packet-stream) out)
   (print-unreadable-object (stream out :type t)
