@@ -69,7 +69,7 @@
    #:*mysql-encoding*
    ;; Connections
    #:mysql-connect
-   #+(or ccl sbcl)
+   #+(or ccl sbcl ecl)
    #:mysql-local-connect
    #:mysql-disconnect
    #:mysql-connection-has-status

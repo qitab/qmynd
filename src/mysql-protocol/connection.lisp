@@ -79,7 +79,7 @@
   (usocket:socket-close (mysql-connection-socket c))
   (setf (mysql-connection-connected *mysql-connection*) nil))
 
-#+(or ccl sbcl)
+#+(or ccl sbcl ecl)
 (progn
 
   (defclass mysql-local-connection (mysql-base-connection)
@@ -90,7 +90,8 @@
   (defmethod mysql-connection-close-socket ((c mysql-local-connection))
     (let ((socket (mysql-connection-socket c)))
       #+ccl (ccl::close socket)
-      #+sbcl (sb-bsd-sockets:socket-close socket)
+      #+(or sbcl ecl)
+      (sb-bsd-sockets:socket-close socket)
       )
     (setf (mysql-connection-connected *mysql-connection*) nil))
 
