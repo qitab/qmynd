@@ -53,7 +53,7 @@
                                 :ssl-verify ssl-verify)))
 
 ;;; AF_LOCAL sockets should really be folded into usocket. For now, just implement CCL and SBCL support.
-#+(or ccl sbcl)
+#+(or ccl sbcl ecl)
 (defun mysql-local-connect (&key (path #P"/var/run/mysqld/mysqld.sock")
                               (username "")
                               (password "")
@@ -72,21 +72,23 @@
            #+ccl (ccl:make-socket :address-family :file
                                   :connect :active
                                   :remote-filename path)
-           #+sbcl (let ((socket (make-instance 'sb-bsd-sockets:local-socket
-                                               :type :stream)))
-                    (sb-bsd-sockets:socket-connect socket (etypecase path
-                                                            (pathname (namestring path))
-                                                            (string path)))
-                    socket)
+           #+(or sbcl ecl)
+           (let ((socket (make-instance 'sb-bsd-sockets:local-socket
+                                        :type :stream)))
+             (sb-bsd-sockets:socket-connect socket (etypecase path
+                                                     (pathname (namestring path))
+                                                     (string path)))
+             socket)
            )
          (connection (make-instance 'mysql-local-connection
                                     :socket socket
                                     :stream
                                     #+ccl socket
-                                    #+sbcl (sb-bsd-sockets:socket-make-stream
-                                            socket :input t
-                                                   :output t
-                                                   :element-type '(unsigned-byte 8))
+                                    #+(or sbcl ecl)
+                                    (sb-bsd-sockets:socket-make-stream
+                                     socket :input t
+                                     :output t
+                                     :element-type '(unsigned-byte 8))
                                     :default-schema database)))
     (mysql-connect-do-handshake connection username password database
                                 :client-found-rows client-found-rows
