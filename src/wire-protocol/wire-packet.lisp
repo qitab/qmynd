@@ -61,7 +61,12 @@ each Command Phase.
 ;;; read-length-encoded-integer are defined in basic-types.lisp and build on
 ;;; this low-level API.
 ;;;
-(defconstant +max-packet-length+ #xffffff)
+(defconstant +max-packet-length+ #xffffff
+  "Larger packet that we may receive, see
+    https://dev.mysql.com/doc/internals/en/sending-more-than-16mbyte.html")
+
+(defvar *max-allowed-packets* #xffffff
+  "Client side implementation of max_allowed_packets.")
 
 ;;;
 ;;; Each packet len and pos is an (integer 0 #xffffff), but when a value
@@ -134,18 +139,30 @@ each Command Phase.
   "Check if we are at the end of the packet, or if we need to read from the
    next chunk from the network within the same \"logical\" packet."
   (declare (special *mysql-connection*))
-  (when (= (my-pos stream) (my-len stream))
-    (if (< (my-len stream) +max-packet-length+)
-      ;; no extra packet was needed
-      (if eof-error-p (signal 'end-of-file) eof-value)
+  (flet ((read-next-chunk ()
+           (prog1
+               (prepare-next-chunk stream)
+             ;; we have to care about the connection sequence id here
+             (setf (mysql-connection-sequence-id *mysql-connection*)
+                   (my-seq-id stream)))))
+    (declare (inline read-next-chunk))
+    (cond ((= (my-pos stream) +max-packet-length+)
+           (read-next-chunk))
 
-      ;; we reached the end of a +max-packet-length+ packet and need to read
-      ;; from the next one now
-      (prog1
-          (prepare-next-chunk stream)
-        ;; we have to care about the connection sequence id here
-        (setf (mysql-connection-sequence-id *mysql-connection*)
-              (my-seq-id stream))))))
+          ((= (my-pos stream) *max-allowed-packets*)
+           (error "MySQL Packet too large: ~d is bigger than ~a bytes [~a]"
+                  (my-len stream)
+                  *max-allowed-packets*
+                  (my-pos stream)))
+
+          ((= (my-pos stream) (my-len stream))
+           (if (< (my-len stream) +max-packet-length+)
+               ;; no extra packet was needed
+               (if eof-error-p (signal 'end-of-file) eof-value)
+
+               ;; we reached the end of a +max-packet-length+ packet and need
+               ;; to read from the next one now
+               (read-next-chunk))))))
 
 (defun read-my-octet (stream &optional eof-error-p eof-value)
   "Read a single octet from STREAM."
@@ -176,10 +193,15 @@ each Command Phase.
 
       ;; in that case we're going to cross at least a packet boundary
       (loop for pos fixnum from 0 below (length sequence)
-         do (let ((bytes (- (my-len stream) (my-pos stream))))
+         do (let* ((available-bytes (- (my-len stream) (my-pos stream)))
+                   (bytes           (if (<= (+ pos available-bytes)
+                                           (length sequence))
+                                        available-bytes
+                                        (- (length sequence) pos))))
               (replace sequence (my-payload stream)
                        :start1 pos
-                       :start2 (my-pos stream))
+                       :start2 (my-pos stream)
+                       :end2   (+ (my-pos stream) bytes))
               (incf (my-pos stream) bytes)
               (incf pos (- bytes 1))
               (maybe-read-next-chunk stream)))))
