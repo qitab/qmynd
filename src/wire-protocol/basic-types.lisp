@@ -74,7 +74,7 @@
          (octet-4    (read-my-octet stream))
          (unsigned
           (logior (ash octet-4 24) (ash octet-3 16) (ash octet-2 8) octet-1)))
-    (if signed (unsigned-to-signed unsigned 3) unsigned)))
+    (if signed (unsigned-to-signed unsigned 4) unsigned)))
 
 (defun read-6-octets-integer (stream  &key signed)
   (declare (type my-packet-stream stream))
@@ -87,13 +87,22 @@
          (unsigned
           (logior (ash octet-6 40) (ash octet-5 32) (ash octet-4 24)
                   (ash octet-3 16) (ash octet-2 8) octet-1)))
-    (if signed (unsigned-to-signed unsigned 3) unsigned)))
+    (if signed (unsigned-to-signed unsigned 6) unsigned)))
 
 (defun read-8-octets-integer (stream &key signed)
   (declare (type my-packet-stream stream))
-  (let ((unsigned
-         (logior (read-4-octets-integer stream)
-                 (ash (read-4-octets-integer stream) 32))))
+  (let* ((octet-1    (read-my-octet stream))
+         (octet-2    (read-my-octet stream))
+         (octet-3    (read-my-octet stream))
+         (octet-4    (read-my-octet stream))
+         (octet-5    (read-my-octet stream))
+         (octet-6    (read-my-octet stream))
+         (octet-7    (read-my-octet stream))
+         (octet-8    (read-my-octet stream))
+         (unsigned
+          (logior (ash octet-8 56) (ash octet-7 48)
+                  (ash octet-6 40) (ash octet-5 32) (ash octet-4 24)
+                  (ash octet-3 16) (ash octet-2 8) octet-1)))
     (if signed (unsigned-to-signed unsigned 8) unsigned)))
 
 (defun read-10-octets-integer (stream  &key signed)
