@@ -97,5 +97,5 @@
              (format s "MySQL ERROR: Partial Read of ~d bytes, expected ~d"
                      (partial-read-bytes e)
                      (partial-read-expected e))
-             (format s "Detail: check MySQL logs for (Got timeout writing communication packets)")
-             (format s "Hint: adjust net_read_timeout and net_write_timeout"))))
+             (format s "~%Detail: check MySQL logs for (Got timeout writing communication packets)")
+             (format s "~%Hint: adjust net_read_timeout and net_write_timeout"))))
