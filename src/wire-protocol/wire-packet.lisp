@@ -226,10 +226,14 @@ each Command Phase.
 (defun read-whole-chunk (length stream)
   "Read LENGTH octets from STREAM and return an array of them."
   (declare (type my-packet-stream stream))
-  (let ((vector (make-array length :element-type '(unsigned-byte 8))))
-    (loop for pos = 0 then (read-sequence vector (my-source stream) :start pos)
-       until (= pos length))
-    (incf (my-pos stream) length)
+  (let* ((vector (make-array length :element-type '(unsigned-byte 8)))
+         (bytes  (read-sequence vector (my-source stream))))
+    (unless (= bytes length)
+      ;; This goes with MySQL server's log complaining: (Got timeout writing
+      ;; communication packets). It looks like a MySQL bug and trying to
+      ;; read the remaing bytes leads nowhere.
+      (error (make-condition 'partial-read :bytes bytes :expected length)))
+    (incf (my-pos stream) bytes)
     vector))
 
 (defun read-rest-of-packet-octets (stream)

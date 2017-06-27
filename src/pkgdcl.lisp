@@ -22,6 +22,7 @@
    #:unexpected-packet
    #:value-is-not-decimal
    #:ssl-not-supported
+   #:partial-read
 
    ;; Constants
    #:+mysql-server-status-in-transaction+

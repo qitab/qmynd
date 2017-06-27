@@ -88,3 +88,14 @@
 (define-condition protocol-version-mismatch (mysql-external-error)
   ((version :initarg :version))
   (:documentation "Signaled when the initial handshake returns an unknown protocol value."))
+
+(define-condition partial-read (mysql-external-error)
+  ((bytes :initarg :bytes :reader partial-read-bytes)
+   (expected :initarg :expected :reader partial-read-expected))
+  (:documentation "Signaled when the library didn't get as many bytes as asked.")
+  (:report (lambda (e s)
+             (format s "MySQL ERROR: Partial Read of ~d bytes, expected ~d"
+                     (partial-read-bytes e)
+                     (partial-read-expected e))
+             (format s "Detail: check MySQL logs for (Got timeout writing communication packets)")
+             (format s "Hint: adjust net_read_timeout and net_write_timeout"))))
