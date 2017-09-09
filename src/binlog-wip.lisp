@@ -180,3 +180,27 @@
      (null-bits :mysql-type (octets (ceiling column-count 8)))
      (optional-meta :mysql-type (octets :eof))))
 
+(defun parse-binlog-event (packet)
+  (when (/= (peek-first-octet packet) +mysql-response-ok+)
+    (return-from parse-binlog-event (parse-response packet)))
+
+  (let ((common-header (parse-common-header packet)))
+
+    (alexandria:switch ((common-header-packet-type-code common-header))
+
+      ;; ((+write-rows-event-v2+
+      ;;   +update-rows-event-v2+
+      ;;   +delete-rows-event-v2+) "Rows")
+
+      (+table-map-event+ (parse-table-event packet))
+      (+gtid-log-event+ "GTID")
+      (+rotate-event+ (parse-rotate-event packet))
+      (+format-description-event+ "Format Description")
+      (+stop-event+ "Stop")
+      (+xid-event+ "XID")
+      (+heartbeat-log-event+ "HeartBeat")
+      (+query-event+ (parse-query-event packet))
+      (+intvar-event+  "IntVar")
+      (+unknown-event+ "Unknown")
+      (otherwise "Unimplemented"))))
+
