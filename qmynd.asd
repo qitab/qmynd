@@ -8,6 +8,8 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(in-package asdf-user)
+
 (defsystem :qmynd
   :name "MySQL Native Driver"
   :author "Alejandro Sedeño"
@@ -22,7 +24,8 @@
                :list-of
                :trivial-gray-streams
                :usocket
-               #-asdf3 :uiop)
+               #-asdf3 :uiop
+               :log4cl)
   :weakly-depends-on (:cl+ssl :chipz :salza2)
   :around-compile "asdf-finalizers:check-finalizers-around-compile"
   :serial nil
@@ -86,7 +89,7 @@
                       :components ((:file "binary-protocol-encoding")
                                    (:file "prepared-statement"
                                     :depends-on ("binary-protocol-encoding"))))))
-       (:file "api"
-        :depends-on ("mysql-protocol")))))
+       (:file "api" :depends-on ("mysql-protocol"))
+       (:file "binlog-wip" :depends-on ("api")))))
   :in-order-to ((test-op (load-op :qmynd-test)))
   :perform (test-op :after (o c) (funcall (read-from-string "qmynd-test::run-all-tests"))))
