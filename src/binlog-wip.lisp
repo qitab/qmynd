@@ -116,3 +116,25 @@
          (write-sequence octets s))))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 14.9.7 command-table-dump
+
+;; We don't actually receive this packet as a client, but it looks like this.
+#+ (or)
+(define-packet command-table-dump
+    ;;; In return we expect a table dump or `ERR' packet.
+    ((tag :mysql-type (integer 1) :value +mysql-command-table-dump+ :transient t :bind nil)
+     (database-length  :mysql-type (integer 1))
+     (database-name    :mysql-type (string :lenenc))
+     (table-length     :mysql-type (integer 1))
+     (table-name       :mysql-type (string :lenenc))))
+
+(defun send-command-table-dump (database table)
+  (mysql-command-init +mysql-command-table-dump+)
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-fixed-length-integer +mysql-command-table-dump+ 1 s)
+     (write-length-encoded-octets (babel:string-to-octets database) s)
+     (write-length-encoded-octets (babel:string-to-octets table)    s))))
+
+
