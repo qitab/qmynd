@@ -45,19 +45,64 @@
 (defconstant +mysql-command-set-option+ #x1b)
 (defconstant +mysql-command-statement-fetch+ #x1c)
 
-;; Replication Protocol (not supported by this library)
+;; Replication Protocol
 (defconstant +mysql-command-binary-log-dump+ #x12)
 (defconstant +mysql-command-table-dump+ #x13)
 (defconstant +mysql-command-connect-out+ #x14)
 (defconstant +mysql-command-register-slave+ #x15)
 (defconstant +mysql-command-binary-log-dump-gtid+ #x1e)
 
+;; Replication Protocol flags
+(defconstant +mysql-flag-binary-log-dump-non-block+ #x01
+  "if there is no more event to send, send a `+mysql-response-end-of-file+'
+instead of blocking the connection.")
+(defconstant +mysql-flag-binary-log-dump-through-position+ #x02
+  "describe me!")
+(defconstant +mysql-flag-binary-log-dump-through-gtid+ #x04
+  "describe me!")
 
 ;; Response types
 (defconstant +mysql-response-ok+ #x00)
 (defconstant +mysql-response-end-of-file+ #xfe)
 (defconstant +mysql-response-error+ #xff)
 
+;; Event types
+(defconstant +unknown-event+ #x00)
+(defconstant +start-event-v3+ #x01)
+(defconstant +query-event+ #x02)
+(defconstant +stop-event+ #x03)
+(defconstant +rotate-event+ #x04)
+(defconstant +intvar-event+ #x05)
+(defconstant +load-event+ #x06)
+(defconstant +slave-event+ #x07)
+(defconstant +create-file-event+ #x08)
+(defconstant +append-block-event+ #x09)
+(defconstant +exec-load-event+ #x0a)
+(defconstant +delete-file-event+ #x0b)
+(defconstant +new-load-event+ #x0c)
+(defconstant +rand-event+ #x0d)
+(defconstant +user-var-event+ #x0e)
+(defconstant +format-description-event+ #x0f)
+(defconstant +xid-event+ #x10)
+(defconstant +begin-load-query-event+ #x11)
+(defconstant +execute-load-query-event+ #x12)
+(defconstant +table-map-event+ #x13)
+(defconstant +pre-ga-write-rows-event+ #x14)
+(defconstant +pre-ga-update-rows-event+ #x15)
+(defconstant +pre-ga-delete-rows-event+ #x16)
+(defconstant +write-rows-event-v1+ #x17)
+(defconstant +update-rows-event-v1+ #x18)
+(defconstant +delete-rows-event-v1+ #x19)
+(defconstant +incident-event+ #x1a)
+(defconstant +heartbeat-log-event+ #x1b)
+(defconstant +ignorable-log-event+ #x1c)
+(defconstant +rows-query-log-event+ #x1d)
+(defconstant +write-rows-event-v2+ #x1e)
+(defconstant +update-rows-event-v2+ #x1f)
+(defconstant +delete-rows-event-v2+ #x20)
+(defconstant +gtid-log-event+ #x21)
+(defconstant +anonymous-gtid-log-event+ #x22)
+(defconstant +previous-gtids-log-event+ #x23)
 
 ;; Shutdown types (15.6.9)
 ;; NB: Only +mysql-shutdown-wait-all-buffers+ is used
