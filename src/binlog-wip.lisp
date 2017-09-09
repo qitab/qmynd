@@ -204,3 +204,8 @@
       (+unknown-event+ "Unknown")
       (otherwise "Unimplemented"))))
 
+(defmethod print-object ((object common-header-packet) s)
+  (format s "#<Event type 0x~2,'0x position: ~s>"
+          (common-header-packet-type-code object)
+          (common-header-packet-binlog-position object)))
+
