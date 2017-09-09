@@ -138,3 +138,13 @@
      (write-length-encoded-octets (babel:string-to-octets table)    s))))
 
 
+
+(define-packet common-header
+    ((ok-tag          :mysql-type (integer 1) :bind nil :transient t)
+     (when-started    :mysql-type (integer 4))
+     (type-code       :mysql-type (integer 1))
+     (master-id       :mysql-type (integer 4))
+     (data-written    :mysql-type (integer 4))
+     (binlog-position :mysql-type (integer 4))
+     (flags           :mysql-type (integer 2))))
+
