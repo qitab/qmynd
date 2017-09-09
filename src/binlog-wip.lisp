@@ -209,3 +209,31 @@
           (common-header-packet-type-code object)
           (common-header-packet-binlog-position object)))
 
+;;;; Types
+
+;;; errors
+(define-condition binlog-error (mysql-base-error) ())
+(define-condition event-error (binlog-error) ())
+
+;;; connection
+(defclass binlog-connection (mysql-local-connection) ())
+
+;;; events
+(defclass binlog-event () ())
+(defclass binlog-rows-event (binlog-event) ())
+(defclass binlog-not-implemented-event (binlog-event) ())
+(defclass binlog-gtid-event (binlog-event) ())
+(defclass binlog-rotate-event (binlog-event) ())
+(defclass binlog-format-description-event (binlog-event) ())
+(defclass binlog-stop-event (binlog-event) ())
+(defclass binlog-xid-event (binlog-event) ())
+(defclass binlog-heartbeat-event (binlog-event) ())
+(defclass binlog-query-event (binlog-event) ())
+(defclass binlog-begin-load-query-event (binlog-event) ())
+(defclass binlog-execute-load-query-event (binlog-event) ())
+(defclass binlog-intvar-event (binlog-event) ())
+(defclass binlog-table-map-event (binlog-event) ())
+(defclass binlog-delete-rows-event (binlog-rows-event) ())
+(defclass binlog-write-rows-event (binlog-rows-event) ())
+(defclass binlog-update-rows-event (binlog-rows-event) ())
+
