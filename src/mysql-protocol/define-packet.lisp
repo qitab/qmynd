@@ -175,7 +175,8 @@ Order of Operations:
        (let ((parser
                (cond
                  ((or (typep termination-spec 'integer)
-                      (member termination-spec locals))
+                      (member termination-spec locals)
+                      (consp termination-spec))
                   `(read-fixed-length-octets ,termination-spec ,stream))
                  (t
                   (ecase termination-spec
