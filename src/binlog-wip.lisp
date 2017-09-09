@@ -237,3 +237,18 @@
 (defclass binlog-write-rows-event (binlog-rows-event) ())
 (defclass binlog-update-rows-event (binlog-rows-event) ())
 
+
+(defun slurp-packets (connection &optional (file "mysql-bin.000001") (position 4))
+  (when (< position 4)
+    (log:warn "correcting invalid binglog postion from ~s to 4." position)
+    (setf position 4))
+  (qmynd-impl:with-mysql-connection (connection)
+    (qmynd-impl::send-command-register-slave 7)
+    (qmynd-impl::send-command-binary-log-dump 7 position t file)
+    (do ((c 0 (1+ c))
+         (r #1=(qmynd-impl::parse-binlog-event (qmynd-impl:mysql-read-packet))
+            (progn
+              (format t "Read ~3s packet: ~s~%" c r)
+              #1#)))
+        ((typep r 'qmynd-impl::response-end-of-file-packet)
+         (format t "Read ~A packets!~%" c)))))
