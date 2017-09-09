@@ -83,3 +83,36 @@
        (write-sequence (babel:string-to-octets binary-log-filename) s)))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 14.9.6 command-binary-log-dump-gtid
+;;; http://imysql.com/mysql-internal-manual/com-binlog-dump-gtid.html
+
+;; We don't actually receive this packet as a client, but it looks like this.
+#+ (or)
+(define-packet command-binary-log-dump-gtid
+    ;;; In return we expect `binary-log-event' stream or `EOF' packet.
+    ((tag :mysql-type (integer 1) :value +mysql-command-binary-log-dump+ :transient t :bind nil)
+     (flags               :mysql-type (integer 2))
+     (server-id           :mysql-type (integer 4) :value +slave-id+)
+     (binlog-filename-len :mysql-type (integer 4))
+     (binlog-filename     :mysql-type (string :lenenc))
+     (binlog-pos          :mysql-type (integer 4))))
+
+(defun send-command-binary-log-dump-gtid (slave-id binary-log-position
+                                          &optional flags binary-log-filename)
+  (mysql-command-init +mysql-command-binary-log-dump+)
+  (mysql-write-packet
+   (flexi-streams:with-output-to-sequence (s)
+     (write-fixed-length-integer +mysql-command-binary-log-dump+ 1 s)
+     (write-fixed-length-integer flags 2 s)
+     (write-fixed-length-integer slave-id 4 s) ; slave server id (unique)
+     (write-length-encoded-octets (babel:string-to-octets binary-log-filename) s)
+     (write-fixed-length-integer binary-log-position 4 s)
+
+     #+ (or)                            ; gtid-data is SID block
+     (when (logand flags +mysql-flag-binary-log-dump-through-gtid+)
+       (let ((octets (babel:string-to-octets gtid-data)))
+         (write-fixed-length-integer (length octets) 4 s)
+         (write-sequence octets s))))))
+
+
