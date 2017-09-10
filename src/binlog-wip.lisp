@@ -238,7 +238,7 @@
 (defclass binlog-update-rows-event (binlog-rows-event) ())
 
 
-(defun slurp-packets (connection &optional (file "mysql-bin.000001") (position 4))
+(defun slurp-packets (connection &optional (file "") (position 4))
   (when (< position 4)
     (log:warn "correcting invalid binglog postion from ~s to 4." position)
     (setf position 4))
