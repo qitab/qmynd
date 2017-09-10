@@ -189,6 +189,8 @@
     (alexandria:switch ((common-header-packet-type-code common-header))
 
       (+table-map-event+ (parse-table-event packet))
+
+      ;; https://dev.mysql.com/doc/dev/mysql-server/latest/classbinary__log_1_1Format__description__event.html
       (+format-description-event+ "(Unimplemented) Format Description")
 
       (+rotate-event+ (parse-rotate-event packet))
@@ -215,6 +217,7 @@
       ;; the `type-code', it will be used only by the server code.
       ;;
       ;; XXX: I'm not sure what that means. Can we ignore this event? -- jd
+      ;; https://dev.mysql.com/doc/dev/mysql-server/latest/classbinary__log_1_1User__var__event.html
       (+user-var-event+ (format nil "User Var: ~s"
                                 (qmynd-impl::read-rest-of-packet-octets packet)))
 
