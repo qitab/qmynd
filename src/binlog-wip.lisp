@@ -188,21 +188,45 @@
 
     (alexandria:switch ((common-header-packet-type-code common-header))
 
-      ;; ((+write-rows-event-v2+
-      ;;   +update-rows-event-v2+
-      ;;   +delete-rows-event-v2+) "Rows")
-
       (+table-map-event+ (parse-table-event packet))
-      (+gtid-log-event+ "GTID")
+      (+format-description-event+ "(Unimplemented) Format Description")
+
       (+rotate-event+ (parse-rotate-event packet))
-      (+format-description-event+ "Format Description")
-      (+stop-event+ "Stop")
+      (+query-event+ (parse-query-event packet))
+
+      (+write-rows-event-v1+ "Write rows (V1)")
+      (+update-rows-event-v1+ "Update rows (V1)")
+      (+delete-rows-event-v1+ "Delete rows (V1)")
+
+      (+gtid-log-event+ "GTID")
+
       (+xid-event+ "XID")
       (+heartbeat-log-event+ "HeartBeat")
-      (+query-event+ (parse-query-event packet))
       (+intvar-event+  "IntVar")
+
+      ;;; no-op
+
+      ;; It is the minimal constructor, and all it will do is set the
+      ;; type_code as `+stop-event' in the common-header in
+      ;; `binlog-event'.
+      (+stop-event+    "Stop")
+
+      ;; This constructor will initialize the instance variables and
+      ;; the `type-code', it will be used only by the server code.
+      ;;
+      ;; XXX: I'm not sure what that means. Can we ignore this event? -- jd
+      (+user-var-event+ (format nil "User Var: ~s"
+                                (qmynd-impl::read-rest-of-packet-octets packet)))
+
+      ;; Self-explanatory
       (+unknown-event+ "Unknown")
-      (otherwise "Unimplemented"))))
+
+      ;;; unimplemented
+      (+write-rows-event-v2+  "(Unimplemented) Write rows (V2)")
+      (+update-rows-event-v2+ "(Unimplemented) Update rows (V2)")
+      (+delete-rows-event-v2+ "(Unimplemented) Delete rows (V2)")
+      (otherwise (format nil "Unimplemented 0x~2,'0x"
+                         (common-header-packet-type-code common-header))))))
 
 (defmethod print-object ((object common-header-packet) s)
   (format s "#<Event type 0x~2,'0x position: ~s>"
