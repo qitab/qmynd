@@ -186,6 +186,17 @@
 (define-packet xid-event
     ((xid :mysql-type (integer 8))))
 
+;; https://dev.mysql.com/doc/dev/mysql-server/latest/classbinary__log_1_1Format__description__event.html
+;; (define-packet format-description-event
+;;     ((created :mysql-type (integer 4))
+;;      ;; This is 1 in MySQL 3.23 and 3 in MySQL 4.0 and 4.1 (In MySQL
+;;      ;; 5.0 and up, FORMAT_DESCRIPTION_EVENT is used instead of
+;;      ;; START_EVENT_V3 and for them its 4).
+;;      (binlog-version :mysql-type (integer 2))
+;;      (server-version :mysql-type (octets 50))
+;;      (common-header-length :mysql-type (integer 1))
+;;      (post-header-lenght   :mysql-type (integer 1))))
+
 (defun parse-binlog-event (packet)
   (when (/= (peek-first-octet packet) +mysql-response-ok+)
     (return-from parse-binlog-event (parse-response packet)))
@@ -196,8 +207,8 @@
 
       (+table-map-event+ (parse-table-event packet))
 
-      ;; https://dev.mysql.com/doc/dev/mysql-server/latest/classbinary__log_1_1Format__description__event.html
-      (+format-description-event+ "(Unimplemented) Format Description")
+
+
 
       (+rotate-event+ (parse-rotate-event packet))
       (+query-event+ (parse-query-event packet))
@@ -234,6 +245,7 @@
       (+write-rows-event-v2+  "(Unimplemented) Write rows (V2)")
       (+update-rows-event-v2+ "(Unimplemented) Update rows (V2)")
       (+delete-rows-event-v2+ "(Unimplemented) Delete rows (V2)")
+      (+format-description-event+ "(Unimplemented) Format Description")
       (otherwise (format nil "Unimplemented 0x~2,'0x"
                          (common-header-packet-type-code common-header))))))
 
