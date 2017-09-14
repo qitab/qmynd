@@ -180,6 +180,12 @@
      (null-bits :mysql-type (octets (ceiling column-count 8)))
      (optional-meta :mysql-type (octets :eof))))
 
+(define-packet heartbeat-event
+    ((log-identifier :mysql-type (octets :eof))))
+
+(define-packet xid-event
+    ((xid :mysql-type (integer 8))))
+
 (defun parse-binlog-event (packet)
   (when (/= (peek-first-octet packet) +mysql-response-ok+)
     (return-from parse-binlog-event (parse-response packet)))
@@ -202,8 +208,8 @@
 
       (+gtid-log-event+ "GTID")
 
-      (+xid-event+ "XID")
-      (+heartbeat-log-event+ "HeartBeat")
+      (+xid-event+ (parse-xid-event packet))
+      (+heartbeat-log-event+ (parse-heartbeat-event packet))
       (+intvar-event+  "IntVar")
 
       ;;; no-op
