@@ -186,6 +186,14 @@
 (define-packet xid-event
     ((xid :mysql-type (integer 8))))
 
+(define-packet rows-event
+    ((table-id :mysql-type (integer 6))
+     ;; reserved for future use, ignore
+     (flags :mysql-type (octets 2) :bind nil :transient t)
+     (column-count :mysql-type (integer :lenenc))
+     (width :mysql-type (octets (ceiling column-count 8)))
+     (rest :mysql-type (octets :eof))))
+
 ;; https://dev.mysql.com/doc/dev/mysql-server/latest/classbinary__log_1_1Format__description__event.html
 ;; (define-packet format-description-event
 ;;     ((created :mysql-type (integer 4))
@@ -213,7 +221,7 @@
       (+rotate-event+ (parse-rotate-event packet))
       (+query-event+ (parse-query-event packet))
 
-      (+write-rows-event-v1+ "Write rows (V1)")
+      (+write-rows-event-v1+ (parse-rows-event packet))
       (+update-rows-event-v1+ "Update rows (V1)")
       (+delete-rows-event-v1+ "Delete rows (V1)")
 
