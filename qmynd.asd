@@ -13,7 +13,7 @@
   :author "Alejandro Sedeño"
   :version "1.0"
   :licence "MIT-style"
-  :maintainer '("Alejandro Sedeño")
+  :maintainer "Alejandro Sedeño"
   :description      "MySQL Native Driver"
   :long-description "MySQL Native Driver for Common Lisp"
   :depends-on (:babel
