@@ -63,52 +63,82 @@
 
 (declaim (inline parse-text-protocol-result-column-as-text))
 
-(defun parse-resultset-row (column-count column-definitions
-                            &key as-text result-type)
-  "Parse a single row of the result set and return either a vector or a
-   list, depending on the value of RESULT-TYPE.
+;;;
+;;; For efficiency reasons, compile four quite similar functions that are
+;;; used depending on the application's wanted result kind:
+;;;
+;;;   - the content can be returned either as a raw string or as a relevant
+;;;     CL data type instance for the MySQL column-type,
+;;;
+;;;   - the content can be returned either as a list or as a vector, for
+;;;     backwards compatibility with previous versions of qmynd.
+;;;
+(defun parse-resultset-row-as-vector (column-count column-definitions)
+  (declare (optimize speed))
+  (let* ((stream (mysql-read-packet))
+         (tag    (peek-first-octet stream))
+         (row    (make-array column-count :initial-element nil)))
+    (if (or (and (= tag +mysql-response-end-of-file+)
+                 (< (my-len stream) 9))
+            (= tag +mysql-response-error+))
+        (parse-response stream)
+        (loop for i fixnum from 0 below column-count
+           for def across column-definitions
+           for str = (read-length-encoded-octets stream :null-ok t)
+           when str
+           do (setf (svref row i)
+                    (parse-text-protocol-result-column str def))
+           finally (return row)))))
 
-   If AS-TEXT is t, return bare data from the server, still dealing with
-   encoding of the text columns.
+(defun parse-resultset-row-as-text-vector (column-count column-definitions)
+  (declare (optimize speed))
+  (let* ((stream (mysql-read-packet))
+         (tag    (peek-first-octet stream))
+         (row    (make-array column-count :initial-element nil)))
+    (if (or (and (= tag +mysql-response-end-of-file+)
+                 (< (my-len stream) 9))
+            (= tag +mysql-response-error+))
+        (parse-response stream)
+        (loop for i fixnum from 0 below column-count
+           for def across column-definitions
+           for str = (read-length-encoded-octets stream :null-ok t)
+           when str
+           do (setf (svref row i)
+                    (parse-text-protocol-result-column-as-text str def))
+           finally (return row)))))
 
-   The default for AS-TEXT is nil, in which case the result columns are
-   parsed into native types depending on the meta data passed in
-   COLUMNS-DEFINITIONS."
+(defun parse-resultset-row-as-list (column-count column-definitions)
+  (declare (optimize speed))
   (let* ((stream (mysql-read-packet))
          (tag    (peek-first-octet stream)))
-    (labels
-        ((parse-column (str column-definition)
-           (when str
-             (if as-text
-                 (parse-text-protocol-result-column-as-text str column-definition)
-                 (parse-text-protocol-result-column str column-definition))))
+    (if (or (and (= tag +mysql-response-end-of-file+)
+                 (< (my-len stream) 9))
+            (= tag +mysql-response-error+))
+        (parse-response stream)
+        (loop for i fixnum from 0 below column-count
+           for def across column-definitions
+           for str = (read-length-encoded-octets stream :null-ok t)
+           collect (when str
+                     (parse-text-protocol-result-column str def))))))
 
-         (result-as-vector (stream)
-           (let ((row (make-array column-count :initial-element nil)))
-             (loop for i fixnum from 0 below column-count
-                for str = (read-length-encoded-octets stream :null-ok t)
-                when str
-                do (setf (aref row i)
-                         (parse-column str (aref column-definitions i))))
-             row))
+(defun parse-resultset-row-as-text-list (column-count column-definitions)
+  (declare (optimize speed))
+  (let* ((stream (mysql-read-packet))
+         (tag    (peek-first-octet stream)))
+    (if (or (and (= tag +mysql-response-end-of-file+)
+                 (< (my-len stream) 9))
+            (= tag +mysql-response-error+))
+        (parse-response stream)
+        (loop for i fixnum from 0 below column-count
+           for def across column-definitions
+           for str = (read-length-encoded-octets stream :null-ok t)
+           collect (when str
+                     (parse-text-protocol-result-column-as-text str def))))))
 
-         (result-as-list (stream)
-           (loop for i fixnum from 0 below column-count
-              for str = (read-length-encoded-octets stream :null-ok t)
-              collect (parse-column str (aref column-definitions i)))))
-
-      (declare (inline parse-column
-                       result-as-vector
-                       result-as-list))
-      (cond
-        ((or (and (= tag +mysql-response-end-of-file+)
-                  (< (my-len stream) 9))
-             (= tag +mysql-response-error+))
-         (parse-response stream))
-        (t
-         (ecase result-type
-           (vector  (result-as-vector stream))
-           (list    (result-as-list stream))))))))
+(declaim (inline parse-resultset-row-as-list
+                 parse-resultset-row-as-text-list
+                 parse-resultset-row-as-vector
+                 parse-resultset-row-as-text-vector))
 
 (defun map-resultset-rows (fn column-count column-definitions
                            &key as-text result-type)
@@ -116,24 +146,32 @@
 
    When RESULT-TYPE is list, the row is a list, when RESULT-TYPE is vector,
    the row passed to the FN function is a vector."
-  (loop for row = (parse-resultset-row column-count
-                                       column-definitions
-                                       :as-text as-text
-                                       :result-type result-type)
-     until (typep row 'response-end-of-file-packet)
-     do (funcall fn row)))
+  (let ((parse-fun (if as-text
+                       (ecase result-type
+                         (list   #'parse-resultset-row-as-text-list)
+                         (vector #'parse-resultset-row-as-text-vector))
+                       (ecase result-type
+                         (list   #'parse-resultset-row-as-list)
+                         (vector #'parse-resultset-row-as-vector)))))
+    (loop for row = (funcall parse-fun column-count column-definitions)
+       until (typep row 'response-end-of-file-packet)
+       do (funcall fn row))))
 
 (defun parse-resultset-rows (column-count column-definitions
                              &key as-text result-type)
   "Accumulate the whole result set in memory then return it as a list or a
    vector depending on the value of RESULT-TYPE (a symbol)."
-  (let ((rows
-         (loop for row = (parse-resultset-row column-count
-                                              column-definitions
-                                              :as-text as-text
-                                              :result-type result-type)
-            until (typep row 'response-end-of-file-packet)
-            collect row)))
+  (let* ((parse-fun (if as-text
+                        (ecase result-type
+                          (list   #'parse-resultset-row-as-text-list)
+                          (vector #'parse-resultset-row-as-text-vector))
+                        (ecase result-type
+                          (list   #'parse-resultset-row-as-list)
+                          (vector #'parse-resultset-row-as-vector))))
+         (rows
+          (loop for row = (funcall parse-fun column-count column-definitions)
+             until (typep row 'response-end-of-file-packet)
+             collect row)))
     (coerce rows result-type)))
 
 (defun decode-octets-to-string (octets &optional encoding)
@@ -160,38 +198,28 @@
   "Refrain from parsing data into lisp types, some application will only use
    the text form anyway"
   (let ((column-type (column-definition-type column-definition)))
-    (cond ((= column-type +mysql-type-null+)
-           nil)
-
-          ;; support for BLOB and TEXT types
-          ((member column-type (list +mysql-type-tiny-blob+
-                                     +mysql-type-medium-blob+
-                                     +mysql-type-long-blob+
-                                     +mysql-type-blob+))
-           (if (= (column-definition-v41-packet-cs-coll column-definition)
-                  +mysql-cs-coll-binary+)
-               octets
-               (let ((encoding (column-definition-encoding column-definition)))
-                 (decode-octets-to-string octets encoding))))
-
-          ;; Binary types
-          ((member column-type (list +mysql-type-bit+
-                                     +mysql-type-enum+
-                                     +mysql-type-set+
-                                     +mysql-type-geometry+)
-                   :test #'=)
-           octets)
-
-          ;; binary strings are strings with binary collations...
-          ((and (member column-type (list +mysql-type-string+
-                                          +mysql-type-var-string+))
-                (= (column-definition-v41-packet-cs-coll column-definition)
-                   +mysql-cs-coll-binary+))
-           octets)
-
-          (t
+    (case column-type
+      (+mysql-type-null+
+       nil)
+      ((+mysql-type-string+
+        +mysql-type-var-string+
+        +mysql-type-tiny-blob+
+        +mysql-type-medium-blob+
+        +mysql-type-long-blob+
+        +mysql-type-blob+)
+       (if (= (column-definition-v41-packet-cs-coll column-definition)
+              +mysql-cs-coll-binary+)
+           octets
            (let ((encoding (column-definition-encoding column-definition)))
-             (decode-octets-to-string octets encoding))))))
+             (decode-octets-to-string octets encoding))))
+      ((+mysql-type-bit+
+        +mysql-type-enum+
+        +mysql-type-set+
+        +mysql-type-geometry+)
+       octets)
+      (otherwise
+       (let ((encoding (column-definition-encoding column-definition)))
+         (decode-octets-to-string octets encoding))))))
 
 (defun parse-text-protocol-result-column (octets column-definition)
   (let ((column-type (column-definition-type column-definition))
