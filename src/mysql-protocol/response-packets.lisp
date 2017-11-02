@@ -24,6 +24,14 @@
                :predicate (mysql-has-capability +mysql-capability-client-protocol-41+))
      (info :mysql-type (string :eof))))
 
+;;; ERR packet sent when connection is refused before negociating capabilities
+(define-packet response-error-no-sql-state
+    ((tag :mysql-type (integer 1)
+          :value +mysql-response-error+
+          :transient t :bind nil)
+     (error-code :mysql-type (integer 2))
+     (error-message :mysql-type (string :eof))))
+
 (define-packet response-error
     ((tag :mysql-type (integer 1) :value +mysql-response-error+ :transient t :bind nil)
      (error-code :mysql-type (integer 2))

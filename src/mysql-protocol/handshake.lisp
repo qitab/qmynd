@@ -209,8 +209,14 @@
 (defun process-initial-handshake-payload (stream)
   "Initial handshake processing dispatch."
   (let ((protocol-version (peek-first-octet stream)))
-    (case protocol-version
-      (10 (process-initial-handshake-v10 stream))
+    (cond
+      ((= protocol-version +mysql-response-error+)
+       (let* ((packet (parse-response-error-no-sql-state stream))
+              (code   (response-error-no-sql-state-packet-error-code packet))
+              (mesg   (response-error-no-sql-state-packet-error-message packet)))
+         (error (make-condition 'mysql-error :code code :message mesg))))
+      ((= protocol-version 10)
+       (process-initial-handshake-v10 stream))
       (t
        (error (make-condition 'protocol-version-mismatch
                               :version protocol-version))))))
