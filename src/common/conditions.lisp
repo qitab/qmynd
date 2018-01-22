@@ -99,3 +99,24 @@
                      (partial-read-expected e))
              (format s "~%Detail: check MySQL logs for (Got timeout writing communication packets)")
              (format s "~%Hint: adjust net_read_timeout and net_write_timeout"))))
+
+(define-condition decoding-error (mysql-external-error)
+  ((coldef :initarg :coldef :reader decoding-error-coldef)
+   (encoding :initarg :encoding :reader decoding-error-encoding)
+   (octets :initarg :octets :reader decoding-error-octets)
+   (coding-error :initarg :error :reader decoding-error-condition))
+  (:documentation "Signaled when babel fails to decode OCTETS in ENCODING for a given column definition COLDEF.")
+  (:report (lambda (e s)
+             (let* ((coldef   (decoding-error-coldef e))
+                    (cs-coll  (column-definition-v41-packet-cs-coll coldef))
+                    (cs-name  (mysql-cs-coll-to-character-encoding cs-coll)))
+              (format s "Failed to decode value of type ~s ~
+and collation ~s~@[[~d]~] column ~s.~s.~s ~
+for encoding ~a: ~a"
+                      (column-definition-type coldef)
+                      cs-coll cs-name
+                      (column-definition-v41-packet-schema coldef)
+                      (column-definition-v41-packet-table coldef)
+                      (column-definition-v41-packet-name coldef)
+                      (decoding-error-encoding e)
+                      (decoding-error-condition e))))))

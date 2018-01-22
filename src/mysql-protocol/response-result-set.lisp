@@ -174,7 +174,7 @@
              collect row)))
     (coerce rows result-type)))
 
-(defun decode-octets-to-string (octets &optional encoding)
+(defun decode-octets-to-string (column-definition octets &optional encoding)
   "Decode the given vector of OCTETS into an internal Common Lisp string,
   given a known encoding for it. Provide a couple of restarts in case the
   decoding fails:
@@ -185,7 +185,15 @@
   (let ((encoding (or *mysql-encoding*
                       encoding
                       babel::*default-character-encoding*)))
-    (restart-case (babel:octets-to-string octets :encoding encoding)
+    (restart-case
+        (handler-case
+            (babel:octets-to-string octets :encoding encoding)
+          (babel-encodings:character-coding-error (e)
+            (error (make-condition 'decoding-error
+                                   :coldef column-definition
+                                   :octets octets
+                                   :encoding encoding
+                                   :error e))))
       (use-nil ()
         :report "skip this column's value and use nil instead."
         nil)
@@ -199,33 +207,34 @@
    the text form anyway"
   (let ((column-type (column-definition-type column-definition)))
     (case column-type
-      (+mysql-type-null+
-       nil)
-      ((+mysql-type-string+
-        +mysql-type-var-string+
-        +mysql-type-tiny-blob+
-        +mysql-type-medium-blob+
-        +mysql-type-long-blob+
-        +mysql-type-blob+)
-       (if (= (column-definition-v41-packet-cs-coll column-definition)
-              +mysql-cs-coll-binary+)
-           octets
-           (let ((encoding (column-definition-encoding column-definition)))
-             (decode-octets-to-string octets encoding))))
-      ((+mysql-type-bit+
-        +mysql-type-enum+
-        +mysql-type-set+
-        +mysql-type-geometry+)
-       octets)
+      (#. +mysql-type-null+
+          nil)
+      (#. (list +mysql-type-string+
+                +mysql-type-var-string+
+                +mysql-type-tiny-blob+
+                +mysql-type-medium-blob+
+                +mysql-type-long-blob+
+                +mysql-type-blob+)
+          (if (= (column-definition-v41-packet-cs-coll column-definition)
+                 +mysql-cs-coll-binary+)
+              octets
+              (let ((encoding (column-definition-encoding column-definition)))
+                (decode-octets-to-string column-definition octets encoding))))
+      (#. (list +mysql-type-bit+
+                +mysql-type-enum+
+                +mysql-type-set+
+                +mysql-type-geometry+)
+          octets)
       (otherwise
        (let ((encoding (column-definition-encoding column-definition)))
-         (decode-octets-to-string octets encoding))))))
+         (decode-octets-to-string column-definition octets encoding))))))
 
 (defun parse-text-protocol-result-column (octets column-definition)
   (let ((column-type (column-definition-type column-definition))
         str)
     (labels ((str ()
-               (unless str (setf str (decode-octets-to-string octets)))
+               (unless str
+                 (setf str (decode-octets-to-string column-definition octets)))
                str)
              (parse-float (&optional (float-format 'single-float))
                ;; Look into replacing this with a library, or moving it to utilities.lisp.
@@ -350,7 +359,7 @@
         (encoding (column-definition-encoding column-definition)))
     (labels ((to-string (octets)
                (if encoding
-                   (decode-octets-to-string octets encoding)
+                   (decode-octets-to-string column-definition octets encoding)
                    octets))
              (parse-binary-integer (length)
                (read-fixed-length-integer
