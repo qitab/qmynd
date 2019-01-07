@@ -94,7 +94,7 @@
 (defconstant +mysql-cs-coll-keybcs2-binary+            73)
 (defconstant +mysql-cs-coll-koi8r-binary+              74)
 (defconstant +mysql-cs-coll-koi8u-binary+              75)
-;;; 76 is NOT USED
+(defconstant +mysql-cs-coll-utf8-tolower-ci+           76)
 (defconstant +mysql-cs-coll-latin2-binary+             77)
 (defconstant +mysql-cs-coll-latin5-binary+             78)
 (defconstant +mysql-cs-coll-latin7-binary+             79)
