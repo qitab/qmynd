@@ -53,7 +53,7 @@
                                 :ssl-verify ssl-verify)))
 
 ;;; AF_LOCAL sockets should really be folded into usocket. For now, just implement CCL and SBCL support.
-#+(or ccl sbcl ecl)
+#+(and (not win32) (or ccl sbcl ecl))
 (defun mysql-local-connect (&key (path #P"/var/run/mysqld/mysqld.sock")
                               (username "")
                               (password "")
