@@ -93,6 +93,7 @@
     ;; (#. +mysql-cs-coll-koi8u-binary+            :unknown)
     (#. +mysql-cs-coll-utf8-tolower-ci+          :utf-8)
     (#. +mysql-cs-coll-utf8mb4-0900-ai-ci+       :utf-8)
+    (#. +mysql-cs-coll-utf8mb4-0900-as-cs+       :utf-8)
     (#. +mysql-cs-coll-latin2-binary+            :iso-8859-2)
     (#. +mysql-cs-coll-latin5-binary+            :iso-8859-5)
     (#. +mysql-cs-coll-latin7-binary+            :iso-8859-7)
