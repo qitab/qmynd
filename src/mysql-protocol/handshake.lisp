@@ -116,9 +116,9 @@
                Server Capabilities: ~8,'0X~%~
                Client Capabilities: ~8,'0X~%~
                Combined Capabiltiies ~8,'0X~%~%"
-            auth-data
-            (babel:octets-to-string auth-plugin-name)
-            capability-flags
+            (mysql-connection-auth-data *mysql-connection*)
+            (mysql-connection-auth-plugin *mysql-connection*)
+            (mysql-connection-capabilities *mysql-connection*)
             (mysql-capabilities-supported)
             (mysql-connection-capabilities *mysql-connection*))
     (values)))
