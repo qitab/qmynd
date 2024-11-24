@@ -76,6 +76,13 @@
            :reader mysql-unsupported-authentication-plugin))
   (:documentation "Signaled when trying to authenticate to a server with an unsupported authentication plugin."))
 
+(define-condition mysql-unsupported-authentication-step (mysql-external-error)
+  ((plugin :initarg :plugin
+           :reader mysql-unsupported-authentication-step-plugin)
+   (message :initarg :message
+            :reader mysql-unsupported-authentication-step-message))
+  (:documentation "Signaled when trying to authenticate to a server with a partially supported authentication plugin."))
+
 (define-condition unexpected-packet (mysql-external-error)
   ((payload :initarg :payload
             :reader unexpected-packet-payload))
