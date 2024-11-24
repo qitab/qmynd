@@ -75,4 +75,5 @@
                (response-end-of-file-packet-status-flags packet))
          packet))
       (t
-       (error (make-condition 'unexpected-packet :stream stream))))))
+       (error (make-condition 'unexpected-packet
+                              :payload (read-rest-of-packet-octets stream)))))))
