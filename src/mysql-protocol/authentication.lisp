@@ -120,6 +120,22 @@
 ;;; Not implemented
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; caching_sha256_password
+
+(defun mysql-caching-sha2-password-auth-response (password auth-data)
+  (if (null password)
+      ""
+      (let* ((password-octets (babel:string-to-octets password))
+             (hash-stage-1 (ironclad:digest-sequence :sha256 password-octets))
+             (hash-stage-2 (ironclad:digest-sequence :sha256 hash-stage-1)))
+        (map-into hash-stage-1 #'logxor
+                  hash-stage-1
+                  (let ((digester (ironclad:make-digest :sha256)))
+                    (ironclad:update-digest digester hash-stage-2)
+                    (ironclad:update-digest digester auth-data :end 20)
+                    (ironclad:produce-digest digester))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Authentication mechanism dispatcher
 
 (defun generate-auth-response (password auth-data &optional plugin)
@@ -131,6 +147,8 @@
      (mysql-old-password-auth-response password auth-data))
     ((string= plugin "mysql_clear_password")
      (mysql-clear-password-auth-response password))
+    ((string= plugin "caching_sha2_password")
+     (mysql-caching-sha2-password-auth-response password auth-data))
     (T
      (error (make-condition 'mysql-unsupported-authentication
                             :plugin plugin)))))

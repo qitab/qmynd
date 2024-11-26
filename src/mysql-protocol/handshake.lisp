@@ -61,6 +61,12 @@
     ((tag :mysql-type (integer 1) :value #xfe)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Fast Auth
+(define-packet fast-auth-response
+    ((tag :mysql-type (integer 1) :value #x01 :transient t :bind nil)
+     (code :mysql-type (integer 1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Protocol::AuthSwitchResponse
 ;;; We don't receive that packet (not being the server), but it would look
 ;;; like the following:
@@ -116,9 +122,9 @@
                Server Capabilities: ~8,'0X~%~
                Client Capabilities: ~8,'0X~%~
                Combined Capabiltiies ~8,'0X~%~%"
-            auth-data
-            (babel:octets-to-string auth-plugin-name)
-            capability-flags
+            (mysql-connection-auth-data *mysql-connection*)
+            (mysql-connection-auth-plugin *mysql-connection*)
+            (mysql-connection-capabilities *mysql-connection*)
             (mysql-capabilities-supported)
             (mysql-connection-capabilities *mysql-connection*))
     (values)))
@@ -206,6 +212,16 @@
        ;; by the user? Both? Stored in the connection object?
        nil))))
 
+(defun send-fast-auth-plain-text-password (password)
+  (with-prefixed-accessors (character-set)
+      (mysql-connection- *mysql-connection*)
+    (mysql-write-packet
+     (flexi-streams:with-output-to-sequence (s)
+       (write-null-terminated-octets
+        (babel:string-to-octets password
+                                :encoding character-set)
+        s)))))
+
 (defun process-initial-handshake-payload (stream)
   "Initial handshake processing dispatch."
   (let ((protocol-version (peek-first-octet stream)))
@@ -268,7 +284,8 @@
                                         :auth-plugin auth-plugin
                                         :database database)
             (let* ((packet      (mysql-read-packet))
-                   (auth-switch (= #xfe (peek-first-octet packet))))
+                   (auth-switch (= #xfe (peek-first-octet packet)))
+                   (fast-auth   (= #x01 (peek-first-octet packet))))
               (cond ((and auth-switch (= 1 (my-len packet)))
                      ;; switch to old auth
                      (let ((auth-plugin "mysql_old_password"))
@@ -277,16 +294,39 @@
 
                     (auth-switch
                      (let* ((new-auth (parse-auth-switch-request packet))
-                            (auth-data
-                             (auth-switch-request-packet-auth-plugin-data new-auth))
-                            (auth-plugin
-                             (auth-switch-request-packet-plugin-name new-auth)))
+                            (auth-data (auth-switch-request-packet-auth-plugin-data new-auth))
+                            (auth-plugin (auth-switch-request-packet-plugin-name new-auth)))
                        (send-auth-switch-response
-                        (generate-auth-response password auth-data auth-plugin)))))
-
+                        (generate-auth-response password auth-data auth-plugin))))
+                    (fast-auth
+                     (let* ((fast-auth-packet (parse-fast-auth-response packet))
+                            (fast-auth-code (fast-auth-response-packet-code fast-auth-packet)))
+                       (ecase fast-auth-code
+                         (#. +mysql-fast-auth-success+)
+                         (#. +mysql-fast-auth-perform-full-auth+
+                          ;; In this case, for cached_sha2_password, we send the password in
+                          ;; clear-text for AF_UNIX and TLS connections, since they are considered
+                          ;; secure by the spec. For non-TLS AF_INET connections there's a whole
+                          ;; dance fetching an RSA public key in PEM format from the server and then
+                          ;; using that to encrypt the password, which will take a lot more effort
+                          ;; to implement and pull in a lot more dependencies. If you've run into
+                          ;; the condition signaled in that case, connect to the server with the
+                          ;; standard mysql client to warm the server's cache, then try again.
+                          (ecase (type-of connection)
+                            (mysql-local-connection
+                             (send-fast-auth-plain-text-password password))
+                            (mysql-inet-connection
+                             (case (mysql-connection-stream connection)
+                               (.# (uiop/package:find-symbol* :cl+ssl :ssl-stream)
+                                (send-fast-auth-plain-text-password password))
+                               (T
+                                (error (make-condition
+                                        'mysql-unsupported-authentication-step
+                                        :plugin auth-plugin
+                                        :message "Connect to server with standard mysql client then try again.")))))))))))
               ;; now read the read auth response
-              ;; unless we got an auth-switch packet, we already have the response.
-              (parse-response (if auth-switch (mysql-read-packet) packet))))
+              ;; unless we got an auth-switch or fast-auth packet, we already have the response.
+              (parse-response (if (or auth-switch fast-auth) (mysql-read-packet) packet))))
         (mysql-base-error (e)
           (mysql-connection-close-socket connection)
           (error e)))

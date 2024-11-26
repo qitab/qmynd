@@ -8,6 +8,8 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(in-package :asdf)
+
 (defsystem :qmynd
   :name "MySQL Native Driver"
   :author "Alejandro Sedeño"
@@ -51,7 +53,7 @@
                       :depends-on ("wire-packet"))
                      (:file "compressed-protocol"
                       :depends-on ("basic-types"))))
-       (module "mysql-protocol"
+       (:module "mysql-protocol"
         :serial nil
         :depends-on ("common" "wire-protocol")
         :components ((:file "define-packet")

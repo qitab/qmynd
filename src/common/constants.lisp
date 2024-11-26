@@ -58,6 +58,11 @@
 (defconstant +mysql-response-end-of-file+ #xfe)
 (defconstant +mysql-response-error+ #xff)
 
+;; Fast Auth Codes
+(defconstant +mysql-fast-auth-request-public-key+ #x02)
+(defconstant +mysql-fast-auth-success+ #x03)
+(defconstant +mysql-fast-auth-perform-full-auth+ #x04)
+
 
 ;; Shutdown types (15.6.9)
 ;; NB: Only +mysql-shutdown-wait-all-buffers+ is used
