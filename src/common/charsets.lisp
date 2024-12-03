@@ -274,5 +274,7 @@
 ;;; 253 is NOT USED
 (defconstant +mysql-cs-coll-utf8mb3-general-cs+        254)
 (defconstant +mysql-cs-coll-utf8mb4-0900-ai-ci+        255)
+;;; 256-308 is NOT USED
+(defconstant +mysql-cs-coll-utf8mb4-0900-bin+          309)
 
 )            ;eval-when
