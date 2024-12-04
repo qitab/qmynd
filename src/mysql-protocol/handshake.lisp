@@ -66,6 +66,10 @@
     ((tag :mysql-type (integer 1) :value #x01 :transient t :bind nil)
      (code :mysql-type (integer 1))))
 
+(define-packet fast-auth-public-key-response
+    ((tag :mysql-type (integer 1) :value #x01 :transient t :bind nil)
+     (public-key :mysql-type (string :eof))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Protocol::AuthSwitchResponse
 ;;; We don't receive that packet (not being the server), but it would look
@@ -222,6 +226,58 @@
                                 :encoding character-set)
         s)))))
 
+(when (have-rsa-support)
+  ;; Parsing an RSA Public Key in PEM format requires a bunch of additional dependencies, both
+  ;; direct and transitive, that I would prefer not to take as hard dependencies. If we have them
+  ;; (which is true if the user is using quicklisp, and might be true otherwise), then we can define
+  ;; FAST-AUTH-GET-RSA-PUBLIC-KEY and parse the PEM encoded key returned by the server. If we don't
+  ;; have them, then we shouldn't try to define this function.  The one call-site is also guarded by
+  ;; HAVE-RSA-SUPPORT, so we will never try to call it if it has not been defined. We can't get away
+  ;; with just using UIOP/PACKAGE:SYMBOL-CALL in a bunch of places because some of these symbols are
+  ;; macros.
+  (eval
+   `(defun fast-auth-get-rsa-public-key ()
+      (mysql-write-packet
+       (flexi-streams:with-output-to-sequence (s)
+         (write-fixed-length-integer +mysql-fast-auth-request-public-key+ 1 s)))
+      (let ((public-key (uiop:stripln
+                         (fast-auth-public-key-response-packet-public-key
+                          (parse-fast-auth-public-key-response (mysql-read-packet)))))
+            (prefix "-----BEGIN PUBLIC KEY-----")
+            (suffix "-----END PUBLIC KEY-----"))
+        (when (uiop:string-enclosed-p prefix public-key suffix)
+          (let ((raw-key (,(uiop/package:find-symbol* :base64-string-to-usb8-array :cl-base64)
+                          (subseq public-key
+                                  (length prefix)
+                                  (- (length public-key) (length suffix))))))
+            (,(uiop/package:find-symbol* :match :trivia)
+             (,(uiop/package:find-symbol* :decode :asn1) raw-key)
+              ((,(uiop/package:find-symbol* :rsa-public-key-info :asn1) n e)
+               (ironclad:make-public-key :rsa :n n :e e)))))))))
+
+(defun perform-fast-auth-full-authentication (password auth-data)
+  (let* ((public-key (uiop/package:symbol-call :qmynd-impl :fast-auth-get-rsa-public-key))
+         (null-terminated-password-as-octets
+           (with-prefixed-accessors (character-set)
+               (mysql-connection- *mysql-connection*)
+             (babel:string-to-octets
+              (with-output-to-string (s)
+                (write-string password s)
+                (write-char #\Null s))
+              :encoding character-set)))
+         (scrambled-password (subseq (ironclad:encrypt-message
+                                      (ironclad:make-cipher :xor
+                                                            :key (subseq auth-data 0 20)
+                                                            :mode :ecb
+                                                            :padding :pkcs7)
+                                      null-terminated-password-as-octets)
+                                     0 (length null-terminated-password-as-octets)))
+         (encrypted-password (ironclad:encrypt-message
+                              public-key
+                              scrambled-password
+                              :oaep t)))
+    (mysql-write-packet encrypted-password)))
+
 (defun process-initial-handshake-payload (stream)
   "Initial handshake processing dispatch."
   (let ((protocol-version (peek-first-octet stream)))
@@ -320,10 +376,12 @@
                                (.# (uiop/package:find-symbol* :cl+ssl :ssl-stream)
                                 (send-fast-auth-plain-text-password password))
                                (T
-                                (error (make-condition
-                                        'mysql-unsupported-authentication-step
-                                        :plugin auth-plugin
-                                        :message "Connect to server with standard mysql client then try again.")))))))))))
+                                (if (have-rsa-support)
+                                    (perform-fast-auth-full-authentication password auth-data)
+                                    (error (make-condition
+                                            'mysql-unsupported-authentication-step
+                                            :plugin auth-plugin
+                                            :message "Connect to server with standard mysql client then try again."))))))))))))
               ;; now read the read auth response
               ;; unless we got an auth-switch or fast-auth packet, we already have the response.
               (parse-response (if (or auth-switch fast-auth) (mysql-read-packet) packet))))

@@ -23,7 +23,12 @@
                :trivial-gray-streams
                :usocket
                #-asdf3 :uiop)
-  :weakly-depends-on (:cl+ssl :chipz :salza2)
+  :weakly-depends-on (;; Compression
+                      :chipz :salza2
+                      ;; RSA key parsing for fast-auth
+                      :asn1 :cl-base64 :trivia
+                      ;; TLS
+                      :cl+ssl)
   :around-compile "asdf-finalizers:check-finalizers-around-compile"
   :serial nil
   :components

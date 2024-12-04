@@ -16,3 +16,8 @@
 (defun have-compression ()
   (and (find-package "CHIPZ")
        (find-package "SALZA2")))
+
+(defun have-rsa-support ()
+  (and (find-package "ASN1")
+       (find-package "CL-BASE64")
+       (find-package "TRIVIA")))
