@@ -44,7 +44,7 @@
                     :initform :utf-8)   ;:iso-8859-1)
    (mysql-cs-coll   :type integer
                     :accessor mysql-connection-cs-coll
-                    :initform +mysql-cs-coll-utf8-general-ci+)
+                    :initform +mysql-cs-coll-utf8mb3-general-ci+)
    (status-flags    :type (or integer null)
                     :accessor mysql-connection-status-flags)
    (sequence-id     :type integer
