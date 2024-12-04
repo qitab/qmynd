@@ -8,8 +8,6 @@
 ;;;                                                                  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :asdf)
-
 (defsystem :qmynd
   :name "MySQL Native Driver"
   :author "Alejandro Sedeño"
